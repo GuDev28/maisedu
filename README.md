@@ -30,11 +30,10 @@ O sistema segue um modelo cliente-servidor em camadas, com front-end SPA, API RE
 - **Autenticação**: Spring Security + JWT, com controle de acesso RBAC
 - **Persistência**: PostgreSQL, acessado via Spring Data JPA / Hibernate
 - **Serviço externo**: Resend, para envio de e-mails transacionais
-- **Containerização**: Docker
 
 ## Modelagem de dados
 
-O diagrama entidade-relacionamento conceitual e o script completo de definição das tabelas (DBML) estão disponíveis em `docs/database/`.
+O diagrama entidade-relacionamento está disponível em `docs/diagrams`.
 
 ![Diagrama entidade-relacionamento do MaisEdu](docs/diagrams/er_diagram.png)
 
