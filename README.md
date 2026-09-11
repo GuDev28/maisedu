@@ -39,33 +39,25 @@ O diagrama entidade-relacionamento está disponível em `docs/diagrams`.
 
 ## Tecnologias utilizadas
 
-| Camada | Tecnologia |
-|---|---|
-| Front-end | React, Vite |
-| Back-end | Java, Spring Boot, Spring Data JPA, Hibernate |
-| Autenticação | Spring Security, JWT |
-| Banco de dados | PostgreSQL |
-| Serviço externo | Resend (e-mail transacional) |
-| Containerização | Docker |
-| Testes | JUnit, Spring Boot Test, Mockito |
-| Versionamento | Git, GitHub, GitHub Projects (Kanban) |
+| Camada          | Tecnologia                                            |
+| --------------- | ----------------------------------------------------- |
+| Front-end       | React, Vite                                           |
+| Back-end        | Java, Spring Boot, Spring Data JPA, Hibernate, Lombok |
+| Autenticação    | Spring Security, JWT                                  |
+| Banco de dados  | PostgreSQL                                            |
+| Serviço externo | Resend (e-mail transacional)                          |
+| Containerização | Docker                                                |
+| Testes          | JUnit, Spring Boot Test, Mockito                      |
+| Versionamento   | Git, GitHub, GitHub Projects (Kanban)                 |
 
 ## Como executar
 
-> ⚠️ Projeto em desenvolvimento — instruções serão atualizadas conforme a implementação avança.
+> Projeto em desenvolvimento — instruções serão atualizadas conforme a implementação avança.
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/<usuario>/maisedu.git
+git clone https://github.com/GuDev28/maisedu.git
 cd maisedu
-
-# Subir os containers (back-end + banco de dados)
-docker compose up -d
-
-# Front-end
-cd frontend
-npm install
-npm run dev
 ```
 
 Variáveis de ambiente necessárias (`.env`): credenciais do banco de dados PostgreSQL e chave de API do Resend.
@@ -78,14 +70,13 @@ maisedu/
 ├── frontend/          # SPA (React + Vite)
 ├── docs/
 │   ├── diagrams/      # Diagrama de arquitetura e diagrama entidade-relacionamento
-│   ├── database/       # Script DBML de modelagem de dados
 │   └── monografia/     # Documento do PFC
 └── docker-compose.yml
 ```
 
 ## Status do projeto
 
-🚧 Em desenvolvimento — fase atual: modelagem de dados e definição de arquitetura concluídas; implementação do back-end e do front-end em andamento.
+Em desenvolvimento — fase atual: modelagem de dados e definição de arquitetura concluídas; implementação do back-end e do front-end em andamento.
 
 ## Equipe
 
