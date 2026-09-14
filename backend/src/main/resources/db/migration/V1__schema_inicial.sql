@@ -1,9 +1,6 @@
--- ============================================================
--- V1__schema_inicial.sql
--- Escopo desta migration: RN1 (vínculo e elegibilidade aluno-turma-professor)
--- Gerado a partir das entidades JPA corrigidas.
--- RBAC completo (permissao/role_permissao) e demais RNs entram em migrations futuras.
--- ============================================================
+
+-- Migration referente à RN1 (vínculo e elegibilidade aluno-turma-professor)
+-- Baseada nas entidades JPA.
 
 CREATE TABLE instituicao (
     id              BIGSERIAL PRIMARY KEY,
