@@ -4,6 +4,19 @@ import { avaliarQuestao } from "../services/avaliacaoQuestaoService";
 const VOTO_APROVAR = "APROVAR";
 const VOTO_REJEITAR = "REJEITAR";
 
+// A questão só muda de status quando atinge o quórum (3 votos iguais, de no máximo 5)
+function montarMensagem({ status, aprovacoes, rejeicoes, votosParaDecidir }) {
+  const placar = `Placar: ${aprovacoes} aprovação(ões) e ${rejeicoes} rejeição(ões).`;
+
+  if (status === "APROVADA") {
+    return `Voto registrado. ${placar} A questão atingiu ${votosParaDecidir} aprovações e entrou no banco compartilhado.`;
+  }
+  if (status === "REJEITADA") {
+    return `Voto registrado. ${placar} A questão atingiu ${votosParaDecidir} rejeições e foi rejeitada.`;
+  }
+  return `Voto registrado. ${placar} A questão continua pendente até ${votosParaDecidir} votos iguais.`;
+}
+
 export default function AvaliarQuestao() {
   const [questaoId, setQuestaoId] = useState("");
   const [professorId, setProfessorId] = useState("");
@@ -19,13 +32,8 @@ export default function AvaliarQuestao() {
     setCarregando(true);
 
     try {
-      await avaliarQuestao(questaoId, professorId, voto);
-
-      setSucesso(
-        voto === VOTO_APROVAR
-          ? "Questão aprovada com sucesso."
-          : "Questão rejeitada com sucesso."
-      );
+      const resultado = await avaliarQuestao(questaoId, professorId, voto);
+      setSucesso(montarMensagem(resultado));
       setProfessorId("");
     } catch (err) {
       setErro(err.message);

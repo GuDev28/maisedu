@@ -22,8 +22,12 @@ public class Usuario {
     @Column(nullable = false)
     private String nome;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
+
+    /** Identificador de acesso do aluno, gerado pela escola, como a matrícula por exemplo. */
+    @Column(unique = true, length = 50)
+    private String login;
 
     @Column(nullable = false)
     @Setter
@@ -47,11 +51,19 @@ public class Usuario {
     @Column(nullable = false, updatable = false)
     private final LocalDateTime criadoEm = LocalDateTime.now();
 
-    public Usuario(String nome, String email, String senha, br.com.maisedu.app.model.Instituicao instituicao) {
+    /** Professor ou admin: identificado pelo e-mail. */
+    public Usuario(String nome, String email, String senha, Instituicao instituicao) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.instituicao = instituicao;
+    }
+
+    /** Aluno: identificado pelo login gerado pela escola, sem e-mail. */
+    public static Usuario novoAluno(String nome, String login, String senha, Instituicao instituicao) {
+        Usuario aluno = new Usuario(nome, null, senha, instituicao);
+        aluno.login = login;
+        return aluno;
     }
 
     public boolean possuiRole(RoleNome roleNome) {
