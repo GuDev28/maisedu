@@ -28,6 +28,7 @@ class AvaliacaoQuestaoServiceTest {
     @Mock QuestaoRepository questaoRepository;
     @Mock UsuarioRepository usuarioRepository;
     @Mock AvaliacaoQuestaoRepository avaliacaoQuestaoRepository;
+    @Mock AuditoriaService auditoriaService;
     @InjectMocks AvaliacaoQuestaoService service;
 
     private static final long QUESTAO_ID = 10L;

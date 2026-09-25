@@ -3,8 +3,10 @@ package br.com.maisedu.app.controller;
 import br.com.maisedu.app.dto.LoginRequest;
 import br.com.maisedu.app.dto.TrocarSenhaRequest;
 import br.com.maisedu.app.dto.UsuarioResumoResponse;
+import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.AutenticacaoService;
+import br.com.maisedu.app.service.AuditoriaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,7 @@ import java.time.Duration;
 public class AuthController {
 
     private final AutenticacaoService autenticacaoService;
+    private final AuditoriaService auditoriaService;
 
     @Value("${maisedu.jwt.cookie-nome}")
     private String nomeCookie;
@@ -43,7 +46,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        auditoriaService.registrar(usuarioAutenticado, AcaoAuditoria.LOGOUT, null, null, true, null);
         ResponseCookie cookie = construirCookie("", Duration.ZERO);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

@@ -27,6 +27,7 @@ class AutenticacaoServiceTest {
     @Mock UsuarioRepository usuarioRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
+    @Mock AuditoriaService auditoriaService;
 
     private AutenticacaoService service;
     private Usuario usuario;
@@ -36,7 +37,7 @@ class AutenticacaoServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AutenticacaoService(usuarioRepository, passwordEncoder, jwtService);
+        service = new AutenticacaoService(usuarioRepository, passwordEncoder, jwtService, auditoriaService);
         ReflectionTestUtils.setField(service, "maxTentativas", MAX_TENTATIVAS);
         ReflectionTestUtils.setField(service, "bloqueioMinutos", BLOQUEIO_MINUTOS);
 

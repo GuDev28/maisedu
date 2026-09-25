@@ -21,6 +21,7 @@ public class AvaliacaoQuestaoService {
     private final QuestaoRepository questaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AvaliacaoQuestaoRepository avaliacaoQuestaoRepository;
+    private final AuditoriaService auditoriaService;
 
     @Transactional
     public AvaliacaoQuestaoResponse avaliar(Long questaoId, Long professorId, VotoAvaliacao voto) {
@@ -73,6 +74,10 @@ public class AvaliacaoQuestaoService {
         } else if (rejeicoes >= VOTOS_PARA_DECIDIR) {
             questao.setStatus(StatusQuestao.REJEITADA);
         }
+        // sem save explícito: "questao" é gerenciada pela transação (dirty checking)
+
+        auditoriaService.registrar(professor.getId(), professor.getNome(), AcaoAuditoria.AVALIACAO_QUESTAO,
+                "Questao", questaoId, true, voto + " -> " + questao.getStatus());
 
         return new AvaliacaoQuestaoResponse(
                 questaoId, questao.getStatus(), aprovacoes, rejeicoes, VOTOS_PARA_DECIDIR, MAXIMO_VOTOS);

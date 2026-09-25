@@ -1,6 +1,7 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
+import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.ProfessorTurma;
 import br.com.maisedu.app.model.RoleNome;
@@ -24,6 +25,7 @@ public class VinculoTurmaService {
     private final TurmaRepository turmaRepository;
     private final AlunoTurmaRepository alunoTurmaRepository;
     private final ProfessorTurmaRepository professorTurmaRepository;
+    private final AuditoriaService auditoriaService;
 
     private void validarElegibilidade(Usuario usuario, Turma turma, RoleNome roleEsperada) {
         if (!usuario.isAtivo()) {
@@ -54,7 +56,6 @@ public class VinculoTurmaService {
                 .orElseThrow(() -> new NegocioException("Turma não encontrada: " + id));
     }
 
-
     @Transactional
     public AlunoTurma vincularAluno(Long alunoId, Long turmaId, UsuarioAutenticado ator) {
         Turma turma = buscarTurma(turmaId);
@@ -67,9 +68,13 @@ public class VinculoTurmaService {
             throw new NegocioException("Aluno já vinculado a esta turma.");
         }
 
-        return alunoTurmaRepository.save(new AlunoTurma(aluno, turma));
+        AlunoTurma vinculo = alunoTurmaRepository.save(new AlunoTurma(aluno, turma));
+        auditoriaService.registrar(ator, AcaoAuditoria.VINCULO_ALUNO_TURMA, "Turma", turmaId,
+                true, "aluno " + alunoId);
+        return vinculo;
     }
 
+    /** Vincular um professor à turma é exclusivo do admin (decisão do grupo: só o admin cria/gerencia turmas). */
     @Transactional
     public ProfessorTurma vincularProfessor(Long professorId, Long turmaId, UsuarioAutenticado ator) {
         if (!ator.possuiRole(RoleNome.ADMIN)) {
@@ -89,7 +94,10 @@ public class VinculoTurmaService {
             throw new NegocioException("Professor já vinculado a esta turma.");
         }
 
-        return professorTurmaRepository.save(new ProfessorTurma(professor, turma));
+        ProfessorTurma vinculo = professorTurmaRepository.save(new ProfessorTurma(professor, turma));
+        auditoriaService.registrar(ator, AcaoAuditoria.VINCULO_PROFESSOR_TURMA, "Turma", turmaId,
+                true, "professor " + professorId);
+        return vinculo;
     }
 
     private void autorizarAtorNaTurma(UsuarioAutenticado ator, Turma turma) {
