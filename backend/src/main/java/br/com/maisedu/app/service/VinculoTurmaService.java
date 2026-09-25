@@ -1,6 +1,7 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
+import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.ProfessorTurma;
 import br.com.maisedu.app.model.RoleNome;
@@ -10,7 +11,9 @@ import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.ProfessorTurmaRepository;
 import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
+import br.com.maisedu.app.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,7 @@ public class VinculoTurmaService {
     private final TurmaRepository turmaRepository;
     private final AlunoTurmaRepository alunoTurmaRepository;
     private final ProfessorTurmaRepository professorTurmaRepository;
+    private final AuditoriaService auditoriaService;
 
     private void validarElegibilidade(Usuario usuario, Turma turma, RoleNome roleEsperada) {
         if (!usuario.isAtivo()) {
@@ -53,23 +57,36 @@ public class VinculoTurmaService {
     }
 
     @Transactional
-    public AlunoTurma vincularAluno(Long alunoId, Long turmaId) {
-        Usuario aluno = buscarUsuario(alunoId);
+    public AlunoTurma vincularAluno(Long alunoId, Long turmaId, UsuarioAutenticado ator) {
         Turma turma = buscarTurma(turmaId);
+        autorizarAtorNaTurma(ator, turma);
 
+        Usuario aluno = buscarUsuario(alunoId);
         validarElegibilidade(aluno, turma, RoleNome.ALUNO);
 
         if (alunoTurmaRepository.existsByAlunoIdAndTurmaId(alunoId, turmaId)) {
             throw new NegocioException("Aluno já vinculado a esta turma.");
         }
 
-        return alunoTurmaRepository.save(new AlunoTurma(aluno, turma));
+        AlunoTurma vinculo = alunoTurmaRepository.save(new AlunoTurma(aluno, turma));
+        auditoriaService.registrar(ator, AcaoAuditoria.VINCULO_ALUNO_TURMA, "Turma", turmaId,
+                true, "aluno " + alunoId);
+        return vinculo;
     }
 
+    /** Vincular um professor à turma é exclusivo do admin (decisão do grupo: só o admin cria/gerencia turmas). */
     @Transactional
-    public ProfessorTurma vincularProfessor(Long professorId, Long turmaId) {
+    public ProfessorTurma vincularProfessor(Long professorId, Long turmaId, UsuarioAutenticado ator) {
+        if (!ator.possuiRole(RoleNome.ADMIN)) {
+            throw new AccessDeniedException("Só o admin vincula professores a turmas.");
+        }
+
         Usuario professor = buscarUsuario(professorId);
         Turma turma = buscarTurma(turmaId);
+
+        if (!ator.instituicaoId().equals(turma.getInstituicao().getId())) {
+            throw new AccessDeniedException("Turma pertence a outra instituição.");
+        }
 
         validarElegibilidade(professor, turma, RoleNome.PROFESSOR);
 
@@ -77,6 +94,23 @@ public class VinculoTurmaService {
             throw new NegocioException("Professor já vinculado a esta turma.");
         }
 
-        return professorTurmaRepository.save(new ProfessorTurma(professor, turma));
+        ProfessorTurma vinculo = professorTurmaRepository.save(new ProfessorTurma(professor, turma));
+        auditoriaService.registrar(ator, AcaoAuditoria.VINCULO_PROFESSOR_TURMA, "Turma", turmaId,
+                true, "professor " + professorId);
+        return vinculo;
+    }
+
+    private void autorizarAtorNaTurma(UsuarioAutenticado ator, Turma turma) {
+        if (ator.possuiRole(RoleNome.ADMIN)) {
+            if (!ator.instituicaoId().equals(turma.getInstituicao().getId())) {
+                throw new AccessDeniedException("Turma pertence a outra instituição.");
+            }
+            return;
+        }
+        if (ator.possuiRole(RoleNome.PROFESSOR)
+                && professorTurmaRepository.existsByProfessorIdAndTurmaId(ator.id(), turma.getId())) {
+            return;
+        }
+        throw new AccessDeniedException("Você não leciona nesta turma.");
     }
 }

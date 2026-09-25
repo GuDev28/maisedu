@@ -4,9 +4,20 @@ import { avaliarQuestao } from "../services/avaliacaoQuestaoService";
 const VOTO_APROVAR = "APROVAR";
 const VOTO_REJEITAR = "REJEITAR";
 
+function montarMensagem({ status, aprovacoes, rejeicoes, votosParaDecidir }) {
+  const placar = `Placar: ${aprovacoes} aprovação(ões) e ${rejeicoes} rejeição(ões).`;
+
+  if (status === "APROVADA") {
+    return `Voto registrado. ${placar} A questão atingiu ${votosParaDecidir} aprovações e entrou no banco compartilhado.`;
+  }
+  if (status === "REJEITADA") {
+    return `Voto registrado. ${placar} A questão atingiu ${votosParaDecidir} rejeições e foi rejeitada.`;
+  }
+  return `Voto registrado. ${placar} A questão continua pendente até ${votosParaDecidir} votos iguais.`;
+}
+
 export default function AvaliarQuestao() {
   const [questaoId, setQuestaoId] = useState("");
-  const [professorId, setProfessorId] = useState("");
   const [voto, setVoto] = useState(VOTO_APROVAR);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -19,14 +30,8 @@ export default function AvaliarQuestao() {
     setCarregando(true);
 
     try {
-      await avaliarQuestao(questaoId, professorId, voto);
-
-      setSucesso(
-        voto === VOTO_APROVAR
-          ? "Questão aprovada com sucesso."
-          : "Questão rejeitada com sucesso."
-      );
-      setProfessorId("");
+      const resultado = await avaliarQuestao(questaoId, voto);
+      setSucesso(montarMensagem(resultado));
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -46,18 +51,6 @@ export default function AvaliarQuestao() {
               type="number"
               value={questaoId}
               onChange={(e) => setQuestaoId(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            ID do professor:{" "}
-            <input
-              type="number"
-              value={professorId}
-              onChange={(e) => setProfessorId(e.target.value)}
               required
             />
           </label>
