@@ -58,7 +58,7 @@ CREATE TABLE alternativa (
     questao_id   BIGINT   NOT NULL REFERENCES questao(id) ON DELETE CASCADE,
     texto        TEXT     NOT NULL,
     correta      BOOLEAN  NOT NULL DEFAULT FALSE,
-    ordem        SMALLINT NOT NULL,  -- 1 = A, 2 = B, 3 = C, 4 = D, 5 = E
+    ordem        SMALLINT NOT NULL,
     CONSTRAINT ck_alternativa_ordem CHECK (ordem BETWEEN 1 AND 5),
 
 

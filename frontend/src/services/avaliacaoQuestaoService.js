@@ -1,23 +1,9 @@
-const API_URL = "http://localhost:8080";
+import { chamarApi } from "./http";
 
-async function tratarResposta(response) {
-  const data = await response.json().catch(() => null);
 
-  if (!response.ok) {
-    const mensagem = data?.mensagem || "Erro inesperado ao processar a solicitação.";
-    throw new Error(mensagem);
-  }
-
-  return data;
-}
-
-export async function avaliarQuestao(questaoId, professorId, voto) {
-  const response = await fetch(`${API_URL}/questoes/${questaoId}/avaliacoes`, {
+export function avaliarQuestao(questaoId, voto) {
+  return chamarApi(`/questoes/${questaoId}/avaliacoes`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ professorId: Number(professorId), voto }),
+    body: JSON.stringify({ voto }),
   });
-  return tratarResposta(response);
 }

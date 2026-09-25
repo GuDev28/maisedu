@@ -57,7 +57,6 @@ class AvaliacaoQuestaoServiceTest {
         return u;
     }
 
-    /** Simula o placar que existirá no banco depois de salvar o voto atual. */
     private void placarAntes(long aprovacoes, long rejeicoes) {
         when(questaoRepository.findByIdParaVotacao(QUESTAO_ID)).thenReturn(Optional.of(questao));
         when(usuarioRepository.findById(AVALIADOR_ID)).thenReturn(Optional.of(avaliador));

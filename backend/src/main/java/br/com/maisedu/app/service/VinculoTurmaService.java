@@ -10,7 +10,9 @@ import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.ProfessorTurmaRepository;
 import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
+import br.com.maisedu.app.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,11 +54,13 @@ public class VinculoTurmaService {
                 .orElseThrow(() -> new NegocioException("Turma não encontrada: " + id));
     }
 
-    @Transactional
-    public AlunoTurma vincularAluno(Long alunoId, Long turmaId) {
-        Usuario aluno = buscarUsuario(alunoId);
-        Turma turma = buscarTurma(turmaId);
 
+    @Transactional
+    public AlunoTurma vincularAluno(Long alunoId, Long turmaId, UsuarioAutenticado ator) {
+        Turma turma = buscarTurma(turmaId);
+        autorizarAtorNaTurma(ator, turma);
+
+        Usuario aluno = buscarUsuario(alunoId);
         validarElegibilidade(aluno, turma, RoleNome.ALUNO);
 
         if (alunoTurmaRepository.existsByAlunoIdAndTurmaId(alunoId, turmaId)) {
@@ -67,9 +71,17 @@ public class VinculoTurmaService {
     }
 
     @Transactional
-    public ProfessorTurma vincularProfessor(Long professorId, Long turmaId) {
+    public ProfessorTurma vincularProfessor(Long professorId, Long turmaId, UsuarioAutenticado ator) {
+        if (!ator.possuiRole(RoleNome.ADMIN)) {
+            throw new AccessDeniedException("Só o admin vincula professores a turmas.");
+        }
+
         Usuario professor = buscarUsuario(professorId);
         Turma turma = buscarTurma(turmaId);
+
+        if (!ator.instituicaoId().equals(turma.getInstituicao().getId())) {
+            throw new AccessDeniedException("Turma pertence a outra instituição.");
+        }
 
         validarElegibilidade(professor, turma, RoleNome.PROFESSOR);
 
@@ -78,5 +90,19 @@ public class VinculoTurmaService {
         }
 
         return professorTurmaRepository.save(new ProfessorTurma(professor, turma));
+    }
+
+    private void autorizarAtorNaTurma(UsuarioAutenticado ator, Turma turma) {
+        if (ator.possuiRole(RoleNome.ADMIN)) {
+            if (!ator.instituicaoId().equals(turma.getInstituicao().getId())) {
+                throw new AccessDeniedException("Turma pertence a outra instituição.");
+            }
+            return;
+        }
+        if (ator.possuiRole(RoleNome.PROFESSOR)
+                && professorTurmaRepository.existsByProfessorIdAndTurmaId(ator.id(), turma.getId())) {
+            return;
+        }
+        throw new AccessDeniedException("Você não leciona nesta turma.");
     }
 }
