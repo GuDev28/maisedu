@@ -4,15 +4,17 @@ import Login from "./pages/Login";
 import TrocarSenha from "./pages/TrocarSenha";
 import VincularTurma from "./pages/VincularTurma";
 import AvaliarQuestao from "./pages/AvaliarQuestao";
+import CriarQuestao from "./pages/CriarQuestao";
+import CadastrarUsuario from "./pages/CadastrarUsuario";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
 import { RodapeLegal, linkStyle } from "./components/RodapeLegal";
 import "./App.css";
 
-// Quem vê cada tela: aluno ainda não tem nenhuma nesta fase (RN3 em diante),
-// admin não vota (RN2 é só entre professores).
 const PAGINAS = {
+  cadastrar: { label: "Cadastrar Usuário", componente: CadastrarUsuario, roles: ["ADMIN", "PROFESSOR"] },
   vincular: { label: "RN1 - Vincular Turma", componente: VincularTurma, roles: ["ADMIN", "PROFESSOR"] },
+  criar: { label: "Criar Questão", componente: CriarQuestao, roles: ["PROFESSOR"] },
   avaliar: { label: "RN2 - Avaliar Questão", componente: AvaliarQuestao, roles: ["PROFESSOR"] },
 };
 
