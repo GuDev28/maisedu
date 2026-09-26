@@ -2,20 +2,24 @@ import { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import TrocarSenha from "./pages/TrocarSenha";
-import VincularTurma from "./pages/VincularTurma";
+import CadastrarProfessor from "./pages/CadastrarProfessor";
+import CadastrarAluno from "./pages/CadastrarAluno";
+import VincularAluno from "./pages/VincularAluno";
+import VincularProfessor from "./pages/VincularProfessor";
 import AvaliarQuestao from "./pages/AvaliarQuestao";
 import CriarQuestao from "./pages/CriarQuestao";
-import CadastrarUsuario from "./pages/CadastrarUsuario";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
 import { RodapeLegal, linkStyle } from "./components/RodapeLegal";
 import "./App.css";
 
 const PAGINAS = {
-  cadastrar: { label: "Cadastrar Usuário", componente: CadastrarUsuario, roles: ["ADMIN", "PROFESSOR"] },
-  vincular: { label: "RN1 - Vincular Turma", componente: VincularTurma, roles: ["ADMIN", "PROFESSOR"] },
+  cadastrarProfessor: { label: "Cadastrar Professor", componente: CadastrarProfessor, roles: ["ADMIN"] },
+  cadastrarAluno: { label: "Cadastrar Aluno", componente: CadastrarAluno, roles: ["PROFESSOR"] },
+  vincularAluno: { label: "Vincular Aluno à Turma", componente: VincularAluno, roles: ["PROFESSOR"] },
+  vincularProfessor: { label: "Vincular Professor à Turma", componente: VincularProfessor, roles: ["ADMIN"] },
   criar: { label: "Criar Questão", componente: CriarQuestao, roles: ["PROFESSOR"] },
-  avaliar: { label: "RN2 - Avaliar Questão", componente: AvaliarQuestao, roles: ["PROFESSOR"] },
+  avaliar: { label: "Avaliar Questão", componente: AvaliarQuestao, roles: ["PROFESSOR"] },
 };
 
 function AppAutenticado({ onAbrirPaginaLegal }) {
@@ -42,7 +46,7 @@ function AppAutenticado({ onAbrirPaginaLegal }) {
         </nav>
         <div>
           <span style={{ marginRight: 12 }}>
-            {usuario.nome} ({usuario.roles.join(", ")})
+            {usuario.nome}
           </span>
           <button onClick={logout}>Sair</button>
         </div>

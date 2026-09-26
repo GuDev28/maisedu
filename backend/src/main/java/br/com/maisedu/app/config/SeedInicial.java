@@ -43,6 +43,11 @@ public class SeedInicial implements CommandLineRunner {
                 passwordEncoder.encode(senhaProvisoria), instituicao);
         admin.adicionarRole(roleRepository.findByNome(RoleNome.ADMIN)
                 .orElseThrow(() -> new IllegalStateException("Papel ADMIN não cadastrado (ver migration V3).")));
+        // Admin acumula PROFESSOR (ver V7): tem acesso a tudo que o professor
+        // tem, e "cadastrar professor" / "vincular professor à turma" ficam
+        // reservados só para quem tem ADMIN.
+        admin.adicionarRole(roleRepository.findByNome(RoleNome.PROFESSOR)
+                .orElseThrow(() -> new IllegalStateException("Papel PROFESSOR não cadastrado (ver migration V1).")));
         usuarioRepository.save(admin);
 
         log.warn("""

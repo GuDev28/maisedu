@@ -6,7 +6,7 @@ export default function TermosUso() {
     <div style={{ maxWidth: 720, margin: "2rem auto", lineHeight: 1.6 }}>
       <h2>Termos de Uso do MaisEdu</h2>
       <p style={{ color: "#555" }}>
-        Última atualização: setembro de 2026. Ao aceitar estes termos no primeiro acesso, você concorda
+        Última atualização: 25 de setembro de 2026. Ao aceitar estes termos no primeiro acesso, você concorda
         com as condições abaixo para uso do MaisEdu.
       </p>
 
