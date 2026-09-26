@@ -53,12 +53,14 @@ public class Usuario {
     @Column(name = "bloqueado_ate")
     private LocalDateTime bloqueadoAte;
 
-
     @Column(name = "senha_temporaria", nullable = false)
     private boolean senhaTemporaria = true;
 
     @Column(nullable = false, updatable = false)
     private final LocalDateTime criadoEm = LocalDateTime.now();
+
+    @Column(name = "termos_aceitos_em")
+    private LocalDateTime termosAceitosEm;
 
     public Usuario(String nome, String email, String senha, Instituicao instituicao) {
         this.nome = nome;
@@ -112,5 +114,9 @@ public class Usuario {
         this.senhaTemporaria = false;
         this.tentativasFalhas = 0;
         this.bloqueadoAte = null;
+    }
+
+    public void aceitarTermos() {
+        this.termosAceitosEm = LocalDateTime.now();
     }
 }

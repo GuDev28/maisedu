@@ -27,6 +27,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final SenhaGeradora senhaGeradora;
     private final AuditoriaService auditoriaService;
+    private final ResendEmailService emailService;
 
     public record NovoUsuario(Usuario usuario, String senhaProvisoria) {
     }
@@ -46,6 +47,7 @@ public class UsuarioService {
 
         Usuario salvo = usuarioRepository.save(professor);
         auditoriaService.registrar(admin, AcaoAuditoria.CADASTRO_PROFESSOR, "Usuario", salvo.getId(), true, null);
+        emailService.enviarSenhaProvisoria(salvo.getId(), salvo.getNome(), email, senhaProvisoria);
 
         return new NovoUsuario(salvo, senhaProvisoria);
     }

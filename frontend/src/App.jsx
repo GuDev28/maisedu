@@ -2,25 +2,39 @@ import { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import TrocarSenha from "./pages/TrocarSenha";
-import VincularTurma from "./pages/VincularTurma";
+import CadastrarProfessor from "./pages/CadastrarProfessor";
+import CadastrarAluno from "./pages/CadastrarAluno";
+import VincularAluno from "./pages/VincularAluno";
+import VincularProfessor from "./pages/VincularProfessor";
 import AvaliarQuestao from "./pages/AvaliarQuestao";
+import CriarQuestao from "./pages/CriarQuestao";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosUso from "./pages/TermosUso";
+import { RodapeLegal, linkStyle } from "./components/RodapeLegal";
 import "./App.css";
 
 const PAGINAS = {
-  vincular: { label: "RN1 - Vincular Turma", componente: VincularTurma },
-  avaliar: { label: "RN2 - Avaliar Questão", componente: AvaliarQuestao },
+  cadastrarProfessor: { label: "Cadastrar Professor", componente: CadastrarProfessor, roles: ["ADMIN"] },
+  cadastrarAluno: { label: "Cadastrar Aluno", componente: CadastrarAluno, roles: ["PROFESSOR"] },
+  vincularAluno: { label: "Vincular Aluno à Turma", componente: VincularAluno, roles: ["PROFESSOR"] },
+  vincularProfessor: { label: "Vincular Professor à Turma", componente: VincularProfessor, roles: ["ADMIN"] },
+  criar: { label: "Criar Questão", componente: CriarQuestao, roles: ["PROFESSOR"] },
+  avaliar: { label: "Avaliar Questão", componente: AvaliarQuestao, roles: ["PROFESSOR"] },
 };
 
-function AppAutenticado() {
+function AppAutenticado({ onAbrirPaginaLegal }) {
   const { usuario, logout } = useAuth();
-  const [paginaAtiva, setPaginaAtiva] = useState("vincular");
-  const PaginaAtual = PAGINAS[paginaAtiva].componente;
+  const paginasVisiveis = Object.entries(PAGINAS).filter(([, pagina]) =>
+    pagina.roles.some((role) => usuario.roles.includes(role))
+  );
+  const [paginaAtiva, setPaginaAtiva] = useState(paginasVisiveis[0]?.[0] ?? null);
+  const PaginaAtual = paginaAtiva ? PAGINAS[paginaAtiva].componente : null;
 
   return (
     <div>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
         <nav style={{ display: "flex", gap: "0.5rem" }}>
-          {Object.entries(PAGINAS).map(([key, { label }]) => (
+          {paginasVisiveis.map(([key, { label }]) => (
             <button
               key={key}
               onClick={() => setPaginaAtiva(key)}
@@ -32,33 +46,54 @@ function AppAutenticado() {
         </nav>
         <div>
           <span style={{ marginRight: 12 }}>
-            {usuario.nome} ({usuario.roles.join(", ")})
+            {usuario.nome}
           </span>
           <button onClick={logout}>Sair</button>
         </div>
       </header>
 
-      <PaginaAtual />
+      {PaginaAtual ? (
+        <PaginaAtual />
+      ) : (
+        <p>Nenhuma funcionalidade disponível para o seu perfil ainda.</p>
+      )}
+
+      <RodapeLegal onAbrirPaginaLegal={onAbrirPaginaLegal} />
     </div>
   );
 }
 
 function App() {
   const { usuario, carregandoSessao } = useAuth();
+  const [paginaLegal, setPaginaLegal] = useState(null);
+
+  if (paginaLegal) {
+    const PaginaLegal = paginaLegal === "termos" ? TermosUso : PoliticaPrivacidade;
+    return (
+      <div>
+        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+          <button type="button" style={linkStyle} onClick={() => setPaginaLegal(null)}>
+            ← Voltar
+          </button>
+        </div>
+        <PaginaLegal />
+      </div>
+    );
+  }
 
   if (carregandoSessao) {
     return <p style={{ textAlign: "center", marginTop: "4rem" }}>Carregando...</p>;
   }
 
   if (!usuario) {
-    return <Login />;
+    return <Login onAbrirPaginaLegal={setPaginaLegal} />;
   }
 
   if (usuario.senhaTemporaria) {
-    return <TrocarSenha />;
+    return <TrocarSenha onAbrirPaginaLegal={setPaginaLegal} />;
   }
 
-  return <AppAutenticado />;
+  return <AppAutenticado onAbrirPaginaLegal={setPaginaLegal} />;
 }
 
 export default function AppComProvider() {

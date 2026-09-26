@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { RodapeLegal } from "../components/RodapeLegal";
 
-export default function Login() {
+export default function Login({ onAbrirPaginaLegal }) {
   const { login } = useAuth();
   const [identificador, setIdentificador] = useState("");
   const [senha, setSenha] = useState("");
@@ -57,6 +58,8 @@ export default function Login() {
       </form>
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
+
+      <RodapeLegal onAbrirPaginaLegal={onAbrirPaginaLegal} />
     </div>
   );
 }
