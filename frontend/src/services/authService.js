@@ -15,9 +15,9 @@ export function usuarioAtual() {
   return chamarApi("/auth/me");
 }
 
-export function trocarSenha(senhaAtual, novaSenha) {
+export function trocarSenha(senhaAtual, novaSenha, aceiteTermos) {
   return chamarApi("/auth/trocar-senha", {
     method: "POST",
-    body: JSON.stringify({ senhaAtual, novaSenha }),
+    body: JSON.stringify({ senhaAtual, novaSenha, aceiteTermos }),
   });
 }

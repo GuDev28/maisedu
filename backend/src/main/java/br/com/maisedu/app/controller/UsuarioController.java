@@ -25,7 +25,7 @@ public class UsuarioController {
             @AuthenticationPrincipal UsuarioAutenticado admin,
             @Valid @RequestBody CadastroProfessorRequest request) {
         var novo = usuarioService.cadastrarProfessor(admin, request.nome(), request.email());
-        return UsuarioCadastradoResponse.from(novo.usuario(), novo.senhaProvisoria());
+        return UsuarioCadastradoResponse.semSenha(novo.usuario());
     }
 
     @PostMapping("/alunos")

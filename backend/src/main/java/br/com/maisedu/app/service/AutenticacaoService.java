@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-
 @Service
 @RequiredArgsConstructor
 public class AutenticacaoService {
@@ -48,8 +47,7 @@ public class AutenticacaoService {
         if (!usuario.isAtivo()) {
             auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
                     null, null, false, "Conta desativada");
-            // Mensagem específica aqui: uma conta desativada não é o mesmo caso de
-            // "não existe" ou "senha errada", e quem foi desativado sabe que foi.
+            
             throw new AutenticacaoException("Esta conta está desativada.");
         }
 
@@ -92,8 +90,11 @@ public class AutenticacaoService {
         }
 
         usuario.trocarSenha(passwordEncoder.encode(novaSenha));
+        usuario.aceitarTermos();
         usuarioRepository.save(usuario);
         auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.TROCA_SENHA,
+                "Usuario", usuario.getId(), true, null);
+        auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.ACEITE_TERMOS,
                 "Usuario", usuario.getId(), true, null);
     }
 }

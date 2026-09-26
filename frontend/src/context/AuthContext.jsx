@@ -30,8 +30,8 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function trocarSenha(senhaAtual, novaSenha) {
-    await authService.trocarSenha(senhaAtual, novaSenha);
+  async function trocarSenha(senhaAtual, novaSenha, aceiteTermos) {
+    await authService.trocarSenha(senhaAtual, novaSenha, aceiteTermos);
     // o backend já invalidou o cookie antigo: força um novo login
     setUsuario(null);
   }
