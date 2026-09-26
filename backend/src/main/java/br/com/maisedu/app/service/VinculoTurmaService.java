@@ -17,6 +17,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class VinculoTurmaService {
@@ -98,6 +101,47 @@ public class VinculoTurmaService {
         auditoriaService.registrar(ator, AcaoAuditoria.VINCULO_PROFESSOR_TURMA, "Turma", turmaId,
                 true, "professor " + professorId);
         return vinculo;
+    }
+
+    /**
+     * Turmas em que o ator pode atuar: todas as da instituição para o admin,
+     * ou só as que o professor leciona (mesma regra de {@link #autorizarAtorNaTurma}).
+     * Usado para popular o seletor de turma nas telas de vínculo.
+     */
+    public List<Turma> listarTurmasParaVinculo(UsuarioAutenticado ator) {
+        if (ator.possuiRole(RoleNome.ADMIN)) {
+            return turmaRepository.findByInstituicaoIdAndAtivoTrueOrderByNomeAsc(ator.instituicaoId());
+        }
+
+        List<Turma> turmas = new ArrayList<>();
+        for (ProfessorTurma vinculo : professorTurmaRepository.findByProfessorId(ator.id())) {
+            if (vinculo.getTurma().isAtivo()) {
+                turmas.add(vinculo.getTurma());
+            }
+        }
+        return turmas;
+    }
+
+    /** Alunos ainda não vinculados à turma informada, para a tela "Vincular aluno". */
+    public List<Usuario> listarAlunosDisponiveis(Long turmaId, UsuarioAutenticado ator) {
+        Turma turma = buscarTurma(turmaId);
+        autorizarAtorNaTurma(ator, turma);
+        return usuarioRepository.findAlunosDisponiveisParaTurma(RoleNome.ALUNO, turma.getInstituicao().getId(), turmaId);
+    }
+
+    /** Professores ainda não vinculados à turma informada, para a tela "Vincular professor" (só admin). */
+    public List<Usuario> listarProfessoresDisponiveis(Long turmaId, UsuarioAutenticado ator) {
+        if (!ator.possuiRole(RoleNome.ADMIN)) {
+            throw new AccessDeniedException("Só o admin vincula professores a turmas.");
+        }
+
+        Turma turma = buscarTurma(turmaId);
+        if (!ator.instituicaoId().equals(turma.getInstituicao().getId())) {
+            throw new AccessDeniedException("Turma pertence a outra instituição.");
+        }
+
+        return usuarioRepository.findProfessoresDisponiveisParaTurma(
+                RoleNome.PROFESSOR, turma.getInstituicao().getId(), turmaId);
     }
 
     private void autorizarAtorNaTurma(UsuarioAutenticado ator, Turma turma) {
