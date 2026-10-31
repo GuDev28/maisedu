@@ -35,7 +35,9 @@ public class AutenticacaoService {
     public record Sessao(String token, Usuario usuario) {
     }
 
-    @Transactional
+    // noRollbackFor: a senha errada grava tentativasFalhas/bloqueadoAte e depois lança
+    // AutenticacaoException; sem isso o rollback desfazia a contagem e o bloqueio nunca acontecia.
+    @Transactional(noRollbackFor = AutenticacaoException.class)
     public Sessao login(String identificador, String senha) {
         Usuario usuario = usuarioRepository.findByIdentificadorDeAcesso(identificador).orElse(null);
         if (usuario == null) {
