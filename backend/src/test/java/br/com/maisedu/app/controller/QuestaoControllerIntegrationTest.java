@@ -4,6 +4,7 @@ import br.com.maisedu.app.dto.AlternativaResponse;
 import br.com.maisedu.app.dto.CriarQuestaoRequest;
 import br.com.maisedu.app.dto.QuestaoResponse;
 import br.com.maisedu.app.exception.ErroResponse;
+import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.model.StatusQuestao;
@@ -89,7 +90,7 @@ class QuestaoControllerIntegrationTest extends IntegracaoTestBase {
     @Test
     void criar_comQuatroAlternativas_deveRetornar400ComMensagemENaoGravar() {
         CriarQuestaoRequest request = new CriarQuestaoRequest(
-                "Questao incompleta", topicoQualquer().getId(), NivelDificuldade.FACIL,
+                "Questao incompleta", topicoQualquer().getId(), NivelDificuldade.FACIL, AnoEscolar.SEXTO_ANO,
                 List.of("1", "2", "3", "4"), 0);
 
         ResponseEntity<ErroResponse> response = client.post().uri(BASE_PATH)

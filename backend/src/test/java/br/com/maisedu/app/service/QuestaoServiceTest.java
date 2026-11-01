@@ -2,6 +2,7 @@ package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
+import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.Alternativa;
 import br.com.maisedu.app.model.Instituicao;
 import br.com.maisedu.app.model.NivelDificuldade;
@@ -128,7 +129,7 @@ class QuestaoServiceTest {
         });
 
         // Act
-        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO,
+        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
                 CINCO_ALTERNATIVAS, 2);
 
         // Assert
@@ -153,7 +154,7 @@ class QuestaoServiceTest {
 
         // Act
         NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(9L, ENUNCIADO,
-                TOPICO_ID, NivelDificuldade.FACIL, CINCO_ALTERNATIVAS, 2));
+                TOPICO_ID, NivelDificuldade.FACIL, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, 2));
 
         // Assert
         assertEquals("Usuário informado não possui papel de professor", ex.getMessage());
@@ -169,7 +170,7 @@ class QuestaoServiceTest {
 
         // Act
         NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(AUTOR_ID, ENUNCIADO,
-                TOPICO_ID, NivelDificuldade.MEDIO, alternativas, 0));
+                TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, alternativas, 0));
 
         // Assert
         assertEquals("A questão deve ter exatamente 5 alternativas", ex.getMessage());
@@ -188,7 +189,7 @@ class QuestaoServiceTest {
         when(questaoRepository.save(any(Questao.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         // Act
-        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO,
+        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
                 CINCO_ALTERNATIVAS, indiceCorreta);
 
         // Assert
@@ -205,7 +206,7 @@ class QuestaoServiceTest {
 
         // Act
         NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(AUTOR_ID, ENUNCIADO,
-                TOPICO_ID, NivelDificuldade.MEDIO, CINCO_ALTERNATIVAS, indiceCorreta));
+                TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, indiceCorreta));
 
         // Assert
         assertEquals("Indique qual alternativa é a correta", ex.getMessage());
