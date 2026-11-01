@@ -29,6 +29,13 @@ public class LogAuditoria {
 
     private String usuarioNome;
 
+    /**
+     * Instituição de quem executou a ação. Cada administrador só consulta os registros da própria
+     * instituição; tentativas de login com identificador inexistente ficam sem instituição.
+     */
+    @Column(name = "instituicao_id")
+    private Long instituicaoId;
+
     private String identificadorAcesso;
 
     @Enumerated(EnumType.STRING)
@@ -54,11 +61,12 @@ public class LogAuditoria {
     @Column(nullable = false)
     private LocalDateTime criadoEm;
 
-    public LogAuditoria(Long usuarioId, String usuarioNome, String identificadorAcesso, AcaoAuditoria acao,
-                         String entidade, Long entidadeId, boolean sucesso, String detalhes,
+    public LogAuditoria(Long usuarioId, String usuarioNome, Long instituicaoId, String identificadorAcesso,
+                         AcaoAuditoria acao, String entidade, Long entidadeId, boolean sucesso, String detalhes,
                          String ip, String userAgent) {
         this.usuarioId = usuarioId;
         this.usuarioNome = usuarioNome;
+        this.instituicaoId = instituicaoId;
         this.identificadorAcesso = identificadorAcesso;
         this.acao = acao;
         this.entidade = entidade;
