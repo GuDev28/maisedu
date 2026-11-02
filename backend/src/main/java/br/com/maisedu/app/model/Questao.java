@@ -38,6 +38,14 @@ public class Questao {
     @Column(name = "nivel_dificuldade", nullable = false, length = 10)
     private NivelDificuldade nivelDificuldade;
 
+    /**
+     * Ano escolar a que a questão se destina (6º ao 9º ano). Obrigatório para questões novas; pode
+     * ser nulo apenas em questões criadas antes da migration V8.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ano_escolar", length = 20)
+    private AnoEscolar anoEscolar;
+
     @OneToMany(mappedBy = "questao", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
     private List<Alternativa> alternativas = new ArrayList<>();
@@ -51,10 +59,16 @@ public class Questao {
     private final LocalDateTime criadoEm = LocalDateTime.now();
 
     public Questao(String enunciado, Usuario autor, Topico topico, NivelDificuldade nivelDificuldade) {
+        this(enunciado, autor, topico, nivelDificuldade, null);
+    }
+
+    public Questao(String enunciado, Usuario autor, Topico topico, NivelDificuldade nivelDificuldade,
+                   AnoEscolar anoEscolar) {
         this.enunciado = enunciado;
         this.autor = autor;
         this.topico = topico;
         this.nivelDificuldade = nivelDificuldade;
+        this.anoEscolar = anoEscolar;
         this.status = StatusQuestao.RASCUNHO;
     }
 
@@ -97,5 +111,18 @@ public class Questao {
 
     public boolean isAutor(Long usuarioId) {
         return autor.getId().equals(usuarioId);
+    }
+
+    public boolean isAprovada() {
+        return status == StatusQuestao.APROVADA;
+    }
+
+    public Alternativa alternativaCorreta() {
+        for (Alternativa alternativa : alternativas) {
+            if (alternativa.isCorreta()) {
+                return alternativa;
+            }
+        }
+        throw new IllegalStateException("Questão " + id + " sem alternativa correta");
     }
 }
