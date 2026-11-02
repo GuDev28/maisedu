@@ -2,8 +2,11 @@ package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
+import br.com.maisedu.app.model.AnoEscolar;
+import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.model.RoleNome;
+import br.com.maisedu.app.model.StatusQuestao;
 import br.com.maisedu.app.model.Topico;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.AvaliacaoQuestaoRepository;
@@ -30,7 +33,7 @@ public class QuestaoService {
 
     @Transactional
     public Questao criar(Long professorId, String enunciado, Long topicoId,
-                          br.com.maisedu.app.model.NivelDificuldade nivelDificuldade,
+                          NivelDificuldade nivelDificuldade, AnoEscolar anoEscolar,
                           List<String> alternativas, int indiceCorreta) {
         Usuario professor = usuarioRepository.findById(professorId)
                 .orElseThrow(() -> new NegocioException("Professor não encontrado"));
@@ -41,7 +44,7 @@ public class QuestaoService {
         Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new NegocioException("Tópico não encontrado"));
 
-        Questao questao = new Questao(enunciado, professor, topico, nivelDificuldade);
+        Questao questao = new Questao(enunciado.strip(), professor, topico, nivelDificuldade, anoEscolar);
         questao.definirAlternativas(alternativas, indiceCorreta);
 
         Questao salva = questaoRepository.save(questao);
@@ -77,7 +80,7 @@ public class QuestaoService {
     @Transactional(readOnly = true)
     public List<Questao> listarPendentesParaAvaliar(Long professorId) {
         List<Questao> pendentes = questaoRepository.findByStatusAndAutorIdNotOrderByCriadoEmAsc(
-                br.com.maisedu.app.model.StatusQuestao.PENDENTE, professorId);
+                StatusQuestao.PENDENTE, professorId);
 
         List<Questao> aindaNaoVotadas = new ArrayList<>();
         for (Questao questao : pendentes) {
@@ -86,5 +89,11 @@ public class QuestaoService {
             }
         }
         return aindaNaoVotadas;
+    }
+
+    /** Banco compartilhado (RF15): questões APROVADAS de qualquer autor e instituição, com filtros opcionais. */
+    @Transactional(readOnly = true)
+    public List<Questao> buscarAprovadas(Long topicoId, NivelDificuldade nivel, AnoEscolar anoEscolar) {
+        return questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, topicoId, nivel, anoEscolar);
     }
 }

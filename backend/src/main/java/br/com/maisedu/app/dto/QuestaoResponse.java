@@ -1,6 +1,7 @@
 package br.com.maisedu.app.dto;
 
 import br.com.maisedu.app.model.Alternativa;
+import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.model.StatusQuestao;
@@ -14,6 +15,7 @@ public record QuestaoResponse(
         String enunciado,
         String topico,
         NivelDificuldade nivelDificuldade,
+        AnoEscolar anoEscolar,
         StatusQuestao status,
         String autorNome,
         List<AlternativaResponse> alternativas,
@@ -30,6 +32,7 @@ public record QuestaoResponse(
                 questao.getEnunciado(),
                 questao.getTopico().getNome(),
                 questao.getNivelDificuldade(),
+                questao.getAnoEscolar(),
                 questao.getStatus(),
                 questao.getAutor().getNome(),
                 alternativas,

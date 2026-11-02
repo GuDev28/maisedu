@@ -1,13 +1,13 @@
-import { chamarApi } from "./http";
+import { chamarApi, query } from "./http";
 
 export function listarTopicos() {
   return chamarApi("/topicos");
 }
 
-export function criarQuestao({ enunciado, topicoId, nivelDificuldade, alternativas, indiceCorreta }) {
+export function criarQuestao({ enunciado, topicoId, nivelDificuldade, anoEscolar, alternativas, indiceCorreta }) {
   return chamarApi("/questoes", {
     method: "POST",
-    body: JSON.stringify({ enunciado, topicoId, nivelDificuldade, alternativas, indiceCorreta }),
+    body: JSON.stringify({ enunciado, topicoId, nivelDificuldade, anoEscolar, alternativas, indiceCorreta }),
   });
 }
 
@@ -21,4 +21,9 @@ export function listarMinhasQuestoes() {
 
 export function listarQuestoesPendentes() {
   return chamarApi("/questoes/pendentes");
+}
+
+/** Banco compartilhado: questões aprovadas de qualquer instituição. */
+export function listarAprovadas({ topicoId, nivel, anoEscolar } = {}) {
+  return chamarApi(`/questoes/aprovadas${query({ topicoId, nivel, anoEscolar })}`);
 }

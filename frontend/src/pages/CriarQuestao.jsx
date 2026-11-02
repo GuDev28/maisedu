@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ANOS_ESCOLARES, rotuloAno, rotuloNivel } from "../components/rotulos";
 import {
   criarQuestao,
   enviarParaValidacao,
@@ -18,6 +19,7 @@ export default function CriarQuestao() {
   const [enunciado, setEnunciado] = useState("");
   const [topicoId, setTopicoId] = useState("");
   const [nivelDificuldade, setNivelDificuldade] = useState(NIVEIS[0]);
+  const [anoEscolar, setAnoEscolar] = useState(ANOS_ESCOLARES[0].valor);
   const [alternativas, setAlternativas] = useState(alternativasVazias());
   const [indiceCorreta, setIndiceCorreta] = useState(0);
   const [carregando, setCarregando] = useState(false);
@@ -74,6 +76,7 @@ export default function CriarQuestao() {
         enunciado,
         topicoId: Number(topicoId),
         nivelDificuldade,
+        anoEscolar,
         alternativas,
         indiceCorreta,
       });
@@ -100,7 +103,7 @@ export default function CriarQuestao() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "2rem auto" }}>
+    <div className="pagina" style={{ maxWidth: 640 }}>
       <h2>Criar questão</h2>
 
       <form onSubmit={handleSubmit}>
@@ -117,7 +120,7 @@ export default function CriarQuestao() {
           </label>
         </div>
 
-        <div style={{ marginBottom: 12, display: "flex", gap: "1rem" }}>
+        <div style={{ marginBottom: 12, display: "flex", flexWrap: "wrap", gap: "1rem" }}>
           <label>
             Tópico:{" "}
             <select value={topicoId} onChange={(e) => setTopicoId(e.target.value)} required>
@@ -134,7 +137,18 @@ export default function CriarQuestao() {
             <select value={nivelDificuldade} onChange={(e) => setNivelDificuldade(e.target.value)}>
               {NIVEIS.map((nivel) => (
                 <option key={nivel} value={nivel}>
-                  {nivel}
+                  {rotuloNivel(nivel)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Ano escolar:{" "}
+            <select value={anoEscolar} onChange={(e) => setAnoEscolar(e.target.value)}>
+              {ANOS_ESCOLARES.map((ano) => (
+                <option key={ano.valor} value={ano.valor}>
+                  {ano.rotulo}
                 </option>
               ))}
             </select>
@@ -184,7 +198,7 @@ export default function CriarQuestao() {
               <strong>#{questao.id}</strong> — {questao.enunciado}
               <br />
               <small>
-                {questao.topico} · {questao.nivelDificuldade} · status: {questao.status}
+                {questao.topico} · {rotuloNivel(questao.nivelDificuldade)} · {rotuloAno(questao.anoEscolar)} · status: {questao.status}
               </small>
               {questao.status === "RASCUNHO" && (
                 <div style={{ marginTop: 4 }}>

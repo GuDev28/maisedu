@@ -2,6 +2,8 @@ package br.com.maisedu.app.controller;
 
 import br.com.maisedu.app.dto.CriarQuestaoRequest;
 import br.com.maisedu.app.dto.QuestaoResponse;
+import br.com.maisedu.app.model.AnoEscolar;
+import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.QuestaoService;
@@ -30,7 +32,7 @@ public class QuestaoController {
             @Valid @RequestBody CriarQuestaoRequest request) {
         Questao questao = questaoService.criar(
                 professor.id(), request.enunciado(), request.topicoId(), request.nivelDificuldade(),
-                request.alternativas(), request.indiceCorreta());
+                request.anoEscolar(), request.alternativas(), request.indiceCorreta());
         return QuestaoResponse.from(questao);
     }
 
@@ -48,6 +50,20 @@ public class QuestaoController {
     public List<QuestaoResponse> minhas(@AuthenticationPrincipal UsuarioAutenticado professor) {
         List<QuestaoResponse> respostas = new ArrayList<>();
         for (Questao questao : questaoService.listarMinhas(professor.id())) {
+            respostas.add(QuestaoResponse.from(questao));
+        }
+        return respostas;
+    }
+
+    /** Banco compartilhado (RF15): questões aprovadas de qualquer instituição, com filtros opcionais. */
+    @GetMapping("/aprovadas")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public List<QuestaoResponse> aprovadas(
+            @RequestParam(required = false) Long topicoId,
+            @RequestParam(required = false) NivelDificuldade nivel,
+            @RequestParam(required = false) AnoEscolar anoEscolar) {
+        List<QuestaoResponse> respostas = new ArrayList<>();
+        for (Questao questao : questaoService.buscarAprovadas(topicoId, nivel, anoEscolar)) {
             respostas.add(QuestaoResponse.from(questao));
         }
         return respostas;
