@@ -10,6 +10,7 @@ import br.com.maisedu.app.dto.QuestaoResponse;
 import br.com.maisedu.app.dto.TrocarSenhaRequest;
 import br.com.maisedu.app.dto.UsuarioCadastradoResponse;
 import br.com.maisedu.app.dto.UsuarioResumoResponse;
+import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.Instituicao;
 import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Role;
@@ -128,8 +129,9 @@ abstract class IntegracaoTestBase {
         // Igual ao SeedInicial: o admin acumula o papel de professor
         admin.adicionarRole(buscarRole(RoleNome.ADMIN));
         admin.adicionarRole(buscarRole(RoleNome.PROFESSOR));
-        // Marca o primeiro acesso como ja feito (senhaTemporaria = false)
+        // Marca o primeiro acesso como ja feito (senhaTemporaria = false e termos vigentes aceitos)
         admin.trocarSenha(hash);
+        admin.aceitarTermos(1);
         Usuario salvo = usuarioRepository.save(admin);
 
         return new Conta(salvo.getId(), nome, email, login(email, SENHA_DEFINITIVA));
@@ -245,6 +247,7 @@ abstract class IntegracaoTestBase {
                 enunciado,
                 topicoId,
                 NivelDificuldade.MEDIO,
+                AnoEscolar.SEXTO_ANO,
                 List.of("1/2", "3/4", "1", "5/4", "2"),
                 2);
     }

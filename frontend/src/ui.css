@@ -1,0 +1,307 @@
+/* Estilos compartilhados das telas do MaisEdu (usam as variáveis de cor do index.css). */
+
+.pagina {
+  max-width: 880px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pagina h2 {
+  margin-top: 0;
+}
+
+.pagina-estreita {
+  max-width: 520px;
+}
+
+.texto-suave {
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.mensagem {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+
+.mensagem-erro {
+  color: #9b1c1c;
+  background: #fde8e8;
+}
+
+.mensagem-sucesso {
+  color: #03543f;
+  background: #def7ec;
+}
+
+.cartao {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.cartao-selecionado {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.linha-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.campos label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  gap: 0.2rem;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabela th,
+.tabela td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabela th {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.etiqueta {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.etiqueta-alerta {
+  color: #9b1c1c;
+  border-color: #f8b4b4;
+}
+
+.etiqueta-ok {
+  color: #03543f;
+  border-color: #84e1bc;
+}
+
+.etiqueta-neutra {
+  color: var(--text);
+}
+
+.barra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 140px;
+}
+
+.barra-trilho {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.barra-preenchimento {
+  display: block;
+  height: 100%;
+}
+
+.barra-baixa {
+  background: #e02424;
+}
+
+.barra-media {
+  background: #c27803;
+}
+
+.barra-alta {
+  background: #0e9f6e;
+}
+
+.barra-valor {
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2rem;
+  text-align: right;
+}
+
+.barra-destaque .barra-valor {
+  font-size: 1.2rem;
+  color: var(--text-h);
+}
+
+.resumo-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cartao-numero {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.cartao-numero .numero {
+  font-size: 1.6rem;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-nivel {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.alternativas {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.alternativas li {
+  margin-bottom: 0.4rem;
+}
+
+.alternativa {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.alternativa:disabled {
+  cursor: default;
+}
+
+.alternativa-certa {
+  border-color: #0e9f6e;
+  background: #def7ec;
+  color: #03543f;
+}
+
+.alternativa-errada {
+  border-color: #e02424;
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+
+.grafico {
+  margin: 0;
+}
+
+.grafico svg {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+.grafico-grade {
+  stroke: var(--border);
+}
+
+.grafico-meta {
+  stroke: #0e9f6e;
+  stroke-dasharray: 4 4;
+}
+
+.grafico-linha {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.grafico-ponto {
+  fill: var(--accent);
+}
+
+.grafico-ponto-semana {
+  fill: var(--accent-bg);
+  stroke: var(--accent-border);
+}
+
+.grafico-rotulo {
+  fill: var(--text);
+  font-size: 11px;
+}
+
+.nav-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.nav-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.nav-grupo-titulo {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  min-width: 5.5rem;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .cabecalho {
+    flex-direction: column;
+  }
+
+  /* Tabelas largas rolam na horizontal em vez de estourar a tela do celular */
+  .tabela {
+    display: block;
+    overflow-x: auto;
+    font-size: 0.8rem;
+  }
+}
