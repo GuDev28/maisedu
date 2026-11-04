@@ -15,6 +15,8 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Usuario {
 
+    public static final String PREFIXO_LOGIN_ANONIMIZADO = "anonimizado-";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -62,6 +64,20 @@ public class Usuario {
     @Column(name = "termos_aceitos_em")
     private LocalDateTime termosAceitosEm;
 
+    /** Versão dos Termos de Uso / Política de Privacidade aceita pelo usuário (null = nunca aceitou). */
+    @Column(name = "termos_versao")
+    private Integer termosVersao;
+
+    /**
+     * Incrementada sempre que as sessões abertas devem deixar de valer (logout, troca ou redefinição
+     * de senha, desativação). O JWT carrega a versão em que foi emitido e o filtro compara com esta.
+     */
+    @Column(name = "versao_sessao", nullable = false)
+    private int versaoSessao = 0;
+
+    @Column(name = "anonimizado_em")
+    private LocalDateTime anonimizadoEm;
+
     public Usuario(String nome, String email, String senha, Instituicao instituicao) {
         this.nome = nome;
         this.email = email;
@@ -96,7 +112,6 @@ public class Usuario {
         return bloqueadoAte != null && bloqueadoAte.isAfter(LocalDateTime.now());
     }
 
-    
     public void registrarTentativaFalha(int maximoTentativas, int minutosDeBloqueio) {
         tentativasFalhas++;
         if (tentativasFalhas >= maximoTentativas) {
@@ -109,14 +124,74 @@ public class Usuario {
         bloqueadoAte = null;
     }
 
+    /** Troca feita pelo próprio usuário: a senha deixa de ser provisória e as outras sessões caem. */
     public void trocarSenha(String novoHash) {
         this.senha = novoHash;
         this.senhaTemporaria = false;
         this.tentativasFalhas = 0;
         this.bloqueadoAte = null;
+        encerrarSessoes();
     }
 
-    public void aceitarTermos() {
+    /** Redefinição feita por admin/professor: nova senha provisória, a ser trocada no próximo acesso. */
+    public void redefinirSenhaProvisoria(String novoHash) {
+        this.senha = novoHash;
+        this.senhaTemporaria = true;
+        this.tentativasFalhas = 0;
+        this.bloqueadoAte = null;
+        encerrarSessoes();
+    }
+
+    public void aceitarTermos(int versao) {
         this.termosAceitosEm = LocalDateTime.now();
+        this.termosVersao = versao;
+    }
+
+    public boolean termosPendentes(int versaoAtual) {
+        return termosVersao == null || termosVersao < versaoAtual;
+    }
+
+    /** Invalida todos os tokens JWT já emitidos para este usuário. */
+    public void encerrarSessoes() {
+        this.versaoSessao++;
+    }
+
+    public void corrigirNome(String novoNome) {
+        this.nome = novoNome;
+    }
+
+    public void desativar() {
+        this.ativo = false;
+        encerrarSessoes();
+    }
+
+    public void reativar() {
+        this.ativo = true;
+        this.tentativasFalhas = 0;
+        this.bloqueadoAte = null;
+    }
+
+    public boolean isAnonimizado() {
+        return anonimizadoEm != null;
+    }
+
+    /**
+     * Eliminação a pedido do titular (LGPD, art. 18, VI): remove nome, e-mail e login, troca a senha
+     * por um valor aleatório e desativa a conta. O id continua existindo para não quebrar as
+     * referências (questões de autoria, respostas e registros de auditoria), que passam a ser anônimas.
+     */
+    public void anonimizar(String hashAleatorio) {
+        this.nome = "Usuário anonimizado #" + id;
+        this.email = null;
+        this.login = PREFIXO_LOGIN_ANONIMIZADO + id;
+        this.senha = hashAleatorio;
+        this.ativo = false;
+        this.senhaTemporaria = true;
+        this.termosAceitosEm = null;
+        this.termosVersao = null;
+        this.tentativasFalhas = 0;
+        this.bloqueadoAte = null;
+        this.anonimizadoEm = LocalDateTime.now();
+        encerrarSessoes();
     }
 }

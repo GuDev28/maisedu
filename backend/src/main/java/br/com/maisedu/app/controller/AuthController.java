@@ -1,5 +1,6 @@
 package br.com.maisedu.app.controller;
 
+import br.com.maisedu.app.dto.AceiteTermosRequest;
 import br.com.maisedu.app.dto.LoginRequest;
 import br.com.maisedu.app.dto.TrocarSenhaRequest;
 import br.com.maisedu.app.dto.UsuarioResumoResponse;
@@ -42,11 +43,13 @@ public class AuthController {
         ResponseCookie cookie = construirCookie(sessao.token(), Duration.ofMinutes(expiracaoMinutos));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(UsuarioResumoResponse.from(sessao.usuario()));
+                .body(UsuarioResumoResponse.from(sessao.usuario(), autenticacaoService.versaoTermosAtual()));
     }
 
+    /** Apaga o cookie e invalida o token no servidor: um token copiado antes do logout deixa de valer. */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        autenticacaoService.encerrarSessoes(usuarioAutenticado.id());
         auditoriaService.registrar(usuarioAutenticado, AcaoAuditoria.LOGOUT, null, null, true, null);
         ResponseCookie cookie = construirCookie("", Duration.ZERO);
         return ResponseEntity.noContent()
@@ -68,6 +71,15 @@ public class AuthController {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
+    }
+
+    /** Novo aceite exigido quando a versão vigente dos Termos/Política muda. */
+    @PostMapping("/aceitar-termos")
+    public ResponseEntity<Void> aceitarTermos(
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
+            @Valid @RequestBody AceiteTermosRequest request) {
+        autenticacaoService.aceitarTermos(usuarioAutenticado.id());
+        return ResponseEntity.noContent().build();
     }
 
     private ResponseCookie construirCookie(String token, Duration validade) {
