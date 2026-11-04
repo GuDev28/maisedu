@@ -3,8 +3,12 @@
 ## O que é e por que foi escolhida
 
 O [Resend](https://resend.com) é um serviço de envio de e-mail transacional (API REST). É usado no
-MaisEdu para um único fluxo: **entregar a senha provisória a um professor ou administrador
-recém-cadastrado**, sem que ela precise trafegar na resposta HTTP do cadastro.
+MaisEdu para entregar a senha provisória a professores e administradores, sem que ela precise
+trafegar na resposta HTTP, em dois fluxos:
+
+- **cadastro** de um professor (`POST /professores`);
+- **redefinição de senha** feita pelo admin (`POST /usuarios/{id}/redefinir-senha`), que também serve
+  para reenviar o acesso quando o primeiro e-mail não chegou.
 
 Antes desta integração, `POST /professores` devolvia a senha provisória em texto puro no corpo da
 resposta (`UsuarioCadastradoResponse.senhaProvisoria`), e quem cadastrou repassava manualmente ao
@@ -21,7 +25,7 @@ do cadastro (`POST /alunos`) para o professor repassar fora do sistema.
 | Peça | Arquivo | Papel |
 |---|---|---|
 | Cliente HTTP | `service/ResendEmailService.java` | Monta a chamada REST ao Resend e trata sucesso/falha |
-| Disparo | `service/UsuarioService.java` (`cadastrarProfessor`) | Chama o envio logo após salvar o novo professor |
+| Disparo | `service/UsuarioService.java` (`cadastrarProfessor`) e `service/GestaoUsuarioService.java` (`redefinirSenha`) | Pedem o envio dentro da transação; o envio real acontece **depois do commit** |
 | Configuração | `application.properties` + `.env` | `maisedu.resend.api-key`, `maisedu.resend.remetente` |
 | Auditoria | `AcaoAuditoria.ENVIO_EMAIL` | Cada tentativa de envio (sucesso ou falha) vira uma linha em `log_auditoria` |
 
@@ -44,9 +48,11 @@ Content-Type: application/json
 }
 ```
 
-- **from**: por padrão usa `onboarding@resend.dev` — domínio de teste do próprio Resend, que funciona
-  sem verificação de domínio próprio (suficiente para um projeto acadêmico). Pode ser trocado por um
-  remetente com domínio verificado via `RESEND_REMETENTE` no `.env`, sem alterar código.
+- **from**: por padrão usa `onboarding@resend.dev` — domínio de teste do próprio Resend. **Atenção:**
+  com esse remetente o Resend só entrega para o e-mail dono da conta Resend; qualquer outro
+  destinatário recebe erro 403 ("You can only send testing emails to your own email address").
+  Para enviar a professores reais, verifique um domínio em <https://resend.com/domains> e defina
+  `RESEND_REMETENTE` com um endereço desse domínio, sem alterar código.
 - **to**: sempre um único destinatário — o e-mail do professor recém-cadastrado.
 - Referência oficial do endpoint: <https://resend.com/docs/api-reference/emails/send-email>.
 
@@ -65,9 +71,19 @@ configurada, ou a chamada ao Resend falhar (rede, credencial inválida, limite d
 1. O professor é cadastrado normalmente no banco.
 2. Um `log.warn(...)` é emitido no log da aplicação.
 3. Uma linha malsucedida (`sucesso = false`) é gravada em `log_auditoria` com `acao = ENVIO_EMAIL`,
-   permitindo ao admin perceber, pela tela de auditoria, que aquele professor não recebeu a senha por
-   e-mail e precisa de outro canal (ex.: recadastro, ou uma futura funcionalidade de "esqueci minha
-   senha", fora do escopo desta entrega).
+   visível ao admin na tela de Auditoria.
+4. O admin usa **Usuários → Nova senha** para gerar outra senha provisória e reenviar o e-mail
+   (as sessões antigas da conta são encerradas).
+
+No perfil `dev` (`maisedu.email.registrar-no-log-sem-resend=true`), sem `RESEND_API_KEY` o conteúdo do
+e-mail, inclusive a senha provisória, é escrito no log — só para demonstração local.
+
+## Envio depois do commit
+
+`ResendEmailService` registra o envio como `TransactionSynchronization.afterCommit()` quando há
+transação ativa. Assim, (a) não sai e-mail com senha de um cadastro que acabou desfeito por rollback
+e (b) a chamada HTTP ao Resend não mantém a transação do banco aberta. A auditoria do envio usa uma
+transação própria, como as demais.
 
 Essa decisão segue o mesmo padrão já usado para a gravação de auditoria em si
 (`AuditoriaService`): uma falha num recurso acessório (e-mail, log) não pode impedir a operação de
