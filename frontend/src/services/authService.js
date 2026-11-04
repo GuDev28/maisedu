@@ -21,3 +21,10 @@ export function trocarSenha(senhaAtual, novaSenha, aceiteTermos) {
     body: JSON.stringify({ senhaAtual, novaSenha, aceiteTermos }),
   });
 }
+
+export function aceitarTermos() {
+  return chamarApi("/auth/aceitar-termos", {
+    method: "POST",
+    body: JSON.stringify({ aceiteTermos: true }),
+  });
+}
