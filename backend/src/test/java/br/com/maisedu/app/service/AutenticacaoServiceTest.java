@@ -106,10 +106,35 @@ class AutenticacaoServiceTest {
     void naoAceitaLoginDeContaInativa() {
         usuario.setAtivo(false);
         when(usuarioRepository.findByIdentificadorDeAcesso("prof@escola.test")).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senha-certa", "hash")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.login("prof@escola.test", "qualquer"))
+        assertThatThrownBy(() -> service.login("prof@escola.test", "senha-certa"))
                 .isInstanceOf(AutenticacaoException.class)
                 .hasMessageContaining("desativada");
+        verify(jwtService, never()).gerarToken(any());
+    }
+
+    @Test
+    void contaInativaComSenhaErradaRecebeAMensagemGenerica() {
+        // Quem não sabe a senha não descobre que a conta existe (nem que está desativada)
+        usuario.setAtivo(false);
+        when(usuarioRepository.findByIdentificadorDeAcesso("prof@escola.test")).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("errada", "hash")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.login("prof@escola.test", "errada"))
+                .isInstanceOf(AutenticacaoException.class)
+                .hasMessage("Identificador ou senha inválidos.");
+    }
+
+    @Test
+    void loginNormalizaOIdentificador() {
+        when(usuarioRepository.findByIdentificadorDeAcesso("prof@escola.test")).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senha123", "hash")).thenReturn(true);
+        when(jwtService.gerarToken(usuario)).thenReturn("token-fake");
+
+        var sessao = service.login("  Prof@Escola.TEST ", "senha123");
+
+        assertThat(sessao.token()).isEqualTo("token-fake");
     }
 
     @Test
@@ -142,6 +167,9 @@ class AutenticacaoServiceTest {
 
         assertThat(usuario.getSenha()).isEqualTo("hashNovo");
         assertThat(usuario.isSenhaTemporaria()).isFalse();
+        assertThat(usuario.getTermosVersao()).isEqualTo(1);
+        // A troca de senha derruba as sessões abertas (tokens emitidos antes deixam de valer)
+        assertThat(usuario.getVersaoSessao()).isEqualTo(1);
         verify(usuarioRepository).save(usuario);
     }
 }
