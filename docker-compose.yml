@@ -1,0 +1,52 @@
+# Sobe o MaisEdu completo com um único comando (RNF15):
+#   docker compose up --build
+# Front-end: http://localhost:8081   (a API fica em http://localhost:8081/api)
+#
+# Por padrão roda no perfil "dev": com o banco vazio, cria o cenário de demonstração
+# (contas na saída do back-end: docker compose logs backend). Variáveis em .env (veja .env.example).
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: maisedu
+      POSTGRES_USER: maisedu
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-maisedu}
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maisedu -d maisedu"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/maisedu
+      DB_USERNAME: maisedu
+      DB_PASSWORD: ${DB_PASSWORD:-maisedu}
+      # Só para demonstração local. Em qualquer ambiente acessível por outras pessoas, defina no .env.
+      JWT_SECRET: ${JWT_SECRET:-segredo-local-de-demonstracao-troque-no-arquivo-env-0123456789}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-false}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_REMETENTE: ${RESEND_REMETENTE:-MaisEdu <onboarding@resend.dev>}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # O nginx do front repassa o IP real do cliente; o Tomcat só confia nesse cabeçalho vindo da rede interna.
+      FORWARD_HEADERS_STRATEGY: native
+    depends_on:
+      db:
+        condition: service_healthy
+    # Exposto só na máquina local (útil para Postman/Insomnia); o navegador usa /api pelo front.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  dados-postgres:
