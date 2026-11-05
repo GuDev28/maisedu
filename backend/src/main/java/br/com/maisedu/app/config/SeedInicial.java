@@ -11,12 +11,19 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 
+/**
+ * Registro inicial do cliente: se o banco estiver vazio, cria a instituição e o seu primeiro
+ * administrador, com senha provisória escrita no log. Não roda no perfil "dev", em que o
+ * SeedDemonstracao cria um cenário completo de demonstração.
+ */
 @Component
+@Profile("!dev")
 @RequiredArgsConstructor
 public class SeedInicial implements CommandLineRunner {
 
@@ -43,9 +50,9 @@ public class SeedInicial implements CommandLineRunner {
                 passwordEncoder.encode(senhaProvisoria), instituicao);
         admin.adicionarRole(roleRepository.findByNome(RoleNome.ADMIN)
                 .orElseThrow(() -> new IllegalStateException("Papel ADMIN não cadastrado (ver migration V3).")));
-        // Admin acumula PROFESSOR (ver V7): tem acesso a tudo que o professor
-        // tem, e "cadastrar professor" / "vincular professor à turma" ficam
-        // reservados só para quem tem ADMIN.
+        // Admin acumula PROFESSOR: tem acesso a tudo que o professor tem, e
+        // "cadastrar professor" / "vincular professor à turma" ficam reservados
+        // só para quem tem ADMIN.
         admin.adicionarRole(roleRepository.findByNome(RoleNome.PROFESSOR)
                 .orElseThrow(() -> new IllegalStateException("Papel PROFESSOR não cadastrado (ver migration V1).")));
         usuarioRepository.save(admin);
