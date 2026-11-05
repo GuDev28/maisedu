@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { RodapeLegal } from "../components/RodapeLegal";
 
 export default function Login({ onAbrirPaginaLegal }) {
-  const { login } = useAuth();
+  const { login, avisoSessao } = useAuth();
   const [identificador, setIdentificador] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -25,6 +25,7 @@ export default function Login({ onAbrirPaginaLegal }) {
   return (
     <div style={{ maxWidth: 360, margin: "4rem auto" }}>
       <h2>Entrar no MaisEdu</h2>
+      {avisoSessao && !erro && <p style={{ color: "#8a5300" }}>{avisoSessao}</p>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 12 }}>
