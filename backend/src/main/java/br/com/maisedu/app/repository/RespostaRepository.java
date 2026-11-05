@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RespostaRepository extends JpaRepository<Resposta, Long> {
@@ -29,6 +30,12 @@ public interface RespostaRepository extends JpaRepository<Resposta, Long> {
             "from Resposta r join r.alternativa alt join r.atividadeAlunoQuestao aaq " +
             "where aaq.atividadeAluno.aluno.id = :alunoId order by r.respondidaEm")
     List<RespostaHistorico> findHistoricoDoAluno(@Param("alunoId") Long alunoId);
+
+    /** Histórico de um grupo de alunos (os de uma turma), usado na evolução semanal da turma (RF19). */
+    @Query("select new br.com.maisedu.app.dto.RespostaHistorico(r.respondidaEm, alt.correta) " +
+            "from Resposta r join r.alternativa alt join r.atividadeAlunoQuestao aaq " +
+            "where aaq.atividadeAluno.aluno.id in :alunoIds order by r.respondidaEm")
+    List<RespostaHistorico> findHistoricoDosAlunos(@Param("alunoIds") Collection<Long> alunoIds);
 
     /** Exportação de dados do titular: todas as respostas, com questão e atividade. */
     @Query("select r from Resposta r join fetch r.alternativa join fetch r.atividadeAlunoQuestao aaq " +

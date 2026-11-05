@@ -149,6 +149,17 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
         }
         assertTrue(alunoNoPainel);
 
+        // RF19: indicadores da turma, detalhe por nível e evolução semanal
+        assertEquals(1, daTurma.resumo().totalAlunos());
+        assertEquals(1, daTurma.resumo().alunosComRespostas());
+        assertEquals(1L, daTurma.resumo().totalAtividades());
+        assertEquals(2, daTurma.resumo().totalRespostas());
+        assertEquals(1, daTurma.resumo().totalAcertos());
+        assertEquals(0, new BigDecimal("50.00").compareTo(daTurma.resumo().percentual()));
+        assertFalse(daTurma.topicos().isEmpty());
+        assertFalse(daTurma.topicos().get(0).niveis().isEmpty());
+        assertFalse(daTurma.evolucao().isEmpty());
+
         // RF19/CA02: professor que não leciona na turma não vê o desempenho dela
         ResponseEntity<ErroResponse> negado = client.get().uri("/turmas/" + turmaId + "/desempenho")
                 .header(HttpHeaders.COOKIE, cookie(autor))
