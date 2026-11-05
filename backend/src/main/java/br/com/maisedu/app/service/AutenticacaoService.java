@@ -32,27 +32,33 @@ public class AutenticacaoService {
     @Value("${maisedu.login.bloqueio-minutos}")
     private int bloqueioMinutos;
 
+    @Value("${maisedu.termos.versao-atual:1}")
+    private int versaoTermosAtual = 1;
+
+    /**
+     * Hash de uma senha descartável, gerado uma única vez. Quando o identificador não existe, a
+     * senha digitada é comparada com ele mesmo assim, para que a resposta demore o mesmo tempo de
+     * uma senha errada e não revele, pelo tempo de resposta, se a conta existe.
+     */
+    private volatile String hashFicticio;
+
     public record Sessao(String token, Usuario usuario) {
     }
 
     // noRollbackFor: a senha errada grava tentativasFalhas/bloqueadoAte e depois lança
     // AutenticacaoException; sem isso o rollback desfazia a contagem e o bloqueio nunca acontecia.
     @Transactional(noRollbackFor = AutenticacaoException.class)
-    public Sessao login(String identificador, String senha) {
+    public Sessao login(String identificadorDigitado, String senha) {
+        String identificador = Identificadores.normalizar(identificadorDigitado);
         Usuario usuario = usuarioRepository.findByIdentificadorDeAcesso(identificador).orElse(null);
         if (usuario == null) {
+            compararComHashFicticio(senha);
             auditoriaService.registrar(null, null, identificador, AcaoAuditoria.LOGIN,
                     null, null, false, "Identificador não encontrado");
             throw new AutenticacaoException(MENSAGEM_INVALIDA);
         }
 
-        if (!usuario.isAtivo()) {
-            auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
-                    null, null, false, "Conta desativada");
-            
-            throw new AutenticacaoException("Esta conta está desativada.");
-        }
-
+        // RF01/CA03: com a conta bloqueada, o acesso é negado mesmo com a senha correta, informando o tempo restante.
         if (usuario.estaBloqueado()) {
             long minutosRestantes = Duration.between(LocalDateTime.now(), usuario.getBloqueadoAte()).toMinutes() + 1;
             auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
@@ -67,6 +73,14 @@ public class AutenticacaoService {
             auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
                     null, null, false, "Senha incorreta");
             throw new AutenticacaoException(MENSAGEM_INVALIDA);
+        }
+
+        // Só revela que a conta está desativada para quem acertou a senha: quem não sabe a senha
+        // recebe a mesma mensagem genérica e não descobre se a conta existe.
+        if (!usuario.isAtivo()) {
+            auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
+                    null, null, false, "Conta desativada");
+            throw new AutenticacaoException("Esta conta está desativada. Procure a administração da sua escola.");
         }
 
         usuario.registrarLoginComSucesso();
@@ -92,11 +106,44 @@ public class AutenticacaoService {
         }
 
         usuario.trocarSenha(passwordEncoder.encode(novaSenha));
-        usuario.aceitarTermos();
+        usuario.aceitarTermos(versaoTermosAtual);
         usuarioRepository.save(usuario);
         auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.TROCA_SENHA,
                 "Usuario", usuario.getId(), true, null);
         auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.ACEITE_TERMOS,
-                "Usuario", usuario.getId(), true, null);
+                "Usuario", usuario.getId(), true, "versão " + versaoTermosAtual);
+    }
+
+    /** Novo aceite exigido quando a versão dos Termos/Política muda (maisedu.termos.versao-atual). */
+    @Transactional
+    public void aceitarTermos(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new AutenticacaoException("Usuário não encontrado."));
+        usuario.aceitarTermos(versaoTermosAtual);
+        usuarioRepository.save(usuario);
+        auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.ACEITE_TERMOS,
+                "Usuario", usuario.getId(), true, "versão " + versaoTermosAtual);
+    }
+
+    /** Logout: além de apagar o cookie, invalida o token no servidor (todas as sessões do usuário). */
+    @Transactional
+    public void encerrarSessoes(Long usuarioId) {
+        usuarioRepository.findById(usuarioId).ifPresent(usuario -> {
+            usuario.encerrarSessoes();
+            usuarioRepository.save(usuario);
+        });
+    }
+
+    public int versaoTermosAtual() {
+        return versaoTermosAtual;
+    }
+
+    private void compararComHashFicticio(String senha) {
+        if (hashFicticio == null) {
+            hashFicticio = passwordEncoder.encode("senha-descartavel-" + System.nanoTime());
+        }
+        if (hashFicticio != null && senha != null) {
+            passwordEncoder.matches(senha, hashFicticio);
+        }
     }
 }

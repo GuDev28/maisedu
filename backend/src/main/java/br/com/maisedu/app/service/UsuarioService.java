@@ -33,7 +33,9 @@ public class UsuarioService {
     }
 
     @Transactional
-    public NovoUsuario cadastrarProfessor(UsuarioAutenticado admin, String nome, String email) {
+    public NovoUsuario cadastrarProfessor(UsuarioAutenticado admin, String nomeInformado, String emailInformado) {
+        String nome = nomeInformado.strip();
+        String email = Identificadores.normalizar(emailInformado);
         if (usuarioRepository.existsByEmail(email)) {
             throw new NegocioException("Já existe um usuário com este e-mail.");
         }
@@ -53,7 +55,9 @@ public class UsuarioService {
     }
 
     @Transactional
-    public NovoUsuario cadastrarAluno(Long professorId, String nome, String login) {
+    public NovoUsuario cadastrarAluno(Long professorId, String nomeInformado, String loginInformado) {
+        String nome = nomeInformado.strip();
+        String login = Identificadores.normalizar(loginInformado);
         if (usuarioRepository.existsByLogin(login)) {
             throw new NegocioException("Já existe um usuário com este login.");
         }
