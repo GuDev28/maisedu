@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { cadastrarProfessor } from "../services/usuarioService";
+import { Mensagens } from "../components/Mensagens";
 
+/** RF04: o administrador cadastra um professor; a senha provisória vai por e-mail (Resend). */
 export default function CadastrarProfessor() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -12,11 +14,16 @@ export default function CadastrarProfessor() {
     event.preventDefault();
     setErro(null);
     setSucesso(null);
-    setCarregando(true);
 
+    if (!nome.trim()) {
+      setErro("Informe o nome");
+      return;
+    }
+
+    setCarregando(true);
     try {
-      const novo = await cadastrarProfessor(nome, email);
-      setSucesso(`${novo.nome} cadastrado(a). A senha provisória foi enviada por e-mail para ${email}.`);
+      const novo = await cadastrarProfessor(nome.trim(), email.trim());
+      setSucesso(`${novo.nome} cadastrado(a). A senha provisória foi enviada por e-mail para ${email.trim()}.`);
       setNome("");
       setEmail("");
     } catch (err) {
@@ -27,31 +34,28 @@ export default function CadastrarProfessor() {
   }
 
   return (
-    <div style={{ maxWidth: 420, margin: "2rem auto" }}>
+    <div className="pagina pagina-estreita">
       <h2>Cadastrar professor</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Nome:{" "}
-            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
-          </label>
-        </div>
+      <form onSubmit={handleSubmit} className="formulario">
+        <label>
+          Nome
+          <input className="form-control" type="text" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={255}
+                 autoFocus />
+        </label>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            E-mail:{" "}
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-        </div>
+        <label>
+          E-mail
+          <input className="form-control" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} />
+          <span className="dica">A senha provisória é enviada para este e-mail e não aparece na tela.</span>
+        </label>
 
-        <button type="submit" disabled={carregando}>
+        <button className="btn btn-primary" type="submit" disabled={carregando}>
           {carregando ? "Cadastrando..." : "Cadastrar"}
         </button>
       </form>
 
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-      {sucesso && <p style={{ color: "green" }}>{sucesso}</p>}
+      <Mensagens erro={erro} sucesso={sucesso} />
     </div>
   );
 }

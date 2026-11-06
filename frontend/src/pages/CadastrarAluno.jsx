@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { cadastrarAluno } from "../services/usuarioService";
+import { Mensagens } from "../components/Mensagens";
 
+/** Mesma regra do back-end (CadastroAlunoRequest): 3 a 50 caracteres, sem acento nem espaço. */
+const LOGIN_VALIDO = /^[A-Za-z0-9._-]{3,50}$/;
+const REGRA_LOGIN = "De 3 a 50 caracteres: letras sem acento, números, ponto, hífen ou sublinhado.";
+
+/** RF05: o professor cadastra um aluno (sem e-mail) e recebe a senha provisória para repassar. */
 export default function CadastrarAluno() {
   const [nome, setNome] = useState("");
   const [login, setLogin] = useState("");
@@ -12,10 +18,19 @@ export default function CadastrarAluno() {
     event.preventDefault();
     setErro(null);
     setResultado(null);
-    setCarregando(true);
 
+    if (!nome.trim()) {
+      setErro("Informe o nome");
+      return;
+    }
+    if (!LOGIN_VALIDO.test(login.trim())) {
+      setErro(`Login inválido. ${REGRA_LOGIN}`);
+      return;
+    }
+
+    setCarregando(true);
     try {
-      const novo = await cadastrarAluno(nome, login);
+      const novo = await cadastrarAluno(nome.trim(), login.trim());
       setResultado(novo);
       setNome("");
       setLogin("");
@@ -27,33 +42,32 @@ export default function CadastrarAluno() {
   }
 
   return (
-    <div style={{ maxWidth: 420, margin: "2rem auto" }}>
+    <div className="pagina pagina-estreita">
       <h2>Cadastrar aluno</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Nome:{" "}
-            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required autoFocus />
-          </label>
-        </div>
+      <form onSubmit={handleSubmit} className="formulario">
+        <label>
+          Nome
+          <input className="form-control" type="text" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={255}
+                 autoFocus />
+        </label>
 
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Login (ex.: matrícula):{" "}
-            <input type="text" value={login} onChange={(e) => setLogin(e.target.value)} required />
-          </label>
-        </div>
+        <label>
+          Login (ex.: matrícula)
+          <input className="form-control" type="text" value={login} onChange={(e) => setLogin(e.target.value)} required maxLength={50}
+                 autoComplete="off" />
+          <span className="dica">{REGRA_LOGIN} O aluno não tem e-mail cadastrado.</span>
+        </label>
 
-        <button type="submit" disabled={carregando}>
+        <button className="btn btn-primary" type="submit" disabled={carregando}>
           {carregando ? "Cadastrando..." : "Cadastrar"}
         </button>
       </form>
 
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
+      <Mensagens erro={erro} />
 
       {resultado && (
-        <div style={{ marginTop: 16, padding: 12, border: "1px solid #cde", borderRadius: 4 }}>
+        <div className="cartao cartao-selecionado" role="status">
           <p>
             <strong>{resultado.nome}</strong> cadastrado(a) com sucesso (login: {resultado.identificadorDeAcesso}).
           </p>
