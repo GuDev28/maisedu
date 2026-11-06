@@ -1,10 +1,13 @@
 import { BarraPercentual } from "./BarraPercentual";
+import { CartaoNumero } from "./CartaoNumero";
+import { GraficoBarras } from "./GraficoBarras";
 import { GraficoEvolucao } from "./GraficoEvolucao";
-import { rotuloNivel } from "./rotulos";
+import { formatarPercentual, rotuloNivel } from "./rotulos";
 
 /**
- * Desempenho de um aluno por tópico e nível (RF19). Os números são os mesmos que o motor
- * adaptativo usa (RN05). Tópicos do menor para o maior percentual.
+ * Painel de desempenho de um aluno (RF19): indicadores, acerto por tópico, evolução semanal e o detalhe
+ * por tópico e nível. Os números são os mesmos que o motor adaptativo usa (RN05). Tópicos do menor para o
+ * maior percentual.
  */
 export function PainelDesempenho({ desempenho }) {
   if (!desempenho) {
@@ -14,25 +17,54 @@ export function PainelDesempenho({ desempenho }) {
     return <p>Nenhuma resposta registrada ainda.</p>;
   }
 
+  let niveisDominados = 0;
+  let niveisComRespostas = 0;
+  for (const topico of desempenho.topicos) {
+    for (const nivel of topico.niveis) {
+      niveisComRespostas++;
+      if (nivel.dominado) {
+        niveisDominados++;
+      }
+    }
+  }
+  const maisFraco = desempenho.topicos[0];
+
+  const barras = desempenho.topicos.map((topico) => ({
+    chave: topico.topicoId,
+    rotulo: topico.topico,
+    valor: topico.percentual,
+    detalhe: `${topico.totalAcertos} acertos em ${topico.totalRespostas} respostas`,
+  }));
+
   return (
     <div>
       <div className="resumo-numeros">
-        <div className="cartao-numero">
-          <span className="numero">{desempenho.totalRespostas}</span>
-          <span className="texto-suave">respostas</span>
-        </div>
-        <div className="cartao-numero">
-          <span className="numero">{desempenho.totalAcertos}</span>
-          <span className="texto-suave">acertos</span>
-        </div>
-        <div className="cartao-numero">
+        <CartaoNumero valor={desempenho.totalRespostas} rotulo="respostas" />
+        <CartaoNumero valor={desempenho.totalAcertos} rotulo="acertos" />
+        <CartaoNumero rotulo="acerto geral">
           <BarraPercentual valor={desempenho.percentualGeral} destaque />
-          <span className="texto-suave">acerto geral</span>
-        </div>
+        </CartaoNumero>
+        <CartaoNumero valor={`${niveisDominados}/${niveisComRespostas}`} rotulo="níveis dominados"
+                      detalhe="5+ respostas e 70%+ de acerto" />
+        {maisFraco && desempenho.topicos.length > 1 && (
+          <CartaoNumero valor={maisFraco.topico} rotulo="precisa de atenção" texto
+                        detalhe={`${formatarPercentual(maisFraco.percentual)} de acerto`} />
+        )}
       </div>
 
-      <h3>Por tópico</h3>
-      <table className="tabela">
+      <div className="painel-graficos">
+        <section>
+          <h3>Acerto por tópico</h3>
+          <GraficoBarras itens={barras} descricao="Percentual de acerto por tópico, do mais fraco para o mais forte" />
+        </section>
+        <section>
+          <h3>Evolução</h3>
+          <GraficoEvolucao pontos={desempenho.evolucao} />
+        </section>
+      </div>
+
+      <h3>Por tópico e nível</h3>
+      <table className="table table-hover align-middle tabela">
         <thead>
           <tr>
             <th>Tópico</th>
@@ -66,9 +98,6 @@ export function PainelDesempenho({ desempenho }) {
           ))}
         </tbody>
       </table>
-
-      <h3>Evolução</h3>
-      <GraficoEvolucao pontos={desempenho.evolucao} />
     </div>
   );
 }

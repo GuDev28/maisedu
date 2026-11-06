@@ -21,6 +21,12 @@ export function rotuloNivel(valor) {
   return NIVEIS.find((n) => n.valor === valor)?.rotulo ?? valor;
 }
 
+/** Faixa de cor de um percentual: abaixo de 50%, de 50% a 70% (domínio) e a partir de 70%. */
+export function classeFaixa(valor) {
+  const numero = Number(valor) || 0;
+  return numero < 50 ? "barra-baixa" : numero < 70 ? "barra-media" : "barra-alta";
+}
+
 export function formatarPercentual(valor) {
   if (valor === null || valor === undefined) {
     return "—";
