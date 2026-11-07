@@ -69,18 +69,18 @@ export default function GerenciarTurmas() {
         <div className="campos">
           <label>
             Nome da turma
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: 7º ano A" required
+            <input className="form-control" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: 7º ano A" required
                    maxLength={100} />
           </label>
           <label>
             Ano escolar
-            <select value={anoEscolar} onChange={(e) => setAnoEscolar(e.target.value)}>
+            <select className="form-select" value={anoEscolar} onChange={(e) => setAnoEscolar(e.target.value)}>
               {ANOS_ESCOLARES.map((ano) => (
                 <option key={ano.valor} value={ano.valor}>{ano.rotulo}</option>
               ))}
             </select>
           </label>
-          <button type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Cadastrar turma"}</button>
+          <button className="btn btn-primary" type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Cadastrar turma"}</button>
         </div>
       </form>
 
@@ -91,7 +91,7 @@ export default function GerenciarTurmas() {
       ) : turmas.length === 0 ? (
         <p>Nenhuma turma cadastrada ainda.</p>
       ) : (
-        <table className="tabela">
+        <table className="table table-hover align-middle tabela">
           <thead>
             <tr>
               <th>Turma</th>
@@ -109,7 +109,7 @@ export default function GerenciarTurmas() {
                 <td>{turma.ativo ? "Ativa" : <span className="etiqueta etiqueta-neutra">Inativa</span>}</td>
                 <td>{formatarDataHora(turma.criadoEm)}</td>
                 <td>
-                  <button type="button" onClick={() => alternar(turma)}>
+                  <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => alternar(turma)}>
                     {turma.ativo ? "Desativar" : "Reativar"}
                   </button>
                 </td>

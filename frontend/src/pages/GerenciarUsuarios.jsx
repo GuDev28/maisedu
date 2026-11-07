@@ -116,7 +116,7 @@ export default function GerenciarUsuarios() {
         <div className="campos">
           <label>
             Papel
-            <select value={papel} onChange={(e) => setPapel(e.target.value)}>
+            <select className="form-select" value={papel} onChange={(e) => setPapel(e.target.value)}>
               <option value="">Todos</option>
               <option value="PROFESSOR">Professores</option>
               <option value="ALUNO">Alunos</option>
@@ -141,7 +141,7 @@ export default function GerenciarUsuarios() {
       ) : usuarios.length === 0 ? (
         <p>Nenhum usuário encontrado.</p>
       ) : (
-        <table className="tabela">
+        <table className="table table-hover align-middle tabela">
           <thead>
             <tr>
               <th>Nome</th>
@@ -157,9 +157,9 @@ export default function GerenciarUsuarios() {
                 <td>
                   {editando === alvo.id ? (
                     <span className="linha-acoes">
-                      <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} maxLength={255} />
-                      <button type="button" onClick={() => salvarNome(alvo)}>Salvar</button>
-                      <button type="button" onClick={() => setEditando(null)}>Cancelar</button>
+                      <input className="form-control" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} maxLength={255} />
+                      <button className="btn btn-primary btn-sm" type="button" onClick={() => salvarNome(alvo)}>Salvar</button>
+                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setEditando(null)}>Cancelar</button>
                     </span>
                   ) : (
                     alvo.nome
@@ -177,24 +177,24 @@ export default function GerenciarUsuarios() {
                 <td>
                   {!alvo.anonimizado && alvo.id !== eu.id && (
                     <span className="linha-acoes">
-                      <button type="button" onClick={() => handleRedefinir(alvo)}>Nova senha</button>
+                      <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => handleRedefinir(alvo)}>Nova senha</button>
                       {ehAdmin && (
                         <>
-                          <button type="button" onClick={() => { setEditando(alvo.id); setNovoNome(alvo.nome); }}>
+                          <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => { setEditando(alvo.id); setNovoNome(alvo.nome); }}>
                             Corrigir nome
                           </button>
                           {alvo.ativo ? (
-                            <button type="button" onClick={() => executar(() => desativarUsuario(alvo.id), "Conta desativada e sessões encerradas.")}>
+                            <button className="btn btn-outline-warning btn-sm" type="button" onClick={() => executar(() => desativarUsuario(alvo.id), "Conta desativada e sessões encerradas.")}>
                               Desativar
                             </button>
                           ) : (
-                            <button type="button" onClick={() => executar(() => reativarUsuario(alvo.id), "Conta reativada.")}>
+                            <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => executar(() => reativarUsuario(alvo.id), "Conta reativada.")}>
                               Reativar
                             </button>
                           )}
-                          <button type="button" onClick={() => handleExportar(alvo)}>Exportar dados</button>
+                          <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => handleExportar(alvo)}>Exportar dados</button>
                           {!alvo.roles.includes("ADMIN") && (
-                            <button type="button" onClick={() => handleAnonimizar(alvo)}>Anonimizar</button>
+                            <button className="btn btn-outline-danger btn-sm" type="button" onClick={() => handleAnonimizar(alvo)}>Anonimizar</button>
                           )}
                         </>
                       )}

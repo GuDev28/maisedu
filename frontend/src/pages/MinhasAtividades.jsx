@@ -88,7 +88,7 @@ export default function MinhasAtividades() {
         <p style={{ margin: "0.25rem 0 0.5rem" }}>
           Dez questões escolhidas a partir das suas respostas: os tópicos em que você mais erra, no nível certo para você.
         </p>
-        <button type="button" onClick={gerarPratica} disabled={gerando}>
+        <button className="btn btn-primary" type="button" onClick={gerarPratica} disabled={gerando}>
           {gerando ? "Montando..." : "Praticar agora"}
         </button>
       </div>
@@ -125,7 +125,7 @@ function ItemAtividade({ item, onAbrir }) {
           {item.respondidas > 0 && ` · ${item.acertos} acerto(s)`}
           {item.concluidaEm && ` · concluída em ${formatarDataHora(item.concluidaEm)}`}
         </span>
-        <button type="button" onClick={() => onAbrir(item)}>{rotuloBotao}</button>
+        <button className="btn btn-primary btn-sm" type="button" onClick={() => onAbrir(item)}>{rotuloBotao}</button>
       </div>
     </div>
   );
@@ -156,7 +156,7 @@ function FolhaAtividade({ folha, aviso, onAtualizar, onVoltar }) {
 
   return (
     <div className="pagina">
-      <button type="button" onClick={onVoltar}>← Voltar</button>
+      <button className="btn btn-link px-0 mb-2" type="button" onClick={onVoltar}>← Voltar</button>
       <h2>{folha.titulo}</h2>
       <Mensagens sucesso={aviso} erro={erro} />
       <p>

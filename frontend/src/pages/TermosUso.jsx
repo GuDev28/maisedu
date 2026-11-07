@@ -3,9 +3,9 @@ const TITULO_SECAO = { marginBottom: "0.4rem" };
 
 export default function TermosUso() {
   return (
-    <div style={{ maxWidth: 720, margin: "2rem auto", lineHeight: 1.6, textAlign: "left", padding: "0 1rem" }}>
+    <div className="documento-legal">
       <h2>Termos de Uso do MaisEdu</h2>
-      <p style={{ color: "#555" }}>
+      <p className="text-body-secondary">
         Versão 1 — última atualização: 4 de novembro de 2026. Ao aceitar estes termos no primeiro acesso, você
         concorda com as condições abaixo para uso do MaisEdu.
       </p>
@@ -98,7 +98,7 @@ export default function TermosUso() {
         </p>
       </div>
 
-      <p style={{ color: "#555", fontSize: "0.9rem" }}>
+      <p className="text-body-secondary small">
         Veja também a Política de Privacidade, que detalha quais dados pessoais são coletados e
         como são tratados.
       </p>

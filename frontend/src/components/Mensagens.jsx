@@ -1,15 +1,16 @@
+/** Mensagens de erro e de sucesso das telas, no padrão de alertas do Bootstrap. */
 export function Mensagens({ erro, sucesso }) {
   return (
     <>
       {erro && (
-        <p className="mensagem mensagem-erro" role="alert">
+        <div className="alert alert-danger mt-3" role="alert">
           {erro}
-        </p>
+        </div>
       )}
       {sucesso && (
-        <p className="mensagem mensagem-sucesso" role="status">
+        <div className="alert alert-success mt-3" role="status">
           {sucesso}
-        </p>
+        </div>
       )}
     </>
   );

@@ -4,6 +4,8 @@ import {
   listarProfessoresDisponiveis,
   vincularProfessor,
 } from "../services/vinculoTurmaService";
+import { Mensagens } from "../components/Mensagens";
+import { rotuloAno } from "../components/rotulos";
 
 export default function VincularProfessor() {
   const [turmas, setTurmas] = useState([]);
@@ -76,24 +78,24 @@ export default function VincularProfessor() {
   }
 
   if (carregandoTurmas) {
-    return <p style={{ textAlign: "center" }}>Carregando turmas...</p>;
+    return <p className="pagina">Carregando turmas...</p>;
   }
 
   return (
-    <div style={{ maxWidth: 480, margin: "2rem auto" }}>
+    <div className="pagina pagina-estreita">
       <h2>Vincular professor à turma</h2>
 
       {turmas.length === 0 ? (
         <p>Nenhuma turma disponível para vínculo no momento.</p>
       ) : (
         <>
-          <div style={{ marginBottom: 16 }}>
-            <label>
-              Turma:{" "}
-              <select value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
+          <div className="mb-3">
+            <label className="form-label w-100">
+              Turma
+              <select className="form-select mt-1" value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
                 {turmas.map((turma) => (
                   <option key={turma.id} value={turma.id}>
-                    {turma.nome} ({turma.anoEscolar})
+                    {turma.nome} ({rotuloAno(turma.anoEscolar)})
                   </option>
                 ))}
               </select>
@@ -106,26 +108,17 @@ export default function VincularProfessor() {
             <p>Não há professores disponíveis para vincular a esta turma.</p>
           ) : (
             <form onSubmit={handleSubmit}>
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <div className="list-group mb-3">
                 {professores.map((professor) => (
-                  <li
-                    key={professor.id}
-                    onClick={() => setProfessorSelecionado(professor)}
-                    style={{
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      padding: 8,
-                      marginBottom: 8,
-                      cursor: "pointer",
-                      background: professorSelecionado?.id === professor.id ? "#eef" : "transparent",
-                    }}
-                  >
+                  <button type="button" key={professor.id} onClick={() => setProfessorSelecionado(professor)}
+                          aria-pressed={professorSelecionado?.id === professor.id}
+                          className={`list-group-item list-group-item-action${professorSelecionado?.id === professor.id ? " active" : ""}`}>
                     <strong>{professor.nome}</strong> — <small>{professor.identificadorDeAcesso}</small>
-                  </li>
+                  </button>
                 ))}
-              </ul>
+              </div>
 
-              <button type="submit" disabled={carregando || !professorSelecionado}>
+              <button className="btn btn-primary" type="submit" disabled={carregando || !professorSelecionado}>
                 {carregando ? "Vinculando..." : "Vincular professor selecionado"}
               </button>
             </form>
@@ -133,8 +126,7 @@ export default function VincularProfessor() {
         </>
       )}
 
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-      {sucesso && <p style={{ color: "green" }}>{sucesso}</p>}
+      <Mensagens erro={erro} sucesso={sucesso} />
     </div>
   );
 }

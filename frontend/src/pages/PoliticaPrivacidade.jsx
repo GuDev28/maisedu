@@ -3,9 +3,9 @@ const TITULO_SECAO = { marginBottom: "0.4rem" };
 
 export default function PoliticaPrivacidade() {
   return (
-    <div style={{ maxWidth: 720, margin: "2rem auto", lineHeight: 1.6, textAlign: "left", padding: "0 1rem" }}>
+    <div className="documento-legal">
       <h2>Política de Privacidade do MaisEdu</h2>
-      <p style={{ color: "#555" }}>
+      <p className="text-body-secondary">
         Versão 1 — última atualização: 4 de novembro de 2026. Este documento descreve, de forma específica ao
         MaisEdu (plataforma de aprendizagem adaptativa de Matemática para o Ensino Fundamental II, desenvolvida
         como Projeto Final de Curso), quais dados pessoais o sistema coleta, para quê, com quem são
@@ -140,7 +140,7 @@ export default function PoliticaPrivacidade() {
           usuários precisam ler e aceitar a nova versão no próximo acesso.</p>
       </div>
 
-      <p style={{ color: "#555", fontSize: "0.9rem" }}>
+      <p className="text-body-secondary small">
         Dúvidas sobre esta política podem ser encaminhadas ao administrador responsável pela sua
         instituição no MaisEdu.
       </p>

@@ -5,7 +5,9 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm install (e não npm ci): funciona mesmo se o package-lock.json ainda não tiver as dependências
+# novas (React Router e Bootstrap). Rodar "npm install" na pasta frontend atualiza o lock no repositório.
+RUN npm install --no-audit --no-fund
 COPY . .
 RUN npm run build
 

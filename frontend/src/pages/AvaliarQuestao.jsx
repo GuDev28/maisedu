@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { avaliarQuestao } from "../services/avaliacaoQuestaoService";
 import { listarQuestoesPendentes } from "../services/questaoService";
+import { Mensagens } from "../components/Mensagens";
+import { rotuloNivel } from "../components/rotulos";
 
 const VOTO_APROVAR = "APROVAR";
 const VOTO_REJEITAR = "REJEITAR";
@@ -67,74 +69,70 @@ export default function AvaliarQuestao() {
   }
 
   if (carregandoLista) {
-    return <p style={{ textAlign: "center" }}>Carregando questões pendentes...</p>;
+    return <p className="pagina">Carregando questões pendentes...</p>;
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "2rem auto" }}>
-      <h2>Avaliar questão</h2>
+    <div className="pagina">
+      <h2>Avaliar questões</h2>
+      <p className="text-body-secondary">
+        Questões de outros professores, de qualquer instituição, aguardando validação. Três votos iguais decidem
+        a questão (máximo de cinco votos).
+      </p>
 
       {pendentes.length === 0 ? (
         <p>Não há questões pendentes de avaliação no momento.</p>
       ) : (
-        <div style={{ display: "flex", gap: "1.5rem" }}>
-          <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
-            {pendentes.map((questao) => (
-              <li
-                key={questao.id}
-                onClick={() => setQuestaoSelecionada(questao)}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  padding: 8,
-                  marginBottom: 8,
-                  cursor: "pointer",
-                  background: questaoSelecionada?.id === questao.id ? "#eef" : "transparent",
-                }}
-              >
-                <strong>#{questao.id}</strong> — {questao.enunciado}
-                <br />
-                <small>
-                  {questao.topico} · {questao.nivelDificuldade} · autor: {questao.autorNome}
-                </small>
-              </li>
-            ))}
-          </ul>
+        <div className="row g-4">
+          <div className="col-lg-6">
+            <div className="list-group">
+              {pendentes.map((questao) => (
+                <button type="button" key={questao.id} onClick={() => setQuestaoSelecionada(questao)}
+                        aria-pressed={questaoSelecionada?.id === questao.id}
+                        className={`list-group-item list-group-item-action${questaoSelecionada?.id === questao.id ? " active" : ""}`}>
+                  <strong>#{questao.id}</strong> — {questao.enunciado}
+                  <div className="small opacity-75">
+                    {questao.topico} · {rotuloNivel(questao.nivelDificuldade)} · autor(a): {questao.autorNome}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {questaoSelecionada && (
-            <div style={{ flex: 1 }}>
-              <h3>{questaoSelecionada.enunciado}</h3>
-              <ol type="A">
-                {questaoSelecionada.alternativas.map((alt) => (
-                  <li key={alt.id} style={{ fontWeight: alt.correta ? "bold" : "normal" }}>
-                    {alt.texto}
-                    {alt.correta && " (marcada como correta pelo autor)"}
-                  </li>
-                ))}
-              </ol>
+          <div className="col-lg-6">
+            {questaoSelecionada ? (
+              <div className="cartao">
+                <h3 className="h5">{questaoSelecionada.enunciado}</h3>
+                <ol type="A" className="mb-3">
+                  {questaoSelecionada.alternativas.map((alt) => (
+                    <li key={alt.id} className={alt.correta ? "fw-bold text-success" : undefined}>
+                      {alt.texto}
+                      {alt.correta && " (marcada como correta pelo autor)"}
+                    </li>
+                  ))}
+                </ol>
 
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: 12 }}>
-                  <label>
-                    Voto:{" "}
-                    <select value={voto} onChange={(e) => setVoto(e.target.value)}>
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="voto">Voto</label>
+                    <select id="voto" className="form-select" value={voto} onChange={(e) => setVoto(e.target.value)}>
                       <option value={VOTO_APROVAR}>Aprovar</option>
                       <option value={VOTO_REJEITAR}>Rejeitar</option>
                     </select>
-                  </label>
-                </div>
-
-                <button type="submit" disabled={carregando}>
-                  {carregando ? "Enviando..." : "Enviar avaliação"}
-                </button>
-              </form>
-            </div>
-          )}
+                  </div>
+                  <button type="submit" className="btn btn-primary" disabled={carregando}>
+                    {carregando ? "Enviando..." : "Enviar avaliação"}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <p className="text-body-secondary">Selecione uma questão na lista para ver as alternativas e votar.</p>
+            )}
+          </div>
         </div>
       )}
 
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-      {sucesso && <p style={{ color: "green" }}>{sucesso}</p>}
+      <Mensagens erro={erro} sucesso={sucesso} />
     </div>
   );
 }

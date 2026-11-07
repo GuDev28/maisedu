@@ -78,14 +78,14 @@ export default function AtividadesProfessor() {
       <div className="campos">
         <label>
           Turma
-          <select value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
+          <select className="form-select" value={turmaId} onChange={(e) => setTurmaId(e.target.value)}>
             {turmas.map((turma) => (
               <option key={turma.id} value={turma.id}>{turma.nome} ({rotuloAno(turma.anoEscolar)})</option>
             ))}
           </select>
         </label>
         {!criando && (
-          <button type="button" onClick={() => { setCriando(true); setSucesso(null); }}>Nova atividade</button>
+          <button className="btn btn-primary" type="button" onClick={() => { setCriando(true); setSucesso(null); }}>Nova atividade</button>
         )}
       </div>
 
@@ -98,7 +98,7 @@ export default function AtividadesProfessor() {
       {atividades.length === 0 ? (
         <p>Nenhuma atividade criada para esta turma.</p>
       ) : (
-        <table className="tabela">
+        <table className="table table-hover align-middle tabela">
           <thead>
             <tr>
               <th>Atividade</th>
@@ -117,7 +117,7 @@ export default function AtividadesProfessor() {
                 <td>{atividade.alunosQueIniciaram}</td>
                 <td>{atividade.alunosQueConcluiram}</td>
                 <td>{formatarDataHora(atividade.criadoEm)}</td>
-                <td><button type="button" onClick={() => verResultados(atividade.id)}>Resultados</button></td>
+                <td><button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => verResultados(atividade.id)}>Resultados</button></td>
               </tr>
             ))}
           </tbody>
@@ -127,7 +127,7 @@ export default function AtividadesProfessor() {
       {resultado && (
         <div className="cartao" style={{ marginTop: "1rem" }}>
           <h3 style={{ marginTop: 0 }}>Resultados: {resultado.titulo}</h3>
-          <table className="tabela">
+          <table className="table table-hover align-middle tabela">
             <thead>
               <tr><th>Aluno</th><th>Situação</th><th>Respondidas</th><th>Acertos</th></tr>
             </thead>
@@ -156,7 +156,7 @@ export default function AtividadesProfessor() {
               ))}
             </ol>
           </details>
-          <button type="button" onClick={() => setResultado(null)}>Fechar</button>
+          <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => setResultado(null)}>Fechar</button>
         </div>
       )}
     </div>
@@ -232,7 +232,7 @@ function NovaAtividade({ turmaId, onCriada, onCancelar }) {
       <div className="campos">
         <label style={{ flex: 1 }}>
           Título
-          <input value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={150}
+          <input className="form-control" value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={150}
                  placeholder="Ex.: Revisão de frações" />
         </label>
       </div>
@@ -241,38 +241,38 @@ function NovaAtividade({ turmaId, onCriada, onCancelar }) {
       <form className="campos" onSubmit={buscar}>
         <label>
           Tópico
-          <select value={filtros.topicoId} onChange={(e) => setFiltros({ ...filtros, topicoId: e.target.value })}>
+          <select className="form-select" value={filtros.topicoId} onChange={(e) => setFiltros({ ...filtros, topicoId: e.target.value })}>
             <option value="">Todos</option>
             {topicos.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
           </select>
         </label>
         <label>
           Nível
-          <select value={filtros.nivel} onChange={(e) => setFiltros({ ...filtros, nivel: e.target.value })}>
+          <select className="form-select" value={filtros.nivel} onChange={(e) => setFiltros({ ...filtros, nivel: e.target.value })}>
             <option value="">Todos</option>
             {NIVEIS.map((n) => <option key={n.valor} value={n.valor}>{n.rotulo}</option>)}
           </select>
         </label>
         <label>
           Ano
-          <select value={filtros.anoEscolar} onChange={(e) => setFiltros({ ...filtros, anoEscolar: e.target.value })}>
+          <select className="form-select" value={filtros.anoEscolar} onChange={(e) => setFiltros({ ...filtros, anoEscolar: e.target.value })}>
             <option value="">Todos</option>
             {ANOS_ESCOLARES.map((a) => <option key={a.valor} value={a.valor}>{a.rotulo}</option>)}
           </select>
         </label>
-        <button type="submit" disabled={buscando}>{buscando ? "Buscando..." : "Buscar"}</button>
+        <button className="btn btn-primary" type="submit" disabled={buscando}>{buscando ? "Buscando..." : "Buscar"}</button>
       </form>
 
       <div style={{ maxHeight: 280, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6 }}>
         {banco.length === 0 ? (
           <p style={{ padding: "0.5rem" }}>Nenhuma questão aprovada com esses filtros.</p>
         ) : (
-          <table className="tabela">
+          <table className="table table-hover align-middle tabela">
             <tbody>
               {banco.map((questao) => (
                 <tr key={questao.id}>
                   <td style={{ width: 28 }}>
-                    <input type="checkbox" aria-label={`Selecionar questão ${questao.id}`}
+                    <input className="form-check-input" type="checkbox" aria-label={`Selecionar questão ${questao.id}`}
                            checked={selecionadas.some((q) => q.id === questao.id)} onChange={() => alternar(questao)} />
                   </td>
                   <td>
@@ -297,8 +297,8 @@ function NovaAtividade({ turmaId, onCriada, onCancelar }) {
           {selecionadas.map((questao, indice) => (
             <li key={questao.id}>
               {questao.enunciado}{" "}
-              <button type="button" onClick={() => mover(indice, -1)} disabled={indice === 0} aria-label="Subir">↑</button>
-              <button type="button" onClick={() => mover(indice, 1)} disabled={indice === selecionadas.length - 1}
+              <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => mover(indice, -1)} disabled={indice === 0} aria-label="Subir">↑</button>
+              <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => mover(indice, 1)} disabled={indice === selecionadas.length - 1}
                       aria-label="Descer">↓</button>
             </li>
           ))}
@@ -307,10 +307,10 @@ function NovaAtividade({ turmaId, onCriada, onCancelar }) {
 
       <Mensagens erro={erro} />
       <div className="linha-acoes">
-        <button type="button" onClick={salvar} disabled={salvando || !titulo.trim() || selecionadas.length === 0}>
+        <button className="btn btn-primary" type="button" onClick={salvar} disabled={salvando || !titulo.trim() || selecionadas.length === 0}>
           {salvando ? "Criando..." : "Criar atividade"}
         </button>
-        <button type="button" onClick={onCancelar}>Cancelar</button>
+        <button className="btn btn-outline-secondary btn-sm" type="button" onClick={onCancelar}>Cancelar</button>
       </div>
     </div>
   );

@@ -6,6 +6,14 @@ import {
   listarMinhasQuestoes,
   listarTopicos,
 } from "../services/questaoService";
+import { Mensagens } from "../components/Mensagens";
+
+const CORES_STATUS = {
+  RASCUNHO: "text-bg-secondary",
+  PENDENTE: "text-bg-warning",
+  APROVADA: "text-bg-success",
+  REJEITADA: "text-bg-danger",
+};
 
 const NUMERO_ALTERNATIVAS = 5;
 const NIVEIS = ["FACIL", "MEDIO", "DIFICIL"];
@@ -103,109 +111,90 @@ export default function CriarQuestao() {
   }
 
   return (
-    <div className="pagina" style={{ maxWidth: 640 }}>
+    <div className="pagina">
       <h2>Criar questão</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Enunciado:{" "}
-            <textarea
-              value={enunciado}
-              onChange={(e) => setEnunciado(e.target.value)}
-              rows={3}
-              style={{ width: "100%" }}
-              required
-            />
-          </label>
+      <form onSubmit={handleSubmit} className="cartao">
+        <div className="mb-3">
+          <label className="form-label" htmlFor="enunciado">Enunciado</label>
+          <textarea id="enunciado" className="form-control" value={enunciado}
+                    onChange={(e) => setEnunciado(e.target.value)} rows={3} required />
         </div>
 
-        <div style={{ marginBottom: 12, display: "flex", flexWrap: "wrap", gap: "1rem" }}>
-          <label>
-            Tópico:{" "}
-            <select value={topicoId} onChange={(e) => setTopicoId(e.target.value)} required>
+        <div className="row g-3 mb-3">
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="topico">Tópico</label>
+            <select id="topico" className="form-select" value={topicoId} onChange={(e) => setTopicoId(e.target.value)}
+                    required>
               {topicos.map((topico) => (
-                <option key={topico.id} value={topico.id}>
-                  {topico.nome}
-                </option>
+                <option key={topico.id} value={topico.id}>{topico.nome}</option>
               ))}
             </select>
-          </label>
-
-          <label>
-            Dificuldade:{" "}
-            <select value={nivelDificuldade} onChange={(e) => setNivelDificuldade(e.target.value)}>
+          </div>
+          <div className="col-6 col-md-3">
+            <label className="form-label" htmlFor="nivel">Dificuldade</label>
+            <select id="nivel" className="form-select" value={nivelDificuldade}
+                    onChange={(e) => setNivelDificuldade(e.target.value)}>
               {NIVEIS.map((nivel) => (
-                <option key={nivel} value={nivel}>
-                  {rotuloNivel(nivel)}
-                </option>
+                <option key={nivel} value={nivel}>{rotuloNivel(nivel)}</option>
               ))}
             </select>
-          </label>
-
-          <label>
-            Ano escolar:{" "}
-            <select value={anoEscolar} onChange={(e) => setAnoEscolar(e.target.value)}>
+          </div>
+          <div className="col-6 col-md-3">
+            <label className="form-label" htmlFor="ano">Ano escolar</label>
+            <select id="ano" className="form-select" value={anoEscolar} onChange={(e) => setAnoEscolar(e.target.value)}>
               {ANOS_ESCOLARES.map((ano) => (
-                <option key={ano.valor} value={ano.valor}>
-                  {ano.rotulo}
-                </option>
+                <option key={ano.valor} value={ano.valor}>{ano.rotulo}</option>
               ))}
             </select>
-          </label>
+          </div>
         </div>
 
-        <p style={{ marginBottom: 4 }}>Alternativas (marque a correta):</p>
+        <p className="form-label mb-2">Alternativas (marque a correta)</p>
         {alternativas.map((texto, indice) => (
-          <div key={indice} style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="radio"
-              name="indiceCorreta"
-              checked={indiceCorreta === indice}
-              onChange={() => setIndiceCorreta(indice)}
-            />
-            <span>{String.fromCharCode(65 + indice)})</span>
-            <input
-              type="text"
-              value={texto}
-              onChange={(e) => handleAlternativaChange(indice, e.target.value)}
-              style={{ flex: 1 }}
-              required
-            />
+          <div key={indice} className="input-group mb-2">
+            <span className="input-group-text">
+              <input className="form-check-input mt-0" type="radio" name="indiceCorreta"
+                     aria-label={`Alternativa ${String.fromCharCode(65 + indice)} é a correta`}
+                     checked={indiceCorreta === indice} onChange={() => setIndiceCorreta(indice)} />
+            </span>
+            <span className="input-group-text">{String.fromCharCode(65 + indice)}</span>
+            <input type="text" className="form-control" value={texto}
+                   aria-label={`Texto da alternativa ${String.fromCharCode(65 + indice)}`}
+                   onChange={(e) => handleAlternativaChange(indice, e.target.value)} required />
           </div>
         ))}
 
-        <button type="submit" disabled={carregando || topicos.length === 0}>
+        <button type="submit" className="btn btn-primary mt-2" disabled={carregando || topicos.length === 0}>
           {carregando ? "Salvando..." : "Salvar rascunho"}
         </button>
       </form>
 
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-      {sucesso && <p style={{ color: "green" }}>{sucesso}</p>}
+      <Mensagens erro={erro} sucesso={sucesso} />
 
-      <h3 style={{ marginTop: "2rem" }}>Minhas questões</h3>
+      <h3 className="mt-4">Minhas questões</h3>
       {carregandoLista ? (
         <p>Carregando...</p>
       ) : minhasQuestoes.length === 0 ? (
         <p>Nenhuma questão criada ainda.</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul className="list-group">
           {minhasQuestoes.map((questao) => (
-            <li
-              key={questao.id}
-              style={{ border: "1px solid #ddd", borderRadius: 4, padding: 8, marginBottom: 8 }}
-            >
-              <strong>#{questao.id}</strong> — {questao.enunciado}
-              <br />
-              <small>
-                {questao.topico} · {rotuloNivel(questao.nivelDificuldade)} · {rotuloAno(questao.anoEscolar)} · status: {questao.status}
-              </small>
-              {questao.status === "RASCUNHO" && (
-                <div style={{ marginTop: 4 }}>
-                  <button type="button" onClick={() => handleEnviar(questao.id)}>
-                    Enviar para validação
-                  </button>
+            <li key={questao.id} className="list-group-item">
+              <div className="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <strong>#{questao.id}</strong> — {questao.enunciado}
+                  <div className="small text-body-secondary">
+                    {questao.topico} · {rotuloNivel(questao.nivelDificuldade)} · {rotuloAno(questao.anoEscolar)}
+                  </div>
                 </div>
+                <span className={`badge ${CORES_STATUS[questao.status] ?? "text-bg-secondary"}`}>{questao.status}</span>
+              </div>
+              {questao.status === "RASCUNHO" && (
+                <button type="button" className="btn btn-outline-primary btn-sm mt-2"
+                        onClick={() => handleEnviar(questao.id)}>
+                  Enviar para validação
+                </button>
               )}
             </li>
           ))}

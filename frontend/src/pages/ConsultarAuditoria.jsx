@@ -59,25 +59,25 @@ export default function ConsultarAuditoria() {
       <form className="campos" onSubmit={(e) => { e.preventDefault(); carregar(0); }}>
         <label>
           Id do usuário
-          <input type="number" min="1" value={filtros.usuarioId} onChange={(e) => alterar("usuarioId", e.target.value)}
+          <input className="form-control" type="number" min="1" value={filtros.usuarioId} onChange={(e) => alterar("usuarioId", e.target.value)}
                  style={{ width: 110 }} />
         </label>
         <label>
           Ação
-          <select value={filtros.acao} onChange={(e) => alterar("acao", e.target.value)}>
+          <select className="form-select" value={filtros.acao} onChange={(e) => alterar("acao", e.target.value)}>
             <option value="">Todas</option>
             {ACOES.map((acao) => <option key={acao} value={acao}>{acao}</option>)}
           </select>
         </label>
         <label>
           De
-          <input type="datetime-local" value={filtros.de} onChange={(e) => alterar("de", e.target.value)} />
+          <input className="form-control" type="datetime-local" value={filtros.de} onChange={(e) => alterar("de", e.target.value)} />
         </label>
         <label>
           Até
-          <input type="datetime-local" value={filtros.ate} onChange={(e) => alterar("ate", e.target.value)} />
+          <input className="form-control" type="datetime-local" value={filtros.ate} onChange={(e) => alterar("ate", e.target.value)} />
         </label>
-        <button type="submit">Filtrar</button>
+        <button className="btn btn-primary" type="submit">Filtrar</button>
       </form>
 
       <Mensagens erro={erro} />
@@ -88,7 +88,7 @@ export default function ConsultarAuditoria() {
         <p>Nenhum registro encontrado.</p>
       ) : (
         <>
-          <table className="tabela">
+          <table className="table table-hover align-middle tabela">
             <thead>
               <tr>
                 <th>Data e hora</th>
@@ -119,9 +119,9 @@ export default function ConsultarAuditoria() {
             </tbody>
           </table>
           <div className="linha-acoes">
-            <button type="button" disabled={pagina === 0} onClick={() => carregar(pagina - 1)}>Anterior</button>
+            <button className="btn btn-outline-secondary btn-sm" type="button" disabled={pagina === 0} onClick={() => carregar(pagina - 1)}>Anterior</button>
             <span>Página {pagina + 1} de {Math.max(totalPaginas, 1)}</span>
-            <button type="button" disabled={pagina + 1 >= totalPaginas} onClick={() => carregar(pagina + 1)}>Próxima</button>
+            <button className="btn btn-outline-secondary btn-sm" type="button" disabled={pagina + 1 >= totalPaginas} onClick={() => carregar(pagina + 1)}>Próxima</button>
           </div>
         </>
       )}

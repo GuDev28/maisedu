@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { RodapeLegal } from "../components/RodapeLegal";
+import { Mensagens } from "../components/Mensagens";
 
-export default function Login({ onAbrirPaginaLegal }) {
+/** RF01: entrada única para todos os perfis (e-mail para admin/professor, login para aluno). */
+export default function Login() {
   const { login, avisoSessao } = useAuth();
   const [identificador, setIdentificador] = useState("");
   const [senha, setSenha] = useState("");
@@ -14,6 +16,7 @@ export default function Login({ onAbrirPaginaLegal }) {
     setErro(null);
     setCarregando(true);
     try {
+      // Ao entrar, a rota de login redireciona sozinha para a tela inicial (ou a que o usuário tentou abrir).
       await login(identificador, senha);
     } catch (err) {
       setErro(err.message);
@@ -23,44 +26,34 @@ export default function Login({ onAbrirPaginaLegal }) {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: "4rem auto" }}>
-      <h2>Entrar no MaisEdu</h2>
-      {avisoSessao && !erro && <p style={{ color: "#8a5300" }}>{avisoSessao}</p>}
+    <div className="tela-central">
+      <div className="card shadow-sm cartao-acesso">
+        <div className="card-body p-4">
+          <h1 className="h3 text-center text-primary fw-bold mb-1">MaisEdu</h1>
+          <p className="text-center text-body-secondary mb-4">Aprendizagem adaptativa de Matemática</p>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            E-mail ou login:{" "}
-            <input
-              type="text"
-              value={identificador}
-              onChange={(e) => setIdentificador(e.target.value)}
-              autoFocus
-              required
-            />
-          </label>
+          {avisoSessao && !erro && <div className="alert alert-warning">{avisoSessao}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="identificador">E-mail ou login</label>
+              <input id="identificador" type="text" className="form-control" value={identificador}
+                     onChange={(e) => setIdentificador(e.target.value)} autoComplete="username" autoFocus required />
+            </div>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="senha">Senha</label>
+              <input id="senha" type="password" className="form-control" value={senha}
+                     onChange={(e) => setSenha(e.target.value)} autoComplete="current-password" required />
+            </div>
+            <button type="submit" className="btn btn-primary w-100" disabled={carregando}>
+              {carregando ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+
+          <Mensagens erro={erro} />
         </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <label>
-            Senha:{" "}
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-
-        <button type="submit" disabled={carregando}>
-          {carregando ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
-
-      {erro && <p style={{ color: "red" }}>{erro}</p>}
-
-      <RodapeLegal onAbrirPaginaLegal={onAbrirPaginaLegal} />
+      </div>
+      <RodapeLegal />
     </div>
   );
 }

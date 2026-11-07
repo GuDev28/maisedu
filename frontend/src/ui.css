@@ -1,20 +1,92 @@
-/* Estilos compartilhados das telas do MaisEdu (usam as variáveis de cor do index.css). */
+/*
+ * Componentes próprios do MaisEdu (painel, gráficos, cartões, folha de atividade).
+ * O restante da interface usa as classes do Bootstrap diretamente no JSX.
+ */
 
-.pagina {
-  max-width: 880px;
-  margin: 1.5rem auto;
-  padding: 0 1rem;
-  text-align: left;
-  width: 100%;
-  box-sizing: border-box;
+/* ---------------------------------------------------------------- estrutura */
+
+.barra-superior {
+  z-index: 1030;
 }
 
-.pagina h2 {
-  margin-top: 0;
+.menu-lateral {
+  font-size: 0.95rem;
+}
+
+@media (min-width: 768px) {
+  .menu-lateral {
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+}
+
+.menu-titulo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  padding: 0 0.75rem 0.25rem;
+}
+
+.menu-lateral .nav-link {
+  color: var(--text-h);
+  padding: 0.4rem 0.75rem;
+}
+
+.menu-lateral .nav-link:hover {
+  background: var(--accent-bg);
+}
+
+.menu-lateral .nav-link.active {
+  color: #fff;
+  background: var(--accent);
+}
+
+.tela-central {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.cartao-acesso {
+  width: 100%;
+  max-width: 440px;
+}
+
+.pagina {
+  max-width: 1100px;
 }
 
 .pagina-estreita {
-  max-width: 520px;
+  max-width: 560px;
+}
+
+.pagina > h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.pagina h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+}
+
+.pagina h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.documento-legal {
+  line-height: 1.6;
 }
 
 .texto-suave {
@@ -22,26 +94,14 @@
   font-size: 0.85rem;
 }
 
-.mensagem {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-}
-
-.mensagem-erro {
-  color: #9b1c1c;
-  background: #fde8e8;
-}
-
-.mensagem-sucesso {
-  color: #03543f;
-  background: #def7ec;
-}
-
+/* Bloco branco com borda e sombra (formulários e áreas de destaque) */
 .cartao {
+  background: var(--bs-body-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
+  border-radius: var(--bs-border-radius-lg);
+  box-shadow: var(--bs-box-shadow-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .cartao-selecionado {
@@ -57,62 +117,93 @@
   margin: 0.5rem 0;
 }
 
+/* Linha de filtros/campos lado a lado (quebra em telas estreitas) */
 .campos {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: flex-end;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .campos label {
   display: flex;
   flex-direction: column;
-  font-size: 0.85rem;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 11rem;
 }
 
+/* Formulário de uma coluna (cadastros) */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--bs-border-radius-lg);
+  box-shadow: var(--bs-box-shadow-sm);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 500;
+}
+
+.formulario .dica {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.formulario button[type="submit"] {
+  align-self: flex-start;
+}
+
+/* Tabelas: brancas sobre o fundo cinza e com rolagem horizontal no celular */
 .tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.tabela th,
-.tabela td {
-  border-bottom: 1px solid var(--border);
-  padding: 0.4rem 0.5rem;
-  text-align: left;
-  vertical-align: top;
+  --bs-table-bg: var(--bs-body-bg);
+  border: 1px solid var(--border);
+  font-size: 0.92rem;
 }
 
 .tabela th {
-  color: var(--text-h);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .etiqueta {
   display: inline-block;
   margin-left: 0.4rem;
-  padding: 0 0.4rem;
+  padding: 0 0.45rem;
   border-radius: 999px;
   font-size: 0.75rem;
   border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .etiqueta-alerta {
-  color: #9b1c1c;
-  border-color: #f8b4b4;
+  color: var(--bs-danger-text-emphasis);
+  background: var(--bs-danger-bg-subtle);
+  border-color: var(--bs-danger-border-subtle);
 }
 
 .etiqueta-ok {
-  color: #03543f;
-  border-color: #84e1bc;
+  color: var(--bs-success-text-emphasis);
+  background: var(--bs-success-bg-subtle);
+  border-color: var(--bs-success-border-subtle);
 }
 
 .etiqueta-neutra {
   color: var(--text);
 }
+
+/* ---------------------------------------------------------------- painel de desempenho (RF19) */
 
 .barra {
   display: inline-flex;
@@ -125,7 +216,7 @@
   flex: 1;
   height: 8px;
   border-radius: 4px;
-  background: var(--border);
+  background: var(--bs-secondary-bg);
   overflow: hidden;
   min-width: 80px;
 }
@@ -136,15 +227,15 @@
 }
 
 .barra-baixa {
-  background: #e02424;
+  background: var(--bs-danger);
 }
 
 .barra-media {
-  background: #c27803;
+  background: var(--bs-warning);
 }
 
 .barra-alta {
-  background: #0e9f6e;
+  background: var(--bs-success);
 }
 
 .barra-valor {
@@ -154,30 +245,76 @@
 }
 
 .barra-destaque .barra-valor {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--text-h);
 }
 
+/* Big numbers: até 5 cartões por linha; 2 colunas no celular */
 .resumo-numeros {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .cartao-numero {
+  background: var(--bs-body-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--bs-border-radius-lg);
+  box-shadow: var(--bs-box-shadow-sm);
+  padding: 0.65rem 0.9rem;
   display: flex;
   flex-direction: column;
-  min-width: 120px;
+  min-width: 0;
 }
 
 .cartao-numero .numero {
-  font-size: 1.6rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--text-h);
   font-variant-numeric: tabular-nums;
+}
+
+.cartao-numero .numero-texto {
+  font-size: 1.05rem;
+  max-width: 14rem;
+}
+
+.cartao-numero-rotulo {
+  font-size: 0.85rem;
+  color: var(--text-h);
+}
+
+.cartao-numero .barra {
+  min-width: 0;
+  width: 100%;
+}
+
+.cartao-numero .barra-trilho {
+  min-width: 36px;
+}
+
+/* Gráficos lado a lado em telas largas, empilhados no celular */
+.painel-graficos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.painel-graficos > section {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--bs-border-radius-lg);
+  box-shadow: var(--bs-box-shadow-sm);
+  padding: 1rem 1.25rem;
+}
+
+.painel-graficos h3 {
+  margin-top: 0;
 }
 
 .linha-nivel {
@@ -185,44 +322,7 @@
   white-space: nowrap;
 }
 
-.alternativas {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0;
-}
-
-.alternativas li {
-  margin-bottom: 0.4rem;
-}
-
-.alternativa {
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.alternativa:disabled {
-  cursor: default;
-}
-
-.alternativa-certa {
-  border-color: #0e9f6e;
-  background: #def7ec;
-  color: #03543f;
-}
-
-.alternativa-errada {
-  border-color: #e02424;
-  background: #fde8e8;
-  color: #9b1c1c;
-}
-
+/* Gráfico de linha (GraficoEvolucao) */
 .grafico {
   margin: 0;
 }
@@ -238,7 +338,7 @@
 }
 
 .grafico-meta {
-  stroke: #0e9f6e;
+  stroke: var(--bs-success);
   stroke-dasharray: 4 4;
 }
 
@@ -262,46 +362,127 @@
   font-size: 11px;
 }
 
-.nav-grupos {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+/* Gráfico de barras horizontais (GraficoBarras) */
+.grafico-barras {
+  margin: 0;
 }
 
-.nav-grupo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+.grafico-barras ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gb-linha {
+  display: grid;
+  grid-template-columns: minmax(6rem, 11rem) 1fr 3.6rem;
+  gap: 0.5rem;
   align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.85rem;
 }
 
-.nav-grupo-titulo {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.gb-rotulo {
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.gb-trilho {
+  position: relative;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--bs-secondary-bg);
+}
+
+.gb-barra {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.gb-meta {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 70%;
+  border-left: 2px dashed var(--bs-success);
+}
+
+.gb-valor {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-h);
+}
+
+.gb-marcas {
+  position: relative;
+  height: 1.1rem;
+  font-size: 0.7rem;
   color: var(--text);
-  min-width: 5.5rem;
 }
 
-.cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
+.gb-marcas span {
+  position: absolute;
+  transform: translateX(-50%);
 }
+
+/* ---------------------------------------------------------------- folha de atividade do aluno (RF16) */
+
+.alternativas {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.alternativas li {
+  margin-bottom: 0.4rem;
+}
+
+.alternativa {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.alternativa:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.alternativa:disabled {
+  cursor: default;
+}
+
+.alternativa-certa {
+  border-color: var(--bs-success);
+  background: var(--bs-success-bg-subtle);
+  color: var(--bs-success-text-emphasis);
+}
+
+.alternativa-errada {
+  border-color: var(--bs-danger);
+  background: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-text-emphasis);
+}
+
+/* ---------------------------------------------------------------- celular */
 
 @media (max-width: 640px) {
-  .cabecalho {
-    flex-direction: column;
-  }
-
-  /* Tabelas largas rolam na horizontal em vez de estourar a tela do celular */
+  /* Tabelas largas rolam na horizontal em vez de estourar a tela */
   .tabela {
     display: block;
     overflow-x: auto;
     font-size: 0.8rem;
+  }
+
+  .campos label {
+    min-width: 0;
+    flex: 1 1 100%;
   }
 }

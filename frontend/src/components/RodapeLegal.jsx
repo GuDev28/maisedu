@@ -1,23 +1,16 @@
-export const linkStyle = {
-  background: "none",
-  border: "none",
-  color: "#0645AD",
-  textDecoration: "underline",
-  cursor: "pointer",
-  padding: 0,
-  font: "inherit",
-};
+import { Link } from "react-router";
 
-export function RodapeLegal({ onAbrirPaginaLegal }) {
+/**
+ * Links para os Termos de Uso e a Política de Privacidade em todas as telas (RF14, CA02).
+ * Com `novaAba`, abre em outra aba (usado nas telas com formulário, para não perder o que foi digitado).
+ */
+export function RodapeLegal({ novaAba = false }) {
+  const alvo = novaAba ? { target: "_blank", rel: "noopener noreferrer" } : {};
   return (
-    <footer style={{ textAlign: "center", marginTop: "2rem", fontSize: "0.85rem", color: "#777" }}>
-      <button type="button" style={linkStyle} onClick={() => onAbrirPaginaLegal("termos")}>
-        Termos de Uso
-      </button>
+    <footer className="text-center small text-body-secondary mt-5 pt-3 border-top">
+      <Link to="/termos" {...alvo}>Termos de Uso</Link>
       {" · "}
-      <button type="button" style={linkStyle} onClick={() => onAbrirPaginaLegal("privacidade")}>
-        Política de Privacidade
-      </button>
+      <Link to="/privacidade" {...alvo}>Política de Privacidade</Link>
     </footer>
   );
 }

@@ -1,166 +1,122 @@
-import { useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Layout } from "./components/Layout";
+import { PaginaLegal } from "./components/PaginaLegal";
+import { PAGINAS, caminhoInicial, podeAcessar } from "./navegacao";
 import Login from "./pages/Login";
 import TrocarSenha from "./pages/TrocarSenha";
 import AceitarTermos from "./pages/AceitarTermos";
-import CadastrarProfessor from "./pages/CadastrarProfessor";
-import CadastrarAluno from "./pages/CadastrarAluno";
-import VincularAluno from "./pages/VincularAluno";
-import VincularProfessor from "./pages/VincularProfessor";
-import AvaliarQuestao from "./pages/AvaliarQuestao";
-import CriarQuestao from "./pages/CriarQuestao";
-import GerenciarTurmas from "./pages/GerenciarTurmas";
-import GerenciarUsuarios from "./pages/GerenciarUsuarios";
-import ConsultarAuditoria from "./pages/ConsultarAuditoria";
-import AtividadesProfessor from "./pages/AtividadesProfessor";
-import DesempenhoTurma from "./pages/DesempenhoTurma";
-import MinhasAtividades from "./pages/MinhasAtividades";
-import MeuDesempenho from "./pages/MeuDesempenho";
-import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
-import { RodapeLegal, linkStyle } from "./components/RodapeLegal";
-import "./App.css";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import PaginaNaoEncontrada from "./pages/PaginaNaoEncontrada";
 
-/**
- * Telas por perfil. Sem React Router: a navegação troca a tela ativa no estado (decisão do grupo).
- * O admin também tem o papel PROFESSOR, então vê os dois grupos. O servidor confere o papel em
- * toda requisição; o menu só esconde o que o perfil não pode usar.
- */
-const GRUPOS = [
-  {
-    titulo: "Gestão",
-    roles: ["ADMIN"],
-    paginas: {
-      turmas: { label: "Turmas", componente: GerenciarTurmas },
-      cadastrarProfessor: { label: "Cadastrar Professor", componente: CadastrarProfessor },
-      vincularProfessor: { label: "Vincular Professor à Turma", componente: VincularProfessor },
-      usuarios: { label: "Usuários (LGPD)", componente: GerenciarUsuarios },
-      auditoria: { label: "Auditoria", componente: ConsultarAuditoria },
-    },
-  },
-  {
-    titulo: "Professor",
-    roles: ["PROFESSOR"],
-    paginas: {
-      atividades: { label: "Atividades", componente: AtividadesProfessor },
-      desempenhoTurma: { label: "Desempenho da Turma", componente: DesempenhoTurma },
-      criar: { label: "Criar Questão", componente: CriarQuestao },
-      avaliar: { label: "Avaliar Questão", componente: AvaliarQuestao },
-      cadastrarAluno: { label: "Cadastrar Aluno", componente: CadastrarAluno },
-      vincularAluno: { label: "Vincular Aluno à Turma", componente: VincularAluno },
-      meusAlunos: { label: "Meus Alunos", componente: GerenciarUsuarios, somenteSemRole: "ADMIN" },
-    },
-  },
-  {
-    titulo: "Aluno",
-    roles: ["ALUNO"],
-    paginas: {
-      minhasAtividades: { label: "Minhas Atividades", componente: MinhasAtividades },
-      meuDesempenho: { label: "Meu Desempenho", componente: MeuDesempenho },
-    },
-  },
-];
-
-function gruposDoUsuario(roles) {
-  const grupos = [];
-  for (const grupo of GRUPOS) {
-    if (!grupo.roles.some((role) => roles.includes(role))) {
-      continue;
-    }
-    const paginas = Object.entries(grupo.paginas).filter(
-      ([, pagina]) => !pagina.somenteSemRole || !roles.includes(pagina.somenteSemRole)
-    );
-    grupos.push({ titulo: grupo.titulo, paginas });
-  }
-  return grupos;
-}
-
-function AppAutenticado({ onAbrirPaginaLegal }) {
-  const { usuario, logout } = useAuth();
-  const grupos = gruposDoUsuario(usuario.roles);
-  const todas = grupos.flatMap((grupo) => grupo.paginas);
-  const [paginaAtiva, setPaginaAtiva] = useState(todas[0]?.[0] ?? null);
-  const entrada = todas.find(([chave]) => chave === paginaAtiva);
-  const PaginaAtual = entrada ? entrada[1].componente : null;
-
+function Carregando() {
   return (
-    <div>
-      <header className="cabecalho">
-        <nav className="nav-grupos" aria-label="Menu principal">
-          {grupos.map((grupo) => (
-            <div key={grupo.titulo} className="nav-grupo">
-              {grupos.length > 1 && <span className="nav-grupo-titulo">{grupo.titulo}</span>}
-              {grupo.paginas.map(([chave, { label }]) => (
-                <button
-                  key={chave}
-                  onClick={() => setPaginaAtiva(chave)}
-                  disabled={chave === paginaAtiva}
-                  aria-current={chave === paginaAtiva ? "page" : undefined}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div style={{ whiteSpace: "nowrap" }}>
-          <span style={{ marginRight: 12 }}>{usuario.nome}</span>
-          <button onClick={logout}>Sair</button>
-        </div>
-      </header>
-
-      {PaginaAtual ? (
-        <PaginaAtual key={paginaAtiva} />
-      ) : (
-        <p>Nenhuma funcionalidade disponível para o seu perfil ainda.</p>
-      )}
-
-      <RodapeLegal onAbrirPaginaLegal={onAbrirPaginaLegal} />
+    <div className="tela-central">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Carregando...</span>
+      </div>
     </div>
   );
 }
 
-function App() {
-  const { usuario, carregandoSessao } = useAuth();
-  const [paginaLegal, setPaginaLegal] = useState(null);
-
-  if (paginaLegal) {
-    const PaginaLegal = paginaLegal === "termos" ? TermosUso : PoliticaPrivacidade;
-    return (
-      <div>
-        <div style={{ textAlign: "center", marginTop: "1rem" }}>
-          <button type="button" style={linkStyle} onClick={() => setPaginaLegal(null)}>
-            ← Voltar
-          </button>
-        </div>
-        <PaginaLegal />
-      </div>
-    );
-  }
-
-  if (carregandoSessao) {
-    return <p style={{ textAlign: "center", marginTop: "4rem" }}>Carregando...</p>;
-  }
-
-  if (!usuario) {
-    return <Login onAbrirPaginaLegal={setPaginaLegal} />;
-  }
-
+/** Etapa obrigatória antes da área logada: troca da senha provisória (RF02) ou novo aceite dos termos. */
+function etapaPendente(usuario) {
   if (usuario.senhaTemporaria) {
-    return <TrocarSenha onAbrirPaginaLegal={setPaginaLegal} />;
+    return "/trocar-senha";
   }
-
   if (usuario.termosPendentes) {
-    return <AceitarTermos onAbrirPaginaLegal={setPaginaLegal} />;
+    return "/aceitar-termos";
   }
-
-  return <AppAutenticado onAbrirPaginaLegal={setPaginaLegal} />;
+  return null;
 }
 
-export default function AppComProvider() {
+/** Tela de login: quem já está autenticado volta para a página que tentou abrir (ou para a inicial). */
+function SomenteVisitante({ children }) {
+  const { usuario, carregandoSessao } = useAuth();
+  const location = useLocation();
+  if (carregandoSessao) {
+    return <Carregando />;
+  }
+  if (usuario) {
+    return <Navigate to={location.state?.de ?? "/"} replace />;
+  }
+  return children;
+}
+
+/** Troca de senha e aceite dos termos: só abrem quando são a etapa pendente do usuário. */
+function EtapaObrigatoria({ etapa, children }) {
+  const { usuario, carregandoSessao } = useAuth();
+  if (carregandoSessao) {
+    return <Carregando />;
+  }
+  if (!usuario) {
+    return <Navigate to="/login" replace />;
+  }
+  if (etapaPendente(usuario) !== etapa) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+/**
+ * Área logada: exige sessão e as etapas obrigatórias concluídas. É só conveniência de navegação;
+ * a API recusa (401/403) qualquer requisição fora dessas regras.
+ */
+function AreaAutenticada() {
+  const { usuario, carregandoSessao } = useAuth();
+  const location = useLocation();
+  if (carregandoSessao) {
+    return <Carregando />;
+  }
+  if (!usuario) {
+    return <Navigate to="/login" replace state={{ de: location.pathname }} />;
+  }
+  const pendente = etapaPendente(usuario);
+  if (pendente) {
+    return <Navigate to={pendente} replace />;
+  }
+  return <Layout />;
+}
+
+/** Página de outro perfil: volta para a tela inicial do usuário. */
+function ExigePerfil({ pagina, children }) {
+  const { usuario } = useAuth();
+  if (!podeAcessar(usuario.roles, pagina)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
+function TelaInicial() {
+  const { usuario } = useAuth();
+  return <Navigate to={caminhoInicial(usuario.roles)} replace />;
+}
+
+export default function App() {
   return (
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<SomenteVisitante><Login /></SomenteVisitante>} />
+          {/* RF14: Termos e Política abrem sem login */}
+          <Route path="/termos" element={<PaginaLegal><TermosUso /></PaginaLegal>} />
+          <Route path="/privacidade" element={<PaginaLegal><PoliticaPrivacidade /></PaginaLegal>} />
+          <Route path="/trocar-senha"
+                 element={<EtapaObrigatoria etapa="/trocar-senha"><TrocarSenha /></EtapaObrigatoria>} />
+          <Route path="/aceitar-termos"
+                 element={<EtapaObrigatoria etapa="/aceitar-termos"><AceitarTermos /></EtapaObrigatoria>} />
+
+          <Route element={<AreaAutenticada />}>
+            <Route index element={<TelaInicial />} />
+            {PAGINAS.map((pagina) => (
+              <Route key={pagina.caminho} path={pagina.caminho}
+                     element={<ExigePerfil pagina={pagina}><pagina.componente /></ExigePerfil>} />
+            ))}
+            <Route path="*" element={<PaginaNaoEncontrada />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
