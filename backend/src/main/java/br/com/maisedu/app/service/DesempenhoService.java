@@ -15,7 +15,6 @@ import br.com.maisedu.app.repository.DesempenhoTopicoRepository;
 import br.com.maisedu.app.repository.RespostaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,23 +42,20 @@ public class DesempenhoService {
     private final AlunoTurmaRepository alunoTurmaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AcessoTurma acessoTurma;
-    private final int minimoRespostasDominio;
-    private final BigDecimal percentualDominio;
+    private final MotorAdaptativo motorAdaptativo;
 
     public DesempenhoService(DesempenhoTopicoRepository desempenhoTopicoRepository,
                              RespostaRepository respostaRepository,
                              AlunoTurmaRepository alunoTurmaRepository,
                              UsuarioRepository usuarioRepository,
                              AcessoTurma acessoTurma,
-                             @Value("${maisedu.adaptativo.minimo-respostas-dominio:5}") int minimoRespostasDominio,
-                             @Value("${maisedu.adaptativo.percentual-dominio:70}") BigDecimal percentualDominio) {
+                             MotorAdaptativo motorAdaptativo) {
         this.desempenhoTopicoRepository = desempenhoTopicoRepository;
         this.respostaRepository = respostaRepository;
         this.alunoTurmaRepository = alunoTurmaRepository;
         this.usuarioRepository = usuarioRepository;
         this.acessoTurma = acessoTurma;
-        this.minimoRespostasDominio = minimoRespostasDominio;
-        this.percentualDominio = percentualDominio;
+        this.motorAdaptativo = motorAdaptativo;
     }
 
     /**
@@ -189,7 +185,9 @@ public class DesempenhoService {
                 acertos += registro.getTotalAcertos();
                 niveis.add(new DesempenhoAlunoResponse.NivelDesempenho(registro.getNivelDificuldade().name(),
                         registro.getTotalRespostas(), registro.getTotalAcertos(), registro.getPercentualAcerto(),
-                        registro.dominado(minimoRespostasDominio, percentualDominio)));
+                        motorAdaptativo.dominado(new MotorAdaptativo.DesempenhoNivel(entrada.getKey(),
+                                registro.getNivelDificuldade(), registro.getTotalRespostas(),
+                                registro.getTotalAcertos()))));
             }
             topicos.add(new DesempenhoAlunoResponse.TopicoDesempenho(entrada.getKey(), nomes.get(entrada.getKey()),
                     respostas, acertos, DesempenhoTopico.percentual(acertos, respostas), niveis));

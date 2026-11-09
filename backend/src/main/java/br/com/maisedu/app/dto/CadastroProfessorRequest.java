@@ -11,5 +11,11 @@ public record CadastroProfessorRequest(
         @NotBlank(message = "Informe o e-mail")
         @Email(message = "E-mail inválido")
         @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres")
-        String email) {
+        String email,
+        /** Opcional: já vincula o professor a esta turma no mesmo passo do cadastro. */
+        Long turmaId) {
+
+    public CadastroProfessorRequest(String nome, String email) {
+        this(nome, email, null);
+    }
 }

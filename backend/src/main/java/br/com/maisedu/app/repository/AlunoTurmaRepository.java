@@ -7,10 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AlunoTurmaRepository extends JpaRepository<AlunoTurma, Long> {
 
     boolean existsByAlunoIdAndTurmaId(Long alunoId, Long turmaId);
+
+    Optional<AlunoTurma> findByAlunoIdAndTurmaId(Long alunoId, Long turmaId);
 
     @Query("select at from AlunoTurma at join fetch at.aluno a where at.turma.id = :turmaId order by a.nome")
     List<AlunoTurma> findByTurmaIdComAluno(@Param("turmaId") Long turmaId);

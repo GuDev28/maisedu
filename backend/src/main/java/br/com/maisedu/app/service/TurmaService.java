@@ -1,7 +1,6 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
-import br.com.maisedu.app.exception.RecursoNaoEncontradoException;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.Instituicao;
@@ -23,10 +22,12 @@ import java.util.List;
 public class TurmaService {
 
     public static final int TAMANHO_MAXIMO_NOME = 100;
+    private static final String SO_ADMIN = "Só o administrador gerencia turmas.";
 
     private final TurmaRepository turmaRepository;
     private final InstituicaoRepository instituicaoRepository;
     private final AuditoriaService auditoriaService;
+    private final AcessoTurma acessoTurma;
 
     @Transactional
     public Turma cadastrar(UsuarioAutenticado admin, String nomeInformado, AnoEscolar anoEscolar) {
@@ -64,12 +65,7 @@ public class TurmaService {
     /** Turma inativa não aceita novos vínculos nem atividades (RN01), mas o histórico é mantido. */
     @Transactional
     public Turma alterarSituacao(UsuarioAutenticado admin, Long turmaId, boolean ativa) {
-        exigirAdmin(admin);
-        Turma turma = turmaRepository.findById(turmaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Turma não encontrada."));
-        if (!turma.getInstituicao().getId().equals(admin.instituicaoId())) {
-            throw new AccessDeniedException("Turma pertence a outra instituição.");
-        }
+        Turma turma = acessoTurma.buscarComoAdmin(admin, turmaId, SO_ADMIN);
         turma.setAtivo(ativa);
         auditoriaService.registrar(admin, AcaoAuditoria.ALTERACAO_TURMA, "Turma", turmaId, true,
                 ativa ? "reativada" : "desativada");
@@ -78,7 +74,7 @@ public class TurmaService {
 
     private void exigirAdmin(UsuarioAutenticado ator) {
         if (!ator.possuiRole(RoleNome.ADMIN)) {
-            throw new AccessDeniedException("Só o administrador gerencia turmas.");
+            throw new AccessDeniedException(SO_ADMIN);
         }
     }
 }

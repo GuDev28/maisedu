@@ -24,7 +24,7 @@ public class UsuarioController {
     public UsuarioCadastradoResponse cadastrarProfessor(
             @AuthenticationPrincipal UsuarioAutenticado admin,
             @Valid @RequestBody CadastroProfessorRequest request) {
-        var novo = usuarioService.cadastrarProfessor(admin, request.nome(), request.email());
+        var novo = usuarioService.cadastrarProfessor(admin, request.nome(), request.email(), request.turmaId());
         return UsuarioCadastradoResponse.semSenha(novo.usuario());
     }
 
@@ -34,7 +34,9 @@ public class UsuarioController {
     public UsuarioCadastradoResponse cadastrarAluno(
             @AuthenticationPrincipal UsuarioAutenticado professor,
             @Valid @RequestBody CadastroAlunoRequest request) {
-        var novo = usuarioService.cadastrarAluno(professor.id(), request.nome(), request.login());
-        return UsuarioCadastradoResponse.from(novo.usuario(), novo.senhaProvisoria());
+        var novo = usuarioService.cadastrarAluno(professor, request.nome(), request.login(),
+                request.emailResponsavel(), request.turmaId());
+        // a senha provisória foi para o e-mail do responsável: não volta para quem cadastrou
+        return UsuarioCadastradoResponse.semSenha(novo.usuario());
     }
 }

@@ -4,6 +4,8 @@ import br.com.maisedu.app.dto.PraticaAdaptativaResponse;
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.exception.RecursoNaoEncontradoException;
 import br.com.maisedu.app.model.AcaoAuditoria;
+import br.com.maisedu.app.model.AlunoTurma;
+import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.AtividadeAluno;
 import br.com.maisedu.app.model.AtividadeAlunoQuestao;
 import br.com.maisedu.app.model.DesempenhoTopico;
@@ -12,18 +14,18 @@ import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.StatusQuestao;
 import br.com.maisedu.app.model.TipoAtividade;
 import br.com.maisedu.app.model.Usuario;
+import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.AtividadeAlunoRepository;
 import br.com.maisedu.app.repository.DesempenhoTopicoRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
 import br.com.maisedu.app.repository.RespostaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,6 +43,7 @@ public class PraticaAdaptativaService {
     private final QuestaoRepository questaoRepository;
     private final RespostaRepository respostaRepository;
     private final AtividadeAlunoRepository atividadeAlunoRepository;
+    private final AlunoTurmaRepository alunoTurmaRepository;
     private final AuditoriaService auditoriaService;
     private final MotorAdaptativo motor;
     private final Random random = new Random();
@@ -50,19 +53,17 @@ public class PraticaAdaptativaService {
                                     QuestaoRepository questaoRepository,
                                     RespostaRepository respostaRepository,
                                     AtividadeAlunoRepository atividadeAlunoRepository,
+                                    AlunoTurmaRepository alunoTurmaRepository,
                                     AuditoriaService auditoriaService,
-                                    @Value("${maisedu.adaptativo.maximo-topicos:3}") int maximoTopicos,
-                                    @Value("${maisedu.adaptativo.questoes-por-pratica:10}") int questoesPorPratica,
-                                    @Value("${maisedu.adaptativo.minimo-respostas-dominio:5}") int minimoRespostas,
-                                    @Value("${maisedu.adaptativo.percentual-dominio:70}") BigDecimal percentualDominio) {
+                                    MotorAdaptativo motor) {
         this.usuarioRepository = usuarioRepository;
         this.desempenhoTopicoRepository = desempenhoTopicoRepository;
         this.questaoRepository = questaoRepository;
         this.respostaRepository = respostaRepository;
         this.atividadeAlunoRepository = atividadeAlunoRepository;
+        this.alunoTurmaRepository = alunoTurmaRepository;
         this.auditoriaService = auditoriaService;
-        this.motor = new MotorAdaptativo(new MotorAdaptativo.Parametros(
-                maximoTopicos, questoesPorPratica, minimoRespostas, percentualDominio));
+        this.motor = motor;
     }
 
     /**
@@ -79,7 +80,7 @@ public class PraticaAdaptativaService {
 
         for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(alunoId, TipoAtividade.ADAPTATIVA)) {
             if (!pratica.isConcluida()) {
-                return resumir(pratica, false);
+                return resumir(pratica, false, false);
             }
         }
 
@@ -90,18 +91,33 @@ public class PraticaAdaptativaService {
         }
 
         List<MotorAdaptativo.TopicoPlanejado> plano = motor.planejar(desempenho);
-        if (plano.isEmpty()) {
-            throw new NegocioException("Você ainda não tem desempenho registrado. Responda uma atividade da sua "
-                    + "turma antes de gerar uma prática adaptativa.");
-        }
-
         Map<Long, Questao> questoesPorId = new HashMap<>();
         List<MotorAdaptativo.Candidata> candidatas = new ArrayList<>();
-        for (MotorAdaptativo.TopicoPlanejado topico : plano) {
-            for (Questao questao : questaoRepository.findByStatusAndTopicoId(StatusQuestao.APROVADA, topico.topicoId())) {
-                questoesPorId.put(questao.getId(), questao);
-                candidatas.add(new MotorAdaptativo.Candidata(questao.getId(), topico.topicoId(),
-                        questao.getNivelDificuldade()));
+        boolean diagnostica = plano.isEmpty();
+        if (diagnostica) {
+            // Sem nenhuma resposta ainda: prática diagnóstica com questões fáceis de vários tópicos do
+            // ano escolar do aluno, em vez de mandá-lo esperar uma atividade da turma.
+            Map<Long, List<Questao>> porTopico = new LinkedHashMap<>();
+            for (Questao questao : aprovadasDoAnoDoAluno(alunoId)) {
+                porTopico.computeIfAbsent(questao.getTopico().getId(), id -> new ArrayList<>()).add(questao);
+            }
+            List<Long> topicoIds = new ArrayList<>(porTopico.keySet());
+            Collections.shuffle(topicoIds, random);
+            plano = motor.planejarDiagnostico(topicoIds);
+            for (MotorAdaptativo.TopicoPlanejado topico : plano) {
+                for (Questao questao : porTopico.get(topico.topicoId())) {
+                    questoesPorId.put(questao.getId(), questao);
+                    candidatas.add(new MotorAdaptativo.Candidata(questao.getId(), topico.topicoId(),
+                            questao.getNivelDificuldade()));
+                }
+            }
+        } else {
+            for (MotorAdaptativo.TopicoPlanejado topico : plano) {
+                for (Questao questao : questaoRepository.findByStatusAndTopicoId(StatusQuestao.APROVADA, topico.topicoId())) {
+                    questoesPorId.put(questao.getId(), questao);
+                    candidatas.add(new MotorAdaptativo.Candidata(questao.getId(), topico.topicoId(),
+                            questao.getNivelDificuldade()));
+                }
             }
         }
 
@@ -109,7 +125,9 @@ public class PraticaAdaptativaService {
         List<Long> selecionadas = motor.selecionarQuestoes(plano, candidatas, jaRespondidas, random);
         if (selecionadas.isEmpty()) {
             // RF18/CA03: sem questão aprovada compatível, a prática não é gerada e o aluno é avisado.
-            throw new NegocioException("Ainda não há questões aprovadas no banco para os tópicos em que você "
+            throw new NegocioException(diagnostica
+                    ? "Ainda não há questões aprovadas no banco para o seu ano escolar. Avise o seu professor."
+                    : "Ainda não há questões aprovadas no banco para os tópicos em que você "
                     + "precisa praticar. Avise o seu professor.");
         }
 
@@ -119,21 +137,18 @@ public class PraticaAdaptativaService {
         }
         AtividadeAluno pratica = atividadeAlunoRepository.save(AtividadeAluno.adaptativa(aluno, questoes));
 
-        StringBuilder detalhes = new StringBuilder();
+        List<String> partes = new ArrayList<>();
         for (MotorAdaptativo.TopicoPlanejado topico : plano) {
-            if (!detalhes.isEmpty()) {
-                detalhes.append("; ");
-            }
-            detalhes.append("tópico ").append(topico.topicoId()).append(" (").append(topico.percentualTopico())
-                    .append("%) -> ").append(topico.nivelAlvo());
+            partes.add("tópico " + topico.topicoId() + " (" + topico.percentualTopico() + "%) -> " + topico.nivelAlvo());
         }
-        auditoriaService.registrar(aluno.getId(), aluno.getNome(), AcaoAuditoria.GERACAO_PRATICA_ADAPTATIVA,
-                "AtividadeAluno", pratica.getId(), true, detalhes.toString());
+        String detalhes = (diagnostica ? "diagnóstica: " : "") + String.join("; ", partes);
+        auditoriaService.registrar(aluno.getId(), aluno.getNome(), null, AcaoAuditoria.GERACAO_PRATICA_ADAPTATIVA,
+                "AtividadeAluno", pratica.getId(), true, detalhes);
 
-        return resumir(pratica, true);
+        return resumir(pratica, true, diagnostica);
     }
 
-    private PraticaAdaptativaResponse resumir(AtividadeAluno pratica, boolean nova) {
+    private PraticaAdaptativaResponse resumir(AtividadeAluno pratica, boolean nova, boolean diagnostica) {
         Map<String, int[]> porTopicoENivel = new LinkedHashMap<>();
         for (AtividadeAlunoQuestao entregue : pratica.getQuestoes()) {
             Questao questao = entregue.getQuestao();
@@ -145,6 +160,25 @@ public class PraticaAdaptativaService {
             String[] partes = entrada.getKey().split("\\|");
             topicos.add(new PraticaAdaptativaResponse.TopicoDaPratica(partes[0], partes[1], entrada.getValue()[0]));
         }
-        return new PraticaAdaptativaResponse(pratica.getId(), nova, topicos, pratica.getQuestoes().size());
+        return new PraticaAdaptativaResponse(pratica.getId(), nova, diagnostica, topicos,
+                pratica.getQuestoes().size());
+    }
+
+    /** Questões aprovadas do(s) ano(s) escolar(es) das turmas ativas do aluno; de todos os anos se ele não tem turma. */
+    private List<Questao> aprovadasDoAnoDoAluno(Long alunoId) {
+        Set<AnoEscolar> anos = new HashSet<>();
+        for (AlunoTurma vinculo : alunoTurmaRepository.findByAlunoIdComTurma(alunoId)) {
+            if (vinculo.getTurma().isAtivo()) {
+                anos.add(vinculo.getTurma().getAnoEscolar());
+            }
+        }
+        if (anos.isEmpty()) {
+            return questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, null, null, null);
+        }
+        List<Questao> questoes = new ArrayList<>();
+        for (AnoEscolar ano : anos) {
+            questoes.addAll(questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, null, null, ano));
+        }
+        return questoes;
     }
 }

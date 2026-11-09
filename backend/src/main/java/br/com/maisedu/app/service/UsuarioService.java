@@ -28,12 +28,18 @@ public class UsuarioService {
     private final SenhaGeradora senhaGeradora;
     private final AuditoriaService auditoriaService;
     private final ResendEmailService emailService;
+    private final VinculoTurmaService vinculoTurmaService;
 
     public record NovoUsuario(Usuario usuario, String senhaProvisoria) {
     }
 
+    /**
+     * Cadastra o professor e, se a turma for informada, já o vincula a ela na mesma transação: se o
+     * vínculo falhar, o cadastro também é desfeito (e o e-mail, que só sai depois do commit, não é enviado).
+     */
     @Transactional
-    public NovoUsuario cadastrarProfessor(UsuarioAutenticado admin, String nomeInformado, String emailInformado) {
+    public NovoUsuario cadastrarProfessor(UsuarioAutenticado admin, String nomeInformado, String emailInformado,
+                                          Long turmaId) {
         String nome = nomeInformado.strip();
         String email = Identificadores.normalizar(emailInformado);
         if (usuarioRepository.existsByEmail(email)) {
@@ -49,31 +55,45 @@ public class UsuarioService {
 
         Usuario salvo = usuarioRepository.save(professor);
         auditoriaService.registrar(admin, AcaoAuditoria.CADASTRO_PROFESSOR, "Usuario", salvo.getId(), true, null);
+        if (turmaId != null) {
+            vinculoTurmaService.vincularProfessor(salvo.getId(), turmaId, admin);
+        }
         emailService.enviarSenhaProvisoria(salvo.getId(), salvo.getNome(), email, senhaProvisoria);
 
         return new NovoUsuario(salvo, senhaProvisoria);
     }
 
+    /**
+     * Cadastra o aluno na instituição de quem cadastra. O aluno não tem e-mail próprio: o login e a
+     * senha provisória vão para o e-mail do responsável (depois do commit), e quem cadastra não vê a
+     * senha. Com a turma informada, já faz o vínculo no mesmo passo (RN01).
+     */
     @Transactional
-    public NovoUsuario cadastrarAluno(Long professorId, String nomeInformado, String loginInformado) {
+    public NovoUsuario cadastrarAluno(UsuarioAutenticado professor, String nomeInformado, String loginInformado,
+                                      String emailResponsavelInformado, Long turmaId) {
         String nome = nomeInformado.strip();
         String login = Identificadores.normalizar(loginInformado);
+        String emailResponsavel = Identificadores.normalizar(emailResponsavelInformado);
         if (usuarioRepository.existsByLogin(login)) {
             throw new NegocioException("Já existe um usuário com este login.");
         }
 
-        Usuario professor = usuarioRepository.findById(professorId)
-                .orElseThrow(() -> new NegocioException("Professor não encontrado."));
+        Instituicao instituicao = instituicaoRepository.findById(professor.instituicaoId())
+                .orElseThrow(() -> new NegocioException("Instituição não encontrada."));
 
         String senhaProvisoria = senhaGeradora.gerar();
-        Usuario aluno = Usuario.novoAluno(
-                nome, login, passwordEncoder.encode(senhaProvisoria), professor.getInstituicao());
+        Usuario aluno = Usuario.novoAluno(nome, login, passwordEncoder.encode(senhaProvisoria), instituicao,
+                emailResponsavel);
         aluno.adicionarRole(buscarRole(RoleNome.ALUNO));
 
         Usuario salvo = usuarioRepository.save(aluno);
-        auditoriaService.registrar(professor.getId(), professor.getNome(), AcaoAuditoria.CADASTRO_ALUNO,
-                "Usuario", salvo.getId(), true, null);
+        auditoriaService.registrar(professor, AcaoAuditoria.CADASTRO_ALUNO, "Usuario", salvo.getId(), true, null);
+        if (turmaId != null) {
+            vinculoTurmaService.vincularAluno(salvo.getId(), turmaId, professor);
+        }
 
+        emailService.enviarAcessoAoResponsavel(salvo.getId(), nome, login, instituicao.getNome(), emailResponsavel,
+                senhaProvisoria);
         return new NovoUsuario(salvo, senhaProvisoria);
     }
 

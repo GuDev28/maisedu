@@ -14,7 +14,8 @@ public record DadosPessoaisResponse(
         List<DesempenhoExportado> desempenho,
         List<RegistroAuditoria> registrosDeAuditoria) {
 
-    public record Cadastro(Long id, String nome, String email, String login, List<String> papeis,
+    public record Cadastro(Long id, String nome, String email, String login, String emailResponsavel,
+                           List<String> papeis,
                            String instituicao, boolean ativo, LocalDateTime criadoEm,
                            LocalDateTime termosAceitosEm, Integer versaoTermosAceita) {
     }

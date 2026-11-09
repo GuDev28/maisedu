@@ -2,6 +2,7 @@ package br.com.maisedu.app.controller;
 
 import br.com.maisedu.app.dto.AlunoTurmaResponse;
 import br.com.maisedu.app.dto.ProfessorTurmaResponse;
+import br.com.maisedu.app.dto.TurmaMembrosResponse;
 import br.com.maisedu.app.dto.UsuarioParaVinculoResponse;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.security.UsuarioAutenticado;
@@ -42,6 +43,34 @@ public class VinculoTurmaController {
             @PathVariable Long professorId) {
         var vinculo = vinculoTurmaService.vincularProfessor(professorId, turmaId, ator);
         return ProfessorTurmaResponse.from(vinculo);
+    }
+
+    /** Tela da turma: professores e alunos vinculados. */
+    @GetMapping("/membros")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
+    public TurmaMembrosResponse membros(@AuthenticationPrincipal UsuarioAutenticado ator, @PathVariable Long turmaId) {
+        var membros = vinculoTurmaService.listarMembros(turmaId, ator);
+        return TurmaMembrosResponse.from(membros.turma(), membros.professores(), membros.alunos());
+    }
+
+    @DeleteMapping("/alunos/{alunoId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
+    public void desvincularAluno(
+            @AuthenticationPrincipal UsuarioAutenticado ator,
+            @PathVariable Long turmaId,
+            @PathVariable Long alunoId) {
+        vinculoTurmaService.desvincularAluno(alunoId, turmaId, ator);
+    }
+
+    @DeleteMapping("/professores/{professorId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public void desvincularProfessor(
+            @AuthenticationPrincipal UsuarioAutenticado ator,
+            @PathVariable Long turmaId,
+            @PathVariable Long professorId) {
+        vinculoTurmaService.desvincularProfessor(professorId, turmaId, ator);
     }
 
     @GetMapping("/alunos-disponiveis")

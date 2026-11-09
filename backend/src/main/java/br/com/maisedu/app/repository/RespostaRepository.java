@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RespostaRepository extends JpaRepository<Resposta, Long> {
@@ -18,6 +19,13 @@ public interface RespostaRepository extends JpaRepository<Resposta, Long> {
     @Query("select r from Resposta r join fetch r.alternativa join fetch r.atividadeAlunoQuestao aaq " +
             "where aaq.atividadeAluno.id = :atividadeAlunoId")
     List<Resposta> findByAtividadeAluno(@Param("atividadeAlunoId") Long atividadeAlunoId);
+
+    /** Respondidas e acertos de várias folhas de uma vez (listas de atividades), sem uma consulta por folha. */
+    @Query("select new br.com.maisedu.app.repository.PlacarAtividade(aaq.atividadeAluno.id, count(r), " +
+            "sum(case when alt.correta = true then 1 else 0 end)) " +
+            "from Resposta r join r.alternativa alt join r.atividadeAlunoQuestao aaq " +
+            "where aaq.atividadeAluno.id in :atividadeAlunoIds group by aaq.atividadeAluno.id")
+    List<PlacarAtividade> contarPorAtividadeAluno(@Param("atividadeAlunoIds") Collection<Long> atividadeAlunoIds);
 
     /** Ids das questões que o aluno já respondeu, em qualquer atividade ou prática. */
     @Query("select distinct aaq.questao.id from Resposta r join r.atividadeAlunoQuestao aaq " +

@@ -2,6 +2,7 @@ package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.LogAuditoria;
+import br.com.maisedu.app.repository.FiltroAuditoria;
 import br.com.maisedu.app.repository.LogAuditoriaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
@@ -41,6 +42,10 @@ public class AuditoriaService {
         this.transacaoIndependente.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
+    /**
+     * Quando quem chama tem o usuário carregado mas não há sessão (login, troca de senha, e-mail,
+     * aluno iniciando atividade). {@code identificadorAcesso} só é informado no login.
+     */
     public void registrar(Long usuarioId, String usuarioNome, String identificadorAcesso, AcaoAuditoria acao,
                            String entidade, Long entidadeId, boolean sucesso, String detalhes) {
         gravar(usuarioId, usuarioNome, null, identificadorAcesso, acao, entidade, entidadeId, sucesso, detalhes);
@@ -50,12 +55,6 @@ public class AuditoriaService {
     public void registrar(UsuarioAutenticado ator, AcaoAuditoria acao, String entidade, Long entidadeId,
                            boolean sucesso, String detalhes) {
         gravar(ator.id(), ator.nome(), ator.instituicaoId(), null, acao, entidade, entidadeId, sucesso, detalhes);
-    }
-
-    /** Mesma ideia, quando quem chama já tem o usuário carregado (ex.: dentro de AutenticacaoService), sem identificador de acesso a registrar. */
-    public void registrar(Long usuarioId, String usuarioNome, AcaoAuditoria acao, String entidade, Long entidadeId,
-                           boolean sucesso, String detalhes) {
-        gravar(usuarioId, usuarioNome, null, null, acao, entidade, entidadeId, sucesso, detalhes);
     }
 
     /**
@@ -85,7 +84,7 @@ public class AuditoriaService {
     @Transactional(readOnly = true)
     public Page<LogAuditoria> consultar(Long instituicaoId, Long usuarioId, AcaoAuditoria acao,
                                         LocalDateTime de, LocalDateTime ate, Pageable pageable) {
-        return logAuditoriaRepository.buscar(instituicaoId, usuarioId, acao, de, ate, pageable);
+        return logAuditoriaRepository.findAll(FiltroAuditoria.de(instituicaoId, usuarioId, acao, de, ate), pageable);
     }
 
     /**

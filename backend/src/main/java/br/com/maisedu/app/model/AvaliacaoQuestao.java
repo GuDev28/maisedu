@@ -29,12 +29,21 @@ public class AvaliacaoQuestao {
     @Column(nullable = false)
     private VotoAvaliacao voto;
 
+    /** Motivo informado pelo avaliador (obrigatório na rejeição), mostrado ao autor da questão. */
+    @Column(length = 500)
+    private String comentario;
+
     @Column(nullable = false, updatable = false)
     private final LocalDateTime avaliadoEm = LocalDateTime.now();
 
     public AvaliacaoQuestao(Questao questao, Usuario professor, VotoAvaliacao voto) {
+        this(questao, professor, voto, null);
+    }
+
+    public AvaliacaoQuestao(Questao questao, Usuario professor, VotoAvaliacao voto, String comentario) {
         this.questao = questao;
         this.professor = professor;
         this.voto = voto;
+        this.comentario = comentario;
     }
 }

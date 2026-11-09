@@ -1,12 +1,15 @@
 package br.com.maisedu.app.controller;
 
 import br.com.maisedu.app.dto.AceiteTermosRequest;
+import br.com.maisedu.app.dto.ContaResponse;
+import br.com.maisedu.app.dto.DadosPessoaisResponse;
 import br.com.maisedu.app.dto.LoginRequest;
 import br.com.maisedu.app.dto.TrocarSenhaRequest;
 import br.com.maisedu.app.dto.UsuarioResumoResponse;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.AutenticacaoService;
+import br.com.maisedu.app.service.GestaoUsuarioService;
 import br.com.maisedu.app.service.AuditoriaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class AuthController {
 
     private final AutenticacaoService autenticacaoService;
     private final AuditoriaService auditoriaService;
+    private final GestaoUsuarioService gestaoUsuarioService;
 
     @Value("${maisedu.jwt.cookie-nome}")
     private String nomeCookie;
@@ -59,14 +63,29 @@ public class AuthController {
 
     @GetMapping("/me")
     public UsuarioResumoResponse me(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
-        return UsuarioResumoResponse.from(usuarioAutenticado);
+        return autenticacaoService.resumoDaSessao(usuarioAutenticado.id());
+    }
+
+    /** Tela "Minha conta": dados cadastrais, escola, papéis e aceite dos Termos/Política. */
+    @GetMapping("/conta")
+    public ContaResponse conta(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        return autenticacaoService.conta(usuarioAutenticado.id());
+    }
+
+    /** O próprio titular baixa os seus dados pessoais em JSON (LGPD, art. 18, II e V). */
+    @GetMapping("/meus-dados")
+    public ResponseEntity<DadosPessoaisResponse> meusDados(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"maisedu-meus-dados.json\"")
+                .body(gestaoUsuarioService.exportarMeusDados(usuarioAutenticado));
     }
 
     @PostMapping("/trocar-senha")
     public ResponseEntity<Void> trocarSenha(
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
             @Valid @RequestBody TrocarSenhaRequest request) {
-        autenticacaoService.trocarSenha(usuarioAutenticado.id(), request.senhaAtual(), request.novaSenha());
+        autenticacaoService.trocarSenha(usuarioAutenticado.id(), request.senhaAtual(), request.novaSenha(),
+                request.aceiteTermos());
         ResponseCookie cookie = construirCookie("", Duration.ZERO);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

@@ -7,10 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProfessorTurmaRepository extends JpaRepository<ProfessorTurma, Long> {
 
     boolean existsByProfessorIdAndTurmaId(Long professorId, Long turmaId);
+
+    Optional<ProfessorTurma> findByProfessorIdAndTurmaId(Long professorId, Long turmaId);
 
     List<ProfessorTurma> findByProfessorId(Long professorId);
 

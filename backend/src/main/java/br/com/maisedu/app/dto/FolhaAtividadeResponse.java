@@ -18,9 +18,10 @@ public record FolhaAtividadeResponse(
         int acertos,
         List<QuestaoEntregue> questoes) {
 
+    /** {@code alternativaMarcadaId}: escolha ainda não confirmada (nula quando já há resposta). */
     public record QuestaoEntregue(Long atividadeAlunoQuestaoId, int ordem, String enunciado, String topico,
                                   String nivelDificuldade, List<AlternativaAluno> alternativas,
-                                  RespostaDada resposta) {
+                                  Long alternativaMarcadaId, RespostaDada resposta) {
     }
 
     public record AlternativaAluno(Long id, char letra, String texto) {
