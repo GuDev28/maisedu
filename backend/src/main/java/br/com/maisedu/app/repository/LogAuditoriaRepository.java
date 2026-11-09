@@ -14,14 +14,18 @@ import java.util.List;
 
 public interface LogAuditoriaRepository extends JpaRepository<LogAuditoria, Long> {
 
-    /** Consulta do admin: sempre restrita à instituição dele; os demais filtros são opcionais. */
+    /**
+     * Consulta do admin: sempre restrita à instituição dele; usuário e ação são opcionais. O período vem
+     * sempre preenchido (AuditoriaService completa as datas não informadas): no PostgreSQL, um parâmetro
+     * de data usado em ":de is null" fica sem tipo definido e a consulta falha.
+     */
     @Query("""
             select l from LogAuditoria l
             where l.instituicaoId = :instituicaoId
               and (:usuarioId is null or l.usuarioId = :usuarioId)
               and (:acao is null or l.acao = :acao)
-              and (:de is null or l.criadoEm >= :de)
-              and (:ate is null or l.criadoEm <= :ate)
+              and l.criadoEm >= :de
+              and l.criadoEm <= :ate
             """)
     Page<LogAuditoria> buscar(@Param("instituicaoId") Long instituicaoId,
                                @Param("usuarioId") Long usuarioId,

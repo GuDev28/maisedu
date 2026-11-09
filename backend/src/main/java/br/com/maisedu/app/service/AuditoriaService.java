@@ -23,6 +23,10 @@ import java.time.LocalDateTime;
 @Slf4j
 public class AuditoriaService {
 
+    /** Limites usados quando o admin não informa o início ou o fim do período na consulta (RF13). */
+    static final LocalDateTime INICIO_DO_PERIODO = LocalDateTime.of(2000, 1, 1, 0, 0);
+    static final LocalDateTime FIM_DO_PERIODO = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+
     private final LogAuditoriaRepository logAuditoriaRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -85,7 +89,10 @@ public class AuditoriaService {
     @Transactional(readOnly = true)
     public Page<LogAuditoria> consultar(Long instituicaoId, Long usuarioId, AcaoAuditoria acao,
                                         LocalDateTime de, LocalDateTime ate, Pageable pageable) {
-        return logAuditoriaRepository.buscar(instituicaoId, usuarioId, acao, de, ate, pageable);
+        // Sem data informada, o período fica aberto naquele lado (ver LogAuditoriaRepository.buscar).
+        LocalDateTime inicio = de != null ? de : INICIO_DO_PERIODO;
+        LocalDateTime fim = ate != null ? ate : FIM_DO_PERIODO;
+        return logAuditoriaRepository.buscar(instituicaoId, usuarioId, acao, inicio, fim, pageable);
     }
 
     /**
