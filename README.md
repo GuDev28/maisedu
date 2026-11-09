@@ -23,14 +23,14 @@ O MaisEdu permite que professores criem questões de Matemática por tópico, n�
 | RF16 | Resolução com snapshot das questões (RN03), resposta única e correção automática (RN04) | Aluno |
 | RF17 | Desempenho acumulado por tópico e nível, atualizado a cada resposta (RN05) | Sistema |
 | RF18 | Prática adaptativa (RN06) | Aluno |
-| RF19 | Painel de desempenho do aluno e da turma, com evolução semanal | Aluno, Professor |
+| RF19 | Painel de desempenho (dashboard) do aluno e da turma: indicadores (big numbers), gráfico de acerto por tópico, evolução semanal e detalhe por tópico e nível | Aluno, Professor |
 | LGPD | Redefinição de senha, correção, desativação, exportação (JSON) e anonimização de usuários; retenção automática dos logs | Admin |
 
 ## Arquitetura
 
 ![Diagrama de arquitetura do MaisEdu](docs/diagrams/arquitetura.png)
 
-- **Front-end**: SPA em React + Vite. Chama a API sempre em `/api` (proxy do Vite em desenvolvimento, nginx no Docker), então front e API ficam na mesma origem.
+- **Front-end**: SPA em React + Vite, com React Router (uma URL por tela, rotas protegidas por perfil) e Bootstrap 5 na interface. Chama a API sempre em `/api` (proxy do Vite em desenvolvimento, nginx no Docker), então front e API ficam na mesma origem.
 - **Back-end**: API REST em Spring Boot, em camadas Controller → Service → Repository. O motor adaptativo (`MotorAdaptativo`) é uma classe pura, sem Spring, testada isoladamente.
 - **Autenticação**: Spring Security + JWT em cookie HttpOnly/SameSite=Strict, RBAC por papéis. A cada requisição o filtro confere no banco se a conta está ativa e se a sessão não foi encerrada.
 - **Persistência**: PostgreSQL via Spring Data JPA / Hibernate; esquema evoluído só por migrations Flyway (`V1` a `V8`).
@@ -108,8 +108,7 @@ maisedu/
 ├── docs/
 │   ├── diagrams/       # arquitetura e diagrama entidade-relacionamento
 │   ├── integracao-resend.md
-│   ├── ALTERACOES.md   # o que mudou nesta versão e como foi verificado
-│   └── AJUSTES_MONOGRAFIA.md
+│   └── ALTERACOES.md   # funcionalidades, correções e decisões técnicas desta versão
 ├── docker-compose.yml
 └── .env.example
 ```
