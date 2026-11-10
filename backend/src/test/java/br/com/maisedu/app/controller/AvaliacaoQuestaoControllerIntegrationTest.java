@@ -10,11 +10,14 @@ import br.com.maisedu.app.model.VotoAvaliacao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -123,7 +126,7 @@ class AvaliacaoQuestaoControllerIntegrationTest extends IntegracaoTestBase {
         ResponseEntity<AvaliacaoQuestaoResponse> response = client.post().uri(avaliacoesPath(questaoId))
                 .header(HttpHeaders.COOKIE, cookie(quartoAvaliador))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AvaliacaoQuestaoRequest(VotoAvaliacao.REJEITAR))
+                .body(new AvaliacaoQuestaoRequest(VotoAvaliacao.REJEITAR, "A alternativa marcada como correta está errada"))
                 .retrieve()
                 .toEntity(AvaliacaoQuestaoResponse.class);
 
@@ -137,6 +140,39 @@ class AvaliacaoQuestaoControllerIntegrationTest extends IntegracaoTestBase {
                 .extracting(Questao::getStatus)
                 .isEqualTo(StatusQuestao.REJEITADA);
         assertThat(avaliacaoQuestaoRepository.countByQuestaoId(questaoId)).isEqualTo(4);
+
+        // o autor vê o placar e o motivo de cada rejeição em "Minhas questões"
+        List<QuestaoResponse> minhas = client.get().uri("/questoes/minhas")
+                .header(HttpHeaders.COOKIE, cookie(autor))
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<QuestaoResponse>>() { });
+        QuestaoResponse rejeitada = null;
+        for (QuestaoResponse questao : minhas) {
+            if (questao.id().equals(questaoId)) {
+                rejeitada = questao;
+            }
+        }
+        assertThat(rejeitada).isNotNull();
+        assertThat(rejeitada.aprovacoes()).isEqualTo(1);
+        assertThat(rejeitada.rejeicoes()).isEqualTo(3);
+        assertThat(rejeitada.motivosRejeicao()).hasSize(3)
+                .contains("A alternativa marcada como correta está errada");
+    }
+
+    @Test
+    void avaliar_rejeicaoSemMotivo_deveRetornar400SemGravarVoto() {
+        Long questaoId = criarQuestaoPendente(autor, "Questao para rejeitar sem motivo");
+
+        ResponseEntity<ErroResponse> response = client.post().uri(avaliacoesPath(questaoId))
+                .header(HttpHeaders.COOKIE, cookie(avaliador))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new AvaliacaoQuestaoRequest(VotoAvaliacao.REJEITAR))
+                .retrieve()
+                .toEntity(ErroResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().mensagem()).contains("motivo da rejeição");
+        assertThat(avaliacaoQuestaoRepository.countByQuestaoId(questaoId)).isZero();
     }
 
     @Test
@@ -220,7 +256,7 @@ class AvaliacaoQuestaoControllerIntegrationTest extends IntegracaoTestBase {
         ResponseEntity<ErroResponse> response = client.post().uri(avaliacoesPath(questaoId))
                 .header(HttpHeaders.COOKIE, cookie(atrasado))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AvaliacaoQuestaoRequest(VotoAvaliacao.REJEITAR))
+                .body(new AvaliacaoQuestaoRequest(VotoAvaliacao.REJEITAR, "Chegou depois do quórum"))
                 .retrieve()
                 .toEntity(ErroResponse.class);
 

@@ -1,9 +1,11 @@
 package br.com.maisedu.app.service;
 
+import br.com.maisedu.app.dto.QuestaoResponse;
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.Alternativa;
+import br.com.maisedu.app.model.AvaliacaoQuestao;
 import br.com.maisedu.app.model.Instituicao;
 import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
@@ -12,10 +14,12 @@ import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.StatusQuestao;
 import br.com.maisedu.app.model.Topico;
 import br.com.maisedu.app.model.Usuario;
+import br.com.maisedu.app.model.VotoAvaliacao;
 import br.com.maisedu.app.repository.AvaliacaoQuestaoRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
 import br.com.maisedu.app.repository.TopicoRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
+import br.com.maisedu.app.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,19 +35,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
  * Cadastro de questões do banco compartilhado: criação como rascunho com 5 alternativas (A a E),
- * envio para a validação colaborativa (RN2) e fila de avaliação do professor.
+ * edição e exclusão do rascunho pelo autor, envio para a validação colaborativa (RN2), placar
+ * das questões do autor e fila de avaliação do professor.
  */
 @ExtendWith(MockitoExtension.class)
 class QuestaoServiceTest {
@@ -65,6 +73,8 @@ class QuestaoServiceTest {
     private Instituicao escola;
     private Usuario autor;
     private Topico fracoes;
+    private UsuarioAutenticado atorAutor;
+    private UsuarioAutenticado atorOutroProfessor;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +87,9 @@ class QuestaoServiceTest {
 
         fracoes = new Topico("Frações");
         ReflectionTestUtils.setField(fracoes, "id", TOPICO_ID);
+
+        atorAutor = new UsuarioAutenticado(AUTOR_ID, "Paula Autora", 1L, Set.of(RoleNome.PROFESSOR), false);
+        atorOutroProfessor = new UsuarioAutenticado(OUTRO_PROFESSOR_ID, "Otávio", 1L, Set.of(RoleNome.PROFESSOR), false);
     }
 
     private void dadoQueAutorETopicoExistem() {
@@ -129,7 +142,7 @@ class QuestaoServiceTest {
         });
 
         // Act
-        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
+        Questao questao = service.criar(atorAutor, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
                 CINCO_ALTERNATIVAS, 2);
 
         // Assert
@@ -140,26 +153,21 @@ class QuestaoServiceTest {
         Alternativa correta = unicaAlternativaCorreta(questao);
         assertEquals("15", correta.getTexto());
         assertEquals('C', correta.letra());
-        verify(auditoriaService).registrar(AUTOR_ID, "Paula Autora", AcaoAuditoria.CRIACAO_QUESTAO,
-                "Questao", QUESTAO_ID, true, null);
+        verify(auditoriaService).registrar(atorAutor, AcaoAuditoria.CRIACAO_QUESTAO, "Questao", QUESTAO_ID, true, null);
     }
 
     @Test
     void deveLancarExcecaoQuandoQuemCriaAQuestaoNaoEProfessor() {
         // Arrange
-        Usuario aluno = Usuario.novoAluno("Ana Aluna", "2026001", "hash", escola);
-        ReflectionTestUtils.setField(aluno, "id", 9L);
-        aluno.adicionarRole(new Role(RoleNome.ALUNO));
-        when(usuarioRepository.findById(9L)).thenReturn(Optional.of(aluno));
+        UsuarioAutenticado aluno = new UsuarioAutenticado(9L, "Ana Aluna", 1L, Set.of(RoleNome.ALUNO), false);
 
         // Act
-        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(9L, ENUNCIADO,
+        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(aluno, ENUNCIADO,
                 TOPICO_ID, NivelDificuldade.FACIL, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, 2));
 
         // Assert
         assertEquals("Usuário informado não possui papel de professor", ex.getMessage());
-        verify(questaoRepository, never()).save(any());
-        verifyNoInteractions(topicoRepository, auditoriaService);
+        verifyNoInteractions(questaoRepository, usuarioRepository, topicoRepository, auditoriaService);
     }
 
     @ParameterizedTest(name = "{index}: alternativas = {0}")
@@ -169,7 +177,7 @@ class QuestaoServiceTest {
         dadoQueAutorETopicoExistem();
 
         // Act
-        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(AUTOR_ID, ENUNCIADO,
+        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(atorAutor, ENUNCIADO,
                 TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, alternativas, 0));
 
         // Assert
@@ -189,7 +197,7 @@ class QuestaoServiceTest {
         when(questaoRepository.save(any(Questao.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         // Act
-        Questao questao = service.criar(AUTOR_ID, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
+        Questao questao = service.criar(atorAutor, ENUNCIADO, TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO,
                 CINCO_ALTERNATIVAS, indiceCorreta);
 
         // Assert
@@ -205,7 +213,7 @@ class QuestaoServiceTest {
         dadoQueAutorETopicoExistem();
 
         // Act
-        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(AUTOR_ID, ENUNCIADO,
+        NegocioException ex = assertThrows(NegocioException.class, () -> service.criar(atorAutor, ENUNCIADO,
                 TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, indiceCorreta));
 
         // Assert
@@ -220,12 +228,12 @@ class QuestaoServiceTest {
         when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(rascunho));
 
         // Act
-        Questao enviada = service.enviarParaValidacao(QUESTAO_ID, AUTOR_ID);
+        Questao enviada = service.enviarParaValidacao(atorAutor, QUESTAO_ID);
 
         // Assert
         assertEquals(StatusQuestao.PENDENTE, enviada.getStatus());
-        verify(auditoriaService).registrar(AUTOR_ID, "Paula Autora", AcaoAuditoria.ENVIO_VALIDACAO_QUESTAO,
-                "Questao", QUESTAO_ID, true, null);
+        verify(auditoriaService).registrar(atorAutor, AcaoAuditoria.ENVIO_VALIDACAO_QUESTAO, "Questao", QUESTAO_ID,
+                true, null);
     }
 
     @Test
@@ -236,7 +244,7 @@ class QuestaoServiceTest {
 
         // Act
         AccessDeniedException ex = assertThrows(AccessDeniedException.class,
-                () -> service.enviarParaValidacao(QUESTAO_ID, OUTRO_PROFESSOR_ID));
+                () -> service.enviarParaValidacao(atorOutroProfessor, QUESTAO_ID));
 
         // Assert
         assertEquals("Só o autor pode enviar a questão para validação", ex.getMessage());
@@ -245,19 +253,151 @@ class QuestaoServiceTest {
     }
 
     @Test
-    void deveMontarFilaDeAvaliacaoSemAsQuestoesQueOProfessorJaVotou() {
+    void deveEditarORascunhoQuandoSolicitadoPeloAutor() {
         // Arrange
-        Questao jaVotada = pendenteDoAutor(60L);
-        Questao aindaNaoVotada = pendenteDoAutor(61L);
-        when(questaoRepository.findByStatusAndAutorIdNotOrderByCriadoEmAsc(StatusQuestao.PENDENTE, OUTRO_PROFESSOR_ID))
-                .thenReturn(List.of(jaVotada, aindaNaoVotada));
-        when(avaliacaoQuestaoRepository.existsByQuestaoIdAndProfessorId(60L, OUTRO_PROFESSOR_ID)).thenReturn(true);
-        when(avaliacaoQuestaoRepository.existsByQuestaoIdAndProfessorId(61L, OUTRO_PROFESSOR_ID)).thenReturn(false);
+        Questao rascunho = rascunhoCompletoDoAutor(QUESTAO_ID);
+        Topico porcentagem = new Topico("Porcentagem");
+        ReflectionTestUtils.setField(porcentagem, "id", 6L);
+        when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(rascunho));
+        when(topicoRepository.findById(6L)).thenReturn(Optional.of(porcentagem));
 
         // Act
-        List<Questao> fila = service.listarPendentesParaAvaliar(OUTRO_PROFESSOR_ID);
+        Questao editada = service.editar(atorAutor, QUESTAO_ID, "  Quanto é 10% de 50?  ", 6L, NivelDificuldade.FACIL,
+                AnoEscolar.SETIMO_ANO, List.of("1", "5", "10", "15", "50"), 1);
+
+        // Assert
+        assertEquals("Quanto é 10% de 50?", editada.getEnunciado());
+        assertSame(porcentagem, editada.getTopico());
+        assertEquals(NivelDificuldade.FACIL, editada.getNivelDificuldade());
+        assertEquals(AnoEscolar.SETIMO_ANO, editada.getAnoEscolar());
+        assertEquals("5", unicaAlternativaCorreta(editada).getTexto());
+        assertEquals(StatusQuestao.RASCUNHO, editada.getStatus());
+        verify(auditoriaService).registrar(atorAutor, AcaoAuditoria.EDICAO_QUESTAO, "Questao", QUESTAO_ID, true, null);
+    }
+
+    @Test
+    void deveRecusarEdicaoDeQuestaoJaEnviadaParaValidacao() {
+        // Arrange
+        Questao pendente = pendenteDoAutor(QUESTAO_ID);
+        when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(pendente));
+        when(topicoRepository.findById(TOPICO_ID)).thenReturn(Optional.of(fracoes));
+
+        // Act
+        NegocioException ex = assertThrows(NegocioException.class, () -> service.editar(atorAutor, QUESTAO_ID,
+                "Outro enunciado", TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, 0));
+
+        // Assert
+        assertEquals("Só é possível editar a questão enquanto ela é um rascunho", ex.getMessage());
+        assertEquals(ENUNCIADO, pendente.getEnunciado());
+        verifyNoInteractions(auditoriaService);
+    }
+
+    @Test
+    void deveNegarEdicaoQuandoQuemPedeNaoEOAutor() {
+        // Arrange
+        when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(rascunhoCompletoDoAutor(QUESTAO_ID)));
+
+        // Act
+        AccessDeniedException ex = assertThrows(AccessDeniedException.class, () -> service.editar(atorOutroProfessor,
+                QUESTAO_ID, "Outro", TOPICO_ID, NivelDificuldade.MEDIO, AnoEscolar.SEXTO_ANO, CINCO_ALTERNATIVAS, 0));
+
+        // Assert
+        assertEquals("Só o autor pode editar a questão", ex.getMessage());
+        verifyNoInteractions(topicoRepository, auditoriaService);
+    }
+
+    @Test
+    void deveExcluirORascunhoDoAutor() {
+        // Arrange
+        Questao rascunho = rascunhoCompletoDoAutor(QUESTAO_ID);
+        when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(rascunho));
+
+        // Act
+        service.excluir(atorAutor, QUESTAO_ID);
+
+        // Assert
+        verify(questaoRepository).delete(rascunho);
+        verify(auditoriaService).registrar(atorAutor, AcaoAuditoria.EXCLUSAO_QUESTAO, "Questao", QUESTAO_ID, true, null);
+    }
+
+    @Test
+    void deveRecusarExclusaoDeQuestaoJaEnviada() {
+        // Arrange
+        Questao pendente = pendenteDoAutor(QUESTAO_ID);
+        when(questaoRepository.findById(QUESTAO_ID)).thenReturn(Optional.of(pendente));
+
+        // Act
+        NegocioException ex = assertThrows(NegocioException.class, () -> service.excluir(atorAutor, QUESTAO_ID));
+
+        // Assert
+        assertEquals("Só é possível excluir um rascunho; a questão já foi enviada para validação", ex.getMessage());
+        verify(questaoRepository, never()).delete(any());
+        verifyNoInteractions(auditoriaService);
+    }
+
+    @Test
+    void deveListarAsQuestoesDoAutorComPlacarEMotivosDaRejeicao() {
+        // Arrange
+        Questao pendente = pendenteDoAutor(60L);
+        Questao rascunho = rascunhoCompletoDoAutor(61L);
+        Usuario avaliador = new Usuario("Bruno", "bruno@escola.test", "hash", escola);
+        when(questaoRepository.findByAutorIdOrderByCriadoEmDesc(AUTOR_ID)).thenReturn(List.of(pendente, rascunho));
+        when(avaliacaoQuestaoRepository.findByQuestaoIdIn(List.of(60L, 61L))).thenReturn(List.of(
+                new AvaliacaoQuestao(pendente, avaliador, VotoAvaliacao.APROVAR),
+                new AvaliacaoQuestao(pendente, avaliador, VotoAvaliacao.APROVAR),
+                new AvaliacaoQuestao(pendente, avaliador, VotoAvaliacao.REJEITAR, "Gabarito errado")));
+
+        // Act
+        List<QuestaoResponse> minhas = service.listarMinhas(atorAutor);
+
+        // Assert
+        assertEquals(2, minhas.size());
+        QuestaoResponse primeira = minhas.get(0);
+        assertEquals(60L, primeira.id());
+        assertEquals(2L, primeira.aprovacoes());
+        assertEquals(1L, primeira.rejeicoes());
+        assertEquals(List.of("Gabarito errado"), primeira.motivosRejeicao());
+        assertEquals("Escola Teste", primeira.autorInstituicao());
+        QuestaoResponse segunda = minhas.get(1);
+        assertEquals(0L, segunda.aprovacoes());
+        assertEquals(0L, segunda.rejeicoes());
+        assertTrue(segunda.motivosRejeicao().isEmpty());
+    }
+
+    @Test
+    void deveMontarFilaDeAvaliacaoComAConsultaQueJaExcluiOsVotosDoProfessor() {
+        // Arrange
+        Questao aindaNaoVotada = pendenteDoAutor(61L);
+        when(questaoRepository.findPendentesParaAvaliar(StatusQuestao.PENDENTE, OUTRO_PROFESSOR_ID))
+                .thenReturn(List.of(aindaNaoVotada));
+
+        // Act
+        List<Questao> fila = service.listarPendentesParaAvaliar(atorOutroProfessor);
 
         // Assert
         assertEquals(List.of(aindaNaoVotada), fila);
+        verifyNoInteractions(avaliacaoQuestaoRepository);
+        verifyNoMoreInteractions(questaoRepository);
+    }
+
+    @Test
+    void filaDoAvaliadorTrazOPlacarParcialMasNaoOsMotivosDeQuemRejeitou() {
+        // Arrange
+        Questao pendente = pendenteDoAutor(61L);
+        Usuario avaliador = new Usuario("Bruno", "bruno@escola.test", "hash", escola);
+        when(questaoRepository.findPendentesParaAvaliar(StatusQuestao.PENDENTE, OUTRO_PROFESSOR_ID))
+                .thenReturn(List.of(pendente));
+        when(avaliacaoQuestaoRepository.findByQuestaoIdIn(List.of(61L))).thenReturn(List.of(
+                new AvaliacaoQuestao(pendente, avaliador, VotoAvaliacao.APROVAR),
+                new AvaliacaoQuestao(pendente, avaliador, VotoAvaliacao.REJEITAR, "Enunciado confuso")));
+
+        // Act
+        List<QuestaoResponse> fila = service.listarPendentesComPlacar(atorOutroProfessor);
+
+        // Assert
+        assertEquals(1, fila.size());
+        assertEquals(1L, fila.get(0).aprovacoes());
+        assertEquals(1L, fila.get(0).rejeicoes());
+        assertTrue(fila.get(0).motivosRejeicao().isEmpty());
     }
 }

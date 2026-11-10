@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -65,6 +66,9 @@ abstract class IntegracaoTestBase {
 
     @Value("${maisedu.jwt.cookie-nome}")
     protected String nomeCookie;
+
+    @Value("${maisedu.termos.versao-atual}")
+    protected int versaoTermosAtual;
 
     @Autowired
     protected InstituicaoRepository instituicaoRepository;
@@ -131,7 +135,7 @@ abstract class IntegracaoTestBase {
         admin.adicionarRole(buscarRole(RoleNome.PROFESSOR));
         // Marca o primeiro acesso como ja feito (senhaTemporaria = false e termos vigentes aceitos)
         admin.trocarSenha(hash);
-        admin.aceitarTermos(1);
+        admin.aceitarTermos(versaoTermosAtual);
         Usuario salvo = usuarioRepository.save(admin);
 
         return new Conta(salvo.getId(), nome, email, login(email, SENHA_DEFINITIVA));
@@ -158,22 +162,35 @@ abstract class IntegracaoTestBase {
         return new NovoCadastro(id, nome, email, senhaProvisoria.getValue());
     }
 
-    /** POST /alunos como professor. A senha provisoria do aluno volta na propria resposta. */
+    /**
+     * POST /alunos como professor. A senha provisoria nao volta na resposta: vai para o e-mail do
+     * responsavel e e lida do e-mail entregue ao mock do Resend.
+     */
     protected NovoCadastro cadastrarAlunoSemAtivar(Conta professor) {
         long ts = System.nanoTime();
         String nome = "Aluno " + ts;
         String loginAluno = "aluno." + ts;
+        String emailResponsavel = "responsavel." + ts + "@familia.test";
 
         ResponseEntity<UsuarioCadastradoResponse> response = client.post().uri("/alunos")
                 .header(HttpHeaders.COOKIE, cookie(professor))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new CadastroAlunoRequest(nome, loginAluno))
+                .body(new CadastroAlunoRequest(nome, loginAluno, emailResponsavel))
                 .retrieve()
                 .toEntity(UsuarioCadastradoResponse.class);
         assertThat(response.getStatusCode()).as("cadastro do aluno (arrange)").isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().senhaProvisoria()).as("a senha nao volta para o professor").isNull();
+        Long id = response.getBody().id();
 
-        UsuarioCadastradoResponse body = response.getBody();
-        return new NovoCadastro(body.id(), nome, loginAluno, body.senhaProvisoria());
+        return new NovoCadastro(id, nome, loginAluno, senhaEnviadaAoResponsavel(id, emailResponsavel));
+    }
+
+    /** Senha provisoria do aluno, capturada no e-mail de acesso enviado ao responsavel (mock do Resend). */
+    protected String senhaEnviadaAoResponsavel(Long alunoId, String emailResponsavel) {
+        ArgumentCaptor<String> senhaProvisoria = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarAcessoAoResponsavel(eq(alunoId), anyString(), anyString(), anyString(),
+                eq(emailResponsavel), senhaProvisoria.capture());
+        return senhaProvisoria.getValue();
     }
 
     /** Faz o primeiro acesso: login com a senha provisoria, troca de senha e novo login. */
@@ -282,7 +299,8 @@ abstract class IntegracaoTestBase {
                 .uri("/questoes/" + questaoId + "/avaliacoes")
                 .header(HttpHeaders.COOKIE, cookie(professor))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new AvaliacaoQuestaoRequest(voto))
+                .body(new AvaliacaoQuestaoRequest(voto,
+                        voto == VotoAvaliacao.REJEITAR ? "Motivo da rejeição (teste)" : null))
                 .retrieve()
                 .toEntity(AvaliacaoQuestaoResponse.class);
         assertThat(response.getStatusCode()).as("voto %s (arrange)", voto).isEqualTo(HttpStatus.OK);

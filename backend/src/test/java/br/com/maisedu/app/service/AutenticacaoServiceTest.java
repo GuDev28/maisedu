@@ -2,6 +2,7 @@ package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.AutenticacaoException;
 import br.com.maisedu.app.exception.NegocioException;
+import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.Instituicao;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.UsuarioRepository;
@@ -142,7 +143,7 @@ class AutenticacaoServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("atualErrada", "hash")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.trocarSenha(1L, "atualErrada", "novaSenha123"))
+        assertThatThrownBy(() -> service.trocarSenha(1L, "atualErrada", "novaSenha123", true))
                 .isInstanceOf(AutenticacaoException.class)
                 .hasMessageContaining("Senha atual incorreta");
     }
@@ -152,7 +153,7 @@ class AutenticacaoServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("senhaAtual", "hash")).thenReturn(true, true);
 
-        assertThatThrownBy(() -> service.trocarSenha(1L, "senhaAtual", "senhaAtual"))
+        assertThatThrownBy(() -> service.trocarSenha(1L, "senhaAtual", "senhaAtual", true))
                 .isInstanceOf(NegocioException.class);
     }
 
@@ -163,7 +164,7 @@ class AutenticacaoServiceTest {
         when(passwordEncoder.matches("novaSenha123", "hash")).thenReturn(false);
         when(passwordEncoder.encode("novaSenha123")).thenReturn("hashNovo");
 
-        service.trocarSenha(1L, "senhaAtual", "novaSenha123");
+        service.trocarSenha(1L, "senhaAtual", "novaSenha123", true);
 
         assertThat(usuario.getSenha()).isEqualTo("hashNovo");
         assertThat(usuario.isSenhaTemporaria()).isFalse();
@@ -171,5 +172,33 @@ class AutenticacaoServiceTest {
         // A troca de senha derruba as sessões abertas (tokens emitidos antes deixam de valer)
         assertThat(usuario.getVersaoSessao()).isEqualTo(1);
         verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void primeiroAcessoSemAceiteDosTermosERecusadoAntesDeConferirASenha() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> service.trocarSenha(1L, "senhaAtual", "novaSenha123", false))
+                .isInstanceOf(NegocioException.class)
+                .hasMessageContaining("aceitar os Termos de Uso");
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void trocaVoluntariaNaoExigeNemRegistraNovoAceite() {
+        ReflectionTestUtils.setField(usuario, "senhaTemporaria", false);
+        usuario.aceitarTermos(1);
+        var aceiteAnterior = usuario.getTermosAceitosEm();
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senhaAtual", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("novaSenha123", "hash")).thenReturn(false);
+        when(passwordEncoder.encode("novaSenha123")).thenReturn("hashNovo");
+
+        service.trocarSenha(1L, "senhaAtual", "novaSenha123", false);
+
+        assertThat(usuario.getSenha()).isEqualTo("hashNovo");
+        assertThat(usuario.getTermosAceitosEm()).isSameAs(aceiteAnterior);
+        verify(auditoriaService, never()).registrar(any(), any(), any(), eq(AcaoAuditoria.ACEITE_TERMOS),
+                any(), any(), anyBoolean(), any());
     }
 }

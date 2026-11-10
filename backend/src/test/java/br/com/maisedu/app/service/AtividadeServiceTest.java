@@ -1,5 +1,6 @@
 package br.com.maisedu.app.service;
 
+import br.com.maisedu.app.dto.AtividadeAlunoResumoResponse;
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AnoEscolar;
@@ -18,8 +19,8 @@ import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.AtividadeAlunoRepository;
 import br.com.maisedu.app.repository.AtividadeRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
+import br.com.maisedu.app.repository.PlacarAtividade;
 import br.com.maisedu.app.repository.RespostaRepository;
-import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -41,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -58,7 +61,6 @@ class AtividadeServiceTest {
 
     @Mock AtividadeRepository atividadeRepository;
     @Mock AtividadeAlunoRepository atividadeAlunoRepository;
-    @Mock TurmaRepository turmaRepository;
     @Mock QuestaoRepository questaoRepository;
     @Mock UsuarioRepository usuarioRepository;
     @Mock AlunoTurmaRepository alunoTurmaRepository;
@@ -97,8 +99,7 @@ class AtividadeServiceTest {
 
     @Test
     void rf15Ca01_professorDaTurmaCriaAtividadeNaOrdemEscolhida() {
-        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
-        when(acessoTurma.lecionaNaTurma(atorProfessor, TURMA_ID)).thenReturn(true);
+        dadoQueOProfessorLecionaNaTurma();
         when(questaoRepository.findAllByIdIn(List.of(2L, 1L))).thenReturn(List.of(q1, q2));
         when(usuarioRepository.findById(PROFESSOR_ID)).thenReturn(Optional.of(professor));
         when(atividadeRepository.save(any(Atividade.class))).thenAnswer(invocacao -> {
@@ -118,8 +119,8 @@ class AtividadeServiceTest {
 
     @Test
     void rf15Ca03_professorQueNaoLecionaNaTurmaNaoCriaAtividade() {
-        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
-        when(acessoTurma.lecionaNaTurma(atorProfessor, TURMA_ID)).thenReturn(false);
+        when(acessoTurma.buscarComoProfessorDaTurma(eq(atorProfessor), eq(TURMA_ID), anyString()))
+                .thenThrow(new AccessDeniedException("Só o professor que leciona na turma pode criar atividades para ela."));
 
         assertThrows(AccessDeniedException.class,
                 () -> service.criar(atorProfessor, TURMA_ID, "Revisão", List.of(1L)));
@@ -130,8 +131,7 @@ class AtividadeServiceTest {
     @Test
     void turmaInativaNaoRecebeAtividade() {
         turma.setAtivo(false);
-        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
-        when(acessoTurma.lecionaNaTurma(atorProfessor, TURMA_ID)).thenReturn(true);
+        dadoQueOProfessorLecionaNaTurma();
 
         assertThrows(NegocioException.class, () -> service.criar(atorProfessor, TURMA_ID, "Revisão", List.of(1L)));
 
@@ -140,8 +140,7 @@ class AtividadeServiceTest {
 
     @Test
     void questaoInexistenteERecusada() {
-        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
-        when(acessoTurma.lecionaNaTurma(atorProfessor, TURMA_ID)).thenReturn(true);
+        dadoQueOProfessorLecionaNaTurma();
         when(questaoRepository.findAllByIdIn(List.of(1L, 99L))).thenReturn(List.of(q1));
 
         NegocioException ex = assertThrows(NegocioException.class,
@@ -180,7 +179,7 @@ class AtividadeServiceTest {
         assertEquals(TipoAtividade.REGULAR, iniciada.getTipo());
         assertEquals(2, iniciada.getQuestoes().size());
         assertSame(q1, iniciada.getQuestoes().get(0).getQuestao());
-        verify(auditoriaService).registrar(eq(ALUNO_ID), eq("Ana Aluna"), eq(AcaoAuditoria.INICIO_ATIVIDADE),
+        verify(auditoriaService).registrar(eq(ALUNO_ID), eq("Ana Aluna"), isNull(), eq(AcaoAuditoria.INICIO_ATIVIDADE),
                 eq("AtividadeAluno"), any(), eq(true), anyString());
     }
 
@@ -196,6 +195,39 @@ class AtividadeServiceTest {
         verify(atividadeAlunoRepository, never()).save(any());
     }
 
+    @Test
+    void listaDoAlunoJuntaNaoIniciadasEmAndamentoEPraticasComPlacarContadoNoBanco() {
+        Atividade iniciada = atividadeDaTurma();
+        Atividade nova = new Atividade("Frações", turma, professor);
+        nova.definirQuestoes(List.of(q1));
+        ReflectionTestUtils.setField(nova, "id", 41L);
+        AtividadeAluno folha = AtividadeAluno.regular(aluno, iniciada);
+        ReflectionTestUtils.setField(folha, "id", 900L);
+        AtividadeAluno pratica = AtividadeAluno.adaptativa(aluno, List.of(q1, q2));
+        ReflectionTestUtils.setField(pratica, "id", 901L);
+        when(atividadeAlunoRepository.findByAlunoIdComAtividade(ALUNO_ID)).thenReturn(List.of(pratica, folha));
+        when(respostaRepository.contarPorAtividadeAluno(Set.of(900L, 901L))).thenReturn(List.of(
+                new PlacarAtividade(900L, 2L, 1L), new PlacarAtividade(901L, 1L, 1L)));
+        when(atividadeRepository.findDisponiveisParaAluno(ALUNO_ID)).thenReturn(List.of(iniciada, nova));
+
+        List<AtividadeAlunoResumoResponse> lista = service.listarDoAluno(ALUNO_ID);
+
+        assertEquals(3, lista.size());
+        assertEquals(900L, lista.get(0).atividadeAlunoId());
+        assertEquals(2, lista.get(0).respondidas());
+        assertEquals(1, lista.get(0).acertos());
+        assertEquals(AtividadeAlunoResumoResponse.NAO_INICIADA, lista.get(1).situacao());
+        assertEquals(41L, lista.get(1).atividadeId());
+        assertEquals(TipoAtividade.ADAPTATIVA.name(), lista.get(2).tipo());
+        assertEquals(1, lista.get(2).acertos());
+        verify(atividadeAlunoRepository, never()).findByAlunoIdAndAtividadeId(any(), any());
+        verify(respostaRepository, never()).findByAtividadeAluno(any());
+    }
+
+    private void dadoQueOProfessorLecionaNaTurma() {
+        when(acessoTurma.buscarComoProfessorDaTurma(eq(atorProfessor), eq(TURMA_ID), anyString())).thenReturn(turma);
+    }
+
     private Atividade atividadeDaTurma() {
         Atividade atividade = new Atividade("Revisão", turma, professor);
         atividade.definirQuestoes(List.of(q1, q2));
@@ -206,7 +238,7 @@ class AtividadeServiceTest {
     private static Questao questao(Long id) {
         Questao questao = new Questao("Questão " + id, null, null, NivelDificuldade.FACIL, AnoEscolar.SETIMO_ANO);
         ReflectionTestUtils.setField(questao, "id", id);
-        questao.setStatus(StatusQuestao.APROVADA);
+        ReflectionTestUtils.setField(questao, "status", StatusQuestao.APROVADA);
         return questao;
     }
 }

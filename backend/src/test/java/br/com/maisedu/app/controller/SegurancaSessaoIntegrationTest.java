@@ -12,6 +12,7 @@ import br.com.maisedu.app.exception.ErroResponse;
 import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.Usuario;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
 /** Revogação de sessões, isolamento da auditoria por instituição, redefinição de senha e novo aceite dos termos. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -74,6 +79,29 @@ class SegurancaSessaoIntegrationTest extends IntegracaoTestBase {
     }
 
     @Test
+    void auditoriaAbreSemFiltrosEFiltraPorAcaoEPeriodo() {
+        Conta admin = criarAdmin();
+        String hoje = java.time.LocalDate.now().toString();
+
+        // a tela abre assim: sem nenhum filtro (era aqui que o PostgreSQL devolvia erro 500)
+        ResponseEntity<String> semFiltros = client.get().uri("/auditoria/logs")
+                .header(HttpHeaders.COOKIE, cookie(admin)).retrieve().toEntity(String.class);
+        ResponseEntity<String> loginsDeHoje = client.get()
+                .uri("/auditoria/logs?acao=LOGIN&de=" + hoje + "T00:00:00&ate=" + hoje + "T23:59:59")
+                .header(HttpHeaders.COOKIE, cookie(admin)).retrieve().toEntity(String.class);
+        ResponseEntity<String> logoutsDeHoje = client.get()
+                .uri("/auditoria/logs?acao=LOGOUT&de=" + hoje + "T00:00:00")
+                .header(HttpHeaders.COOKIE, cookie(admin)).retrieve().toEntity(String.class);
+
+        assertEquals(HttpStatus.OK, semFiltros.getStatusCode());
+        assertTrue(semFiltros.getBody().contains(admin.nome()));
+        assertEquals(HttpStatus.OK, loginsDeHoje.getStatusCode());
+        assertTrue(loginsDeHoje.getBody().contains("\"LOGIN\""), "o login de hoje aparece no filtro");
+        assertEquals(HttpStatus.OK, logoutsDeHoje.getStatusCode());
+        assertFalse(logoutsDeHoje.getBody().contains(admin.nome()), "o admin ainda não fez logout");
+    }
+
+    @Test
     void professorRedefineSenhaDeAlunoDaTurmaEAlunoTrocaNoProximoAcesso() {
         Conta admin = criarAdmin();
         Conta professor = cadastrarProfessor(admin);
@@ -93,7 +121,13 @@ class SegurancaSessaoIntegrationTest extends IntegracaoTestBase {
                 .header(HttpHeaders.COOKIE, cookie(professor)).retrieve().toEntity(SenhaRedefinidaResponse.class);
 
         assertEquals(HttpStatus.OK, redefinicao.getStatusCode());
-        String novaSenha = redefinicao.getBody().senhaProvisoria();
+        // a senha nova vai para o e-mail do responsável, não para o professor
+        assertNull(redefinicao.getBody().senhaProvisoria());
+        assertTrue(redefinicao.getBody().enviadaPorEmail());
+        ArgumentCaptor<String> capturada = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarNovaSenhaAoResponsavel(eq(aluno.id()), anyString(), anyString(), anyString(),
+                anyString(), capturada.capture());
+        String novaSenha = capturada.getValue();
         assertNotNull(novaSenha);
         // A sessão antiga do aluno caiu e a senha nova é provisória
         assertEquals(HttpStatus.UNAUTHORIZED, statusDoMe(aluno));

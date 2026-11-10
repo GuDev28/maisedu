@@ -6,9 +6,11 @@ import br.com.maisedu.app.model.*;
 import br.com.maisedu.app.repository.AvaliacaoQuestaoRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
+import br.com.maisedu.app.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +41,9 @@ class AvaliacaoQuestaoServiceTest {
     private Questao questao;
     private Usuario avaliador;
 
+    private static final UsuarioAutenticado ATOR_AVALIADOR = professorAutenticado(AVALIADOR_ID);
+    private static final UsuarioAutenticado ATOR_AUTOR = professorAutenticado(AUTOR_ID);
+
     @BeforeEach
     void setUp() {
         Instituicao escola = mock(Instituicao.class);
@@ -58,6 +64,10 @@ class AvaliacaoQuestaoServiceTest {
         return u;
     }
 
+    private static UsuarioAutenticado professorAutenticado(long id) {
+        return new UsuarioAutenticado(id, "Prof " + id, 1L, Set.of(RoleNome.PROFESSOR), false);
+    }
+
     private void placarAntes(long aprovacoes, long rejeicoes) {
         when(questaoRepository.findByIdParaVotacao(QUESTAO_ID)).thenReturn(Optional.of(questao));
         when(usuarioRepository.findById(AVALIADOR_ID)).thenReturn(Optional.of(avaliador));
@@ -75,7 +85,7 @@ class AvaliacaoQuestaoServiceTest {
         placarAntes(0, 0);
         placarDepois(1, 0);
 
-        AvaliacaoQuestaoResponse r = service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.APROVAR);
+        AvaliacaoQuestaoResponse r = service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.APROVAR, null);
 
         assertThat(r.status()).isEqualTo(StatusQuestao.PENDENTE);
         assertThat(questao.getStatus()).isEqualTo(StatusQuestao.PENDENTE);
@@ -88,7 +98,7 @@ class AvaliacaoQuestaoServiceTest {
         placarAntes(2, 1);
         placarDepois(3, 1);
 
-        AvaliacaoQuestaoResponse r = service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.APROVAR);
+        AvaliacaoQuestaoResponse r = service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.APROVAR, null);
 
         assertThat(r.status()).isEqualTo(StatusQuestao.APROVADA);
         assertThat(questao.getStatus()).isEqualTo(StatusQuestao.APROVADA);
@@ -99,7 +109,8 @@ class AvaliacaoQuestaoServiceTest {
         placarAntes(2, 2);
         placarDepois(2, 3);
 
-        AvaliacaoQuestaoResponse r = service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.REJEITAR);
+        AvaliacaoQuestaoResponse r = service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.REJEITAR,
+                "Enunciado ambíguo");
 
         assertThat(r.status()).isEqualTo(StatusQuestao.REJEITADA);
     }
@@ -109,7 +120,8 @@ class AvaliacaoQuestaoServiceTest {
         placarAntes(2, 1);
         placarDepois(2, 2);
 
-        AvaliacaoQuestaoResponse r = service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.REJEITAR);
+        AvaliacaoQuestaoResponse r = service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.REJEITAR,
+                "Enunciado ambíguo");
 
         assertThat(r.status()).isEqualTo(StatusQuestao.PENDENTE);
     }
@@ -122,7 +134,7 @@ class AvaliacaoQuestaoServiceTest {
         when(questaoRepository.findByIdParaVotacao(20L)).thenReturn(Optional.of(rascunho));
         when(usuarioRepository.findById(AVALIADOR_ID)).thenReturn(Optional.of(avaliador));
 
-        assertThatThrownBy(() -> service.avaliar(20L, AVALIADOR_ID, VotoAvaliacao.APROVAR))
+        assertThatThrownBy(() -> service.avaliar(ATOR_AVALIADOR, 20L, VotoAvaliacao.APROVAR, null))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("rascunho");
         verify(avaliacaoQuestaoRepository, never()).save(any());
@@ -133,7 +145,7 @@ class AvaliacaoQuestaoServiceTest {
         when(questaoRepository.findByIdParaVotacao(QUESTAO_ID)).thenReturn(Optional.of(questao));
         when(usuarioRepository.findById(AUTOR_ID)).thenReturn(Optional.of(questao.getAutor()));
 
-        assertThatThrownBy(() -> service.avaliar(QUESTAO_ID, AUTOR_ID, VotoAvaliacao.APROVAR))
+        assertThatThrownBy(() -> service.avaliar(ATOR_AUTOR, QUESTAO_ID, VotoAvaliacao.APROVAR, null))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("própria questão");
         verify(avaliacaoQuestaoRepository, never()).save(any());
@@ -145,7 +157,7 @@ class AvaliacaoQuestaoServiceTest {
         when(usuarioRepository.findById(AVALIADOR_ID)).thenReturn(Optional.of(avaliador));
         when(avaliacaoQuestaoRepository.existsByQuestaoIdAndProfessorId(QUESTAO_ID, AVALIADOR_ID)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.APROVAR))
+        assertThatThrownBy(() -> service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.APROVAR, null))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("já avaliou");
         verify(avaliacaoQuestaoRepository, never()).save(any());
@@ -153,11 +165,12 @@ class AvaliacaoQuestaoServiceTest {
 
     @Test
     void naoAceitaVotoEmQuestaoJaDecidida() {
-        questao.setStatus(StatusQuestao.APROVADA);
+        questao.apurarVotos(3, 0);
         when(questaoRepository.findByIdParaVotacao(QUESTAO_ID)).thenReturn(Optional.of(questao));
         when(usuarioRepository.findById(AVALIADOR_ID)).thenReturn(Optional.of(avaliador));
 
-        assertThatThrownBy(() -> service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.REJEITAR))
+        assertThatThrownBy(() -> service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.REJEITAR,
+                "Enunciado ambíguo"))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("encerrada");
     }
@@ -166,7 +179,7 @@ class AvaliacaoQuestaoServiceTest {
     void naoAceitaSextoVoto() {
         placarAntes(2, 3); // cenário inconsistente: 5 votos e ainda pendente
 
-        assertThatThrownBy(() -> service.avaliar(QUESTAO_ID, AVALIADOR_ID, VotoAvaliacao.APROVAR))
+        assertThatThrownBy(() -> service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.APROVAR, null))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("máximo");
         verify(avaliacaoQuestaoRepository, never()).save(any());
@@ -180,8 +193,42 @@ class AvaliacaoQuestaoServiceTest {
         when(questaoRepository.findByIdParaVotacao(QUESTAO_ID)).thenReturn(Optional.of(questao));
         when(usuarioRepository.findById(99L)).thenReturn(Optional.of(aluno));
 
-        assertThatThrownBy(() -> service.avaliar(QUESTAO_ID, 99L, VotoAvaliacao.APROVAR))
+        UsuarioAutenticado atorAluno = new UsuarioAutenticado(99L, "Aluno", 1L, Set.of(RoleNome.ALUNO), false);
+        assertThatThrownBy(() -> service.avaliar(atorAluno, QUESTAO_ID, VotoAvaliacao.APROVAR, null))
                 .isInstanceOf(NegocioException.class)
                 .hasMessageContaining("professor");
+    }
+
+    @Test
+    void rejeicaoSemMotivoERecusadaAntesDeTocarNoBanco() {
+        assertThatThrownBy(() -> service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.REJEITAR, "   "))
+                .isInstanceOf(NegocioException.class)
+                .hasMessageContaining("motivo da rejeição");
+        verifyNoInteractions(questaoRepository, usuarioRepository, avaliacaoQuestaoRepository, auditoriaService);
+    }
+
+    @Test
+    void motivoDaRejeicaoEGravadoComOVoto() {
+        placarAntes(0, 0);
+        placarDepois(0, 1);
+
+        service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.REJEITAR, "  A alternativa correta está errada.  ");
+
+        ArgumentCaptor<AvaliacaoQuestao> salvo = ArgumentCaptor.forClass(AvaliacaoQuestao.class);
+        verify(avaliacaoQuestaoRepository).save(salvo.capture());
+        assertThat(salvo.getValue().getVoto()).isEqualTo(VotoAvaliacao.REJEITAR);
+        assertThat(salvo.getValue().getComentario()).isEqualTo("A alternativa correta está errada.");
+    }
+
+    @Test
+    void aprovacaoNaoExigeComentario() {
+        placarAntes(0, 0);
+        placarDepois(1, 0);
+
+        service.avaliar(ATOR_AVALIADOR, QUESTAO_ID, VotoAvaliacao.APROVAR, "");
+
+        ArgumentCaptor<AvaliacaoQuestao> salvo = ArgumentCaptor.forClass(AvaliacaoQuestao.class);
+        verify(avaliacaoQuestaoRepository).save(salvo.capture());
+        assertThat(salvo.getValue().getComentario()).isNull();
     }
 }

@@ -33,6 +33,24 @@ class MotorAdaptativoTest {
     private final MotorAdaptativo motor = new MotorAdaptativo(MotorAdaptativo.Parametros.padrao());
 
     @Test
+    void diagnosticaUsaNoMaximoOsTresPrimeirosTopicosTodosNoNivelFacil() {
+        List<TopicoPlanejado> plano = motor.planejarDiagnostico(List.of(ANGULOS, FRACOES, PORCENTAGEM, EQUACOES));
+
+        assertEquals(3, plano.size());
+        assertEquals(List.of(ANGULOS, FRACOES, PORCENTAGEM),
+                List.of(plano.get(0).topicoId(), plano.get(1).topicoId(), plano.get(2).topicoId()));
+        for (TopicoPlanejado topico : plano) {
+            assertEquals(FACIL, topico.nivelAlvo());
+            assertEquals(0, topico.totalRespostas());
+        }
+    }
+
+    @Test
+    void diagnosticaSemTopicosDevolvePlanoVazio() {
+        assertTrue(motor.planejarDiagnostico(List.of()).isEmpty());
+    }
+
+    @Test
     void rf18Ca01_topicoComMenorPercentualTemPrioridade() {
         // Frações 40% (4 de 10), Porcentagem 80% (8 de 10)
         List<TopicoPlanejado> plano = motor.planejar(List.of(

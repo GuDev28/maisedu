@@ -46,7 +46,7 @@ class RespostaTest {
         Questao questao = new Questao("Questão " + id, null, null, NivelDificuldade.FACIL, AnoEscolar.SEXTO_ANO);
         ReflectionTestUtils.setField(questao, "id", id);
         questao.definirAlternativas(List.of("a", "b", "c", "d", "e"), indiceCorreta);
-        questao.setStatus(StatusQuestao.APROVADA);
+        ReflectionTestUtils.setField(questao, "status", StatusQuestao.APROVADA);
         return questao;
     }
 }

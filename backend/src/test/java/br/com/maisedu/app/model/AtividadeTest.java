@@ -109,7 +109,7 @@ class AtividadeTest {
     static Questao questao(Long id, StatusQuestao status) {
         Questao questao = new Questao("Questão " + id, null, null, NivelDificuldade.FACIL, AnoEscolar.SEXTO_ANO);
         ReflectionTestUtils.setField(questao, "id", id);
-        questao.setStatus(status);
+        ReflectionTestUtils.setField(questao, "status", status);
         return questao;
     }
 }

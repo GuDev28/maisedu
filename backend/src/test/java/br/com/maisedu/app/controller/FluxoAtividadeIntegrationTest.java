@@ -32,6 +32,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -106,9 +107,41 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
         FolhaAtividadeResponse.QuestaoEntregue segunda = folha.questoes().get(1);
         String uriPrimeira = "/aluno/folhas/" + folha.atividadeAlunoId() + "/questoes/" + primeira.atividadeAlunoQuestaoId()
                 + "/resposta";
+        // Marcação provisória: o aluno escolhe A, muda para B e sai; nada disso é resposta ainda
+        String uriMarcacao = "/aluno/folhas/" + folha.atividadeAlunoId() + "/questoes/"
+                + primeira.atividadeAlunoQuestaoId() + "/marcacao";
+        for (char letra : new char[]{'A', 'B'}) {
+            ResponseEntity<Void> marcacao = client.put().uri(uriMarcacao)
+                    .header(HttpHeaders.COOKIE, cookie(aluno))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ResponderQuestaoRequest(alternativa(primeira, letra)))
+                    .retrieve()
+                    .toBodilessEntity();
+            assertEquals(HttpStatus.NO_CONTENT, marcacao.getStatusCode());
+        }
+        FolhaAtividadeResponse comMarcacao = buscar(aluno, "/aluno/folhas/" + folha.atividadeAlunoId(),
+                new ParameterizedTypeReference<FolhaAtividadeResponse>() {});
+        assertEquals(alternativa(primeira, 'B'), comMarcacao.questoes().get(0).alternativaMarcadaId());
+        assertNull(comMarcacao.questoes().get(0).resposta());
+        assertEquals(0, comMarcacao.respondidas());
+
+        // Confirmar: vale a alternativa enviada (C), e a marcação some
         RespostaResultadoResponse certa = postar(aluno, uriPrimeira,
                 new ResponderQuestaoRequest(alternativa(primeira, 'C')), RespostaResultadoResponse.class).getBody();
         assertTrue(certa.acertou());
+        FolhaAtividadeResponse depois = buscar(aluno, "/aluno/folhas/" + folha.atividadeAlunoId(),
+                new ParameterizedTypeReference<FolhaAtividadeResponse>() {});
+        assertNull(depois.questoes().get(0).alternativaMarcadaId());
+        assertNotNull(depois.questoes().get(0).resposta());
+
+        // Questão já respondida não aceita marcação
+        ResponseEntity<ErroResponse> marcarRespondida = client.put().uri(uriMarcacao)
+                .header(HttpHeaders.COOKIE, cookie(aluno))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ResponderQuestaoRequest(alternativa(primeira, 'A')))
+                .retrieve()
+                .toEntity(ErroResponse.class);
+        assertEquals(HttpStatus.BAD_REQUEST, marcarRespondida.getStatusCode());
         assertFalse(certa.atividadeConcluida());
 
         // RF16/CA02 e RN04: a mesma questão não aceita segunda resposta

@@ -235,6 +235,67 @@ class QuestaoControllerIntegrationTest extends IntegracaoTestBase {
         assertThat(response.getBody().mensagem()).isEqualTo("Questão não encontrada");
     }
 
+    // ---------- PUT e DELETE /questoes/{questaoId} (rascunho) ----------
+
+    @Test
+    void editar_rascunhoDoAutor_deveRetornar200ComOsNovosDados() {
+        Long questaoId = criarQuestao(autor, "Enunciado com erro de digitacao");
+        CriarQuestaoRequest corrigida = buildQuestaoRequest("Enunciado corrigido", topicoQualquer().getId());
+
+        ResponseEntity<QuestaoResponse> response = client.put().uri(BASE_PATH + "/" + questaoId)
+                .header(HttpHeaders.COOKIE, cookie(autor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(corrigida)
+                .retrieve()
+                .toEntity(QuestaoResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().enunciado()).isEqualTo("Enunciado corrigido");
+        assertThat(response.getBody().status()).isEqualTo(StatusQuestao.RASCUNHO);
+    }
+
+    @Test
+    void editar_questaoJaEnviada_deveRetornar400() {
+        Long questaoId = criarQuestaoPendente(autor, "Ja enviada para validacao");
+
+        ResponseEntity<ErroResponse> response = client.put().uri(BASE_PATH + "/" + questaoId)
+                .header(HttpHeaders.COOKIE, cookie(autor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildQuestaoRequest("Tentando mudar depois", topicoQualquer().getId()))
+                .retrieve()
+                .toEntity(ErroResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().mensagem()).contains("rascunho");
+    }
+
+    @Test
+    void excluir_rascunhoDoAutor_deveRetornar204ERemoverDoBanco() {
+        Long questaoId = criarQuestao(autor, "Rascunho descartado");
+
+        ResponseEntity<Void> response = client.delete().uri(BASE_PATH + "/" + questaoId)
+                .header(HttpHeaders.COOKIE, cookie(autor))
+                .retrieve()
+                .toBodilessEntity();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(questaoRepository.findById(questaoId)).isEmpty();
+    }
+
+    @Test
+    void excluir_rascunhoDeOutroAutor_deveRetornar403() {
+        Long questaoId = criarQuestao(autor, "Rascunho que nao e seu");
+        Conta outroProfessor = cadastrarProfessor(admin);
+
+        ResponseEntity<ErroResponse> response = client.delete().uri(BASE_PATH + "/" + questaoId)
+                .header(HttpHeaders.COOKIE, cookie(outroProfessor))
+                .retrieve()
+                .toEntity(ErroResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(questaoRepository.findById(questaoId)).isPresent();
+    }
+
     // ---------- GET /questoes/minhas ----------
 
     @Test
