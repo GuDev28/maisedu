@@ -1,0 +1,421 @@
+/*
+ * Identidade do MaisEdu sobre o Bootstrap 5.3: só as cores da marca e o que o Bootstrap não tem
+ * pronto (menu lateral, barra de percentual, gráfico de evolução e alternativas da folha).
+ * O resto das telas usa as classes do próprio Bootstrap.
+ */
+:root {
+  --me-marca: #0f766e;
+  --me-marca-rgb: 15, 118, 110;
+  --me-marca-escura: #115e59;
+  --me-marca-clara: #ccfbf1;
+  --me-destaque: #f59e0b;
+  --me-fundo: #f6f8f7;
+  --me-menu-largura: 260px;
+
+  --bs-primary: var(--me-marca);
+  --bs-primary-rgb: var(--me-marca-rgb);
+  --bs-primary-text-emphasis: #134e4a;
+  --bs-primary-bg-subtle: #e6f4f1;
+  --bs-primary-border-subtle: #99d5cc;
+  --bs-link-color: var(--me-marca);
+  --bs-link-color-rgb: var(--me-marca-rgb);
+  --bs-link-hover-color: var(--me-marca-escura);
+  --bs-link-hover-color-rgb: 17, 94, 89;
+  --bs-body-bg: var(--me-fundo);
+  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-border-radius: 0.5rem;
+  --bs-heading-color: #0f172a;
+  --bs-focus-ring-color: rgba(var(--me-marca-rgb), 0.25);
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--me-marca);
+  --bs-btn-border-color: var(--me-marca);
+  --bs-btn-hover-bg: var(--me-marca-escura);
+  --bs-btn-hover-border-color: var(--me-marca-escura);
+  --bs-btn-active-bg: var(--me-marca-escura);
+  --bs-btn-active-border-color: var(--me-marca-escura);
+  --bs-btn-disabled-bg: var(--me-marca);
+  --bs-btn-disabled-border-color: var(--me-marca);
+  --bs-btn-focus-shadow-rgb: var(--me-marca-rgb);
+  background-image: none;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--me-marca);
+  --bs-btn-border-color: var(--me-marca);
+  --bs-btn-hover-bg: var(--me-marca);
+  --bs-btn-hover-border-color: var(--me-marca);
+  --bs-btn-active-bg: var(--me-marca-escura);
+  --bs-btn-active-border-color: var(--me-marca-escura);
+  --bs-btn-disabled-color: var(--me-marca);
+  --bs-btn-disabled-border-color: var(--me-marca);
+  --bs-btn-focus-shadow-rgb: var(--me-marca-rgb);
+}
+
+.nav-pills,
+.nav-tabs {
+  --bs-nav-link-color: #334155;
+  --bs-nav-link-hover-color: var(--me-marca);
+  --bs-nav-pills-link-active-bg: var(--me-marca);
+  --bs-nav-tabs-link-active-color: var(--me-marca);
+}
+
+.progress,
+.progress-stacked {
+  --bs-progress-bar-bg: var(--me-marca);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: #5fb3a8;
+  box-shadow: 0 0 0 0.25rem rgba(var(--me-marca-rgb), 0.2);
+}
+
+.form-check-input:checked {
+  background-color: var(--me-marca);
+  border-color: var(--me-marca);
+}
+
+.card {
+  --bs-card-border-color: #e3e8e6;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.table {
+  --bs-table-bg: transparent;
+}
+
+/* ---------- Layout: menu lateral + conteúdo ---------- */
+
+.me-app {
+  min-height: 100vh;
+}
+
+.me-menu {
+  --bs-offcanvas-width: 280px;
+  width: var(--me-menu-largura);
+  /* o offcanvas-lg do Bootstrap deixa o fundo transparente no computador */
+  background-color: #ffffff !important;
+  border-right: 1px solid #e3e8e6;
+}
+
+@media (min-width: 992px) {
+  .me-menu {
+    position: fixed;
+    inset: 0 auto 0 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1030;
+  }
+
+  .me-conteudo {
+    margin-left: var(--me-menu-largura);
+  }
+}
+
+.me-menu .offcanvas-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.me-menu-topo {
+  padding: 1.1rem 1.25rem 0.9rem;
+  border-bottom: 1px solid #eef2f1;
+}
+
+.me-menu-usuario {
+  font-size: 0.85rem;
+  line-height: 1.25;
+}
+
+.me-menu-secao {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 1rem 1.25rem 0.35rem;
+}
+
+.me-menu .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1px 0.6rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.45rem;
+  color: #1e293b;
+  font-size: 0.93rem;
+}
+
+.me-menu .nav-link:hover {
+  background: #f1f5f4;
+  color: var(--me-marca-escura);
+}
+
+.me-menu .nav-link.active {
+  background: var(--bs-primary-bg-subtle);
+  color: var(--me-marca-escura);
+  font-weight: 600;
+}
+
+.me-menu .nav-link svg {
+  flex: none;
+  opacity: 0.85;
+}
+
+.me-menu-rodape {
+  margin-top: auto;
+  border-top: 1px solid #eef2f1;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.me-barra-topo {
+  background: #ffffff;
+  border-bottom: 1px solid #e3e8e6;
+}
+
+.me-pagina {
+  max-width: 1100px;
+  padding: 1.5rem 1rem 3rem;
+}
+
+@media (min-width: 768px) {
+  .me-pagina {
+    padding: 2rem 2rem 3rem;
+  }
+}
+
+.me-pagina-estreita {
+  max-width: 640px;
+}
+
+.me-titulo {
+  font-size: 1.5rem;
+  font-weight: 650;
+  margin-bottom: 0.25rem;
+}
+
+.me-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.me-logo:hover {
+  color: #0f172a;
+}
+
+.me-tela-publica {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(var(--me-marca-rgb), 0.12), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(245, 158, 11, 0.12), transparent 40%),
+    var(--me-fundo);
+}
+
+.me-numero {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.me-passo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--me-marca);
+  color: #ffffff;
+  font-weight: 700;
+  flex: none;
+}
+
+.me-avisos {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1090;
+}
+
+/* ---------- Barra de percentual (cor nunca é a única informação: o número aparece ao lado) ---------- */
+
+.barra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 140px;
+}
+
+.barra-trilho {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.barra-preenchimento {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.barra-baixa {
+  background: #dc2626;
+}
+
+.barra-media {
+  background: var(--me-destaque);
+}
+
+.barra-alta {
+  background: #16a34a;
+}
+
+.barra-valor {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  min-width: 3.2rem;
+  text-align: right;
+}
+
+.barra-destaque .barra-valor {
+  font-weight: 700;
+}
+
+/* ---------- Gráfico de evolução semanal ---------- */
+
+.grafico svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.grafico-grade {
+  stroke: #e5e7eb;
+}
+
+.grafico-meta {
+  stroke: var(--me-destaque);
+  stroke-dasharray: 4 4;
+}
+
+.grafico-linha {
+  fill: none;
+  stroke: var(--me-marca);
+  stroke-width: 2.5;
+}
+
+.grafico-ponto {
+  fill: var(--me-marca);
+}
+
+.grafico-rotulo {
+  font-size: 11px;
+  fill: #64748b;
+}
+
+/* ---------- Folha de atividade do aluno ---------- */
+
+.alternativa {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d6dedb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: inherit;
+}
+
+.alternativa:hover:not(:disabled) {
+  border-color: var(--me-marca);
+  background: #f3faf8;
+}
+
+.alternativa:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.alternativa-letra {
+  font-weight: 700;
+  min-width: 1.4rem;
+}
+
+.alternativa-certa {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.alternativa-errada {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Marcada, mas ainda não confirmada: pode trocar. */
+.alternativa-marcada,
+.alternativa-marcada:hover:not(:disabled) {
+  border-color: var(--me-marca);
+  background: var(--me-marca-clara);
+  box-shadow: inset 0 0 0 1px var(--me-marca);
+}
+
+.texto-legal h3 {
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.me-largura-sm {
+  max-width: 420px;
+}
+
+.me-largura-md {
+  max-width: 800px;
+}
+
+.grafico-ponto-semana {
+  fill: #99d5cc;
+}
+
+.me-lista-rolavel {
+  max-height: 420px;
+}
+
+.list-group-item.active-subtle {
+  background: var(--bs-primary-bg-subtle);
+}
+
+/* o menu "Ações" da tabela de usuários não pode ser cortado pela rolagem da tabela no computador */
+@media (min-width: 992px) {
+  .me-tabela-com-menu {
+    overflow: visible;
+  }
+}
+
+.me-cabecalho-texto {
+  flex: 1 1 320px;
+  min-width: 0;
+}

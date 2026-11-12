@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { RodapeLegal } from "../components/RodapeLegal";
+import { AceiteTermos } from "../components/AceiteTermos";
+import { Logo } from "../components/Logo";
 import { Mensagens } from "../components/Mensagens";
+import { RodapeLegal } from "../components/RodapeLegal";
 
 /** Exibida quando há uma versão nova dos Termos de Uso / Política de Privacidade ainda não aceita. */
-export default function AceitarTermos({ onAbrirPaginaLegal }) {
+export default function AceitarTermos() {
   const { aceitarTermos, logout } = useAuth();
   const [aceite, setAceite] = useState(false);
   const [carregando, setCarregando] = useState(false);
@@ -22,32 +24,39 @@ export default function AceitarTermos({ onAbrirPaginaLegal }) {
       await aceitarTermos();
     } catch (err) {
       setErro(err.message);
-    } finally {
       setCarregando(false);
     }
   }
 
   return (
-    <div className="pagina pagina-estreita" style={{ marginTop: "4rem" }}>
-      <h2>Documentos atualizados</h2>
-      <p>
-        Os Termos de Uso e a Política de Privacidade do MaisEdu foram atualizados. Leia as novas versões e
-        confirme o aceite para continuar usando o sistema.
-      </p>
-      <form onSubmit={handleSubmit}>
-        <p>
-          <input id="aceite" type="checkbox" checked={aceite} onChange={(e) => setAceite(e.target.checked)} />{" "}
-          <label htmlFor="aceite">Li e aceito os</label>{" "}
-          <button type="button" onClick={() => onAbrirPaginaLegal("termos")}>Termos de Uso</button> e a{" "}
-          <button type="button" onClick={() => onAbrirPaginaLegal("privacidade")}>Política de Privacidade</button>
-        </p>
-        <div className="linha-acoes">
-          <button type="submit" disabled={carregando}>{carregando ? "Salvando..." : "Continuar"}</button>
-          <button type="button" onClick={logout}>Sair</button>
+    <div className="me-tela-publica">
+      <div className="w-100 me-largura-sm">
+        <div className="text-center mb-4">
+          <Logo tamanho={40} />
         </div>
-      </form>
-      <Mensagens erro={erro} />
-      <RodapeLegal onAbrirPaginaLegal={onAbrirPaginaLegal} />
+        <div className="card shadow-sm">
+          <div className="card-body p-4">
+            <h1 className="h5">Documentos atualizados</h1>
+            <p className="text-secondary">
+              Os Termos de Uso e a Política de Privacidade do MaisEdu mudaram. Leia as novas versões e confirme o
+              aceite para continuar usando o sistema.
+            </p>
+            <Mensagens erro={erro} />
+            <form onSubmit={handleSubmit}>
+              <AceiteTermos marcado={aceite} aoMudar={setAceite} />
+              <div className="d-flex gap-2">
+                <button type="submit" className="btn btn-primary flex-grow-1" disabled={carregando}>
+                  {carregando ? "Salvando..." : "Continuar"}
+                </button>
+                <button type="button" className="btn btn-outline-secondary" onClick={logout}>
+                  Sair
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <RodapeLegal />
+      </div>
     </div>
   );
 }

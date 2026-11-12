@@ -1,216 +1,136 @@
 import { useEffect, useState } from "react";
-import {
-  abrirFolha,
-  gerarPraticaAdaptativa,
-  iniciarAtividade,
-  listarMinhasAtividades,
-  responderQuestao,
-} from "../services/alunoService";
-import { formatarDataHora, rotuloNivel } from "../components/rotulos";
+import { Link, useNavigate } from "react-router-dom";
+import { iniciarAtividade, listarMinhasAtividades } from "../services/alunoService";
+import { Cabecalho } from "../components/Cabecalho";
+import { Carregando } from "../components/Carregando";
+import { EstadoVazio } from "../components/EstadoVazio";
 import { Mensagens } from "../components/Mensagens";
+import { SITUACOES, formatarDataHora } from "../components/rotulos";
 
-const SITUACOES = { NAO_INICIADA: "Não iniciada", EM_ANDAMENTO: "Em andamento", CONCLUIDA: "Concluída" };
-
-/** RF16 e RF18 (aluno): atividades da turma, prática adaptativa e resolução das questões. */
+/** RF16 (aluno): atividades da turma e práticas adaptativas anteriores. */
 export default function MinhasAtividades() {
-  const [atividades, setAtividades] = useState([]);
-  const [folha, setFolha] = useState(null);
-  const [aviso, setAviso] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-  const [gerando, setGerando] = useState(false);
+  const navigate = useNavigate();
+  const [atividades, setAtividades] = useState(null);
+  const [abrindo, setAbrindo] = useState(null);
   const [erro, setErro] = useState(null);
 
-  async function carregar() {
-    try {
-      setAtividades(await listarMinhasAtividades());
-    } catch (err) {
-      setErro(err.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
-
   useEffect(() => {
-    carregar();
+    listarMinhasAtividades()
+      .then(setAtividades)
+      .catch((err) => setErro(err.message));
   }, []);
 
   async function abrir(item) {
     setErro(null);
-    setAviso(null);
+    if (item.atividadeAlunoId) {
+      navigate(`/minhas-atividades/${item.atividadeAlunoId}`);
+      return;
+    }
+    setAbrindo(item.atividadeId);
     try {
-      const aberta = item.atividadeAlunoId
-        ? await abrirFolha(item.atividadeAlunoId)
-        : await iniciarAtividade(item.atividadeId);
-      setFolha(aberta);
+      // RN03: ao começar, as questões da atividade ficam fixas para este aluno
+      const folha = await iniciarAtividade(item.atividadeId);
+      navigate(`/minhas-atividades/${folha.atividadeAlunoId}`);
     } catch (err) {
       setErro(err.message);
+      setAbrindo(null);
     }
   }
 
-  async function gerarPratica() {
-    setErro(null);
-    setAviso(null);
-    setGerando(true);
-    try {
-      const pratica = await gerarPraticaAdaptativa();
-      const topicos = pratica.topicos.map((t) => `${t.topico} (${rotuloNivel(t.nivelDificuldade)})`).join(", ");
-      setAviso(pratica.nova
-        ? `Prática montada para você: ${topicos}.`
-        : "Você já tinha uma prática adaptativa em andamento. Termine esta antes de gerar outra.");
-      setFolha(await abrirFolha(pratica.atividadeAlunoId));
-    } catch (err) {
-      setErro(err.message);
-    } finally {
-      setGerando(false);
-    }
-  }
-
-  async function voltar() {
-    setFolha(null);
-    setAviso(null);
-    await carregar();
-  }
-
-  if (folha) {
-    return <FolhaAtividade folha={folha} aviso={aviso} onAtualizar={setFolha} onVoltar={voltar} />;
-  }
-
-  const regulares = atividades.filter((a) => a.tipo === "REGULAR");
-  const praticas = atividades.filter((a) => a.tipo === "ADAPTATIVA");
+  const regulares = atividades?.filter((a) => a.tipo === "REGULAR") ?? [];
+  const praticas = atividades?.filter((a) => a.tipo === "ADAPTATIVA") ?? [];
 
   return (
-    <div className="pagina">
-      <h2>Minhas atividades</h2>
+    <>
+      <Cabecalho
+        titulo="Minhas atividades"
+        acoes={
+          <Link to="/praticar" className="btn btn-primary">
+            Praticar agora
+          </Link>
+        }
+      >
+        Atividades que o professor passou para a sua turma.
+      </Cabecalho>
       <Mensagens erro={erro} />
+      {!atividades && !erro && <Carregando />}
 
-      <div className="cartao cartao-selecionado">
-        <strong>Prática adaptativa</strong>
-        <p style={{ margin: "0.25rem 0 0.5rem" }}>
-          Dez questões escolhidas a partir das suas respostas: os tópicos em que você mais erra, no nível certo para você.
-        </p>
-        <button type="button" onClick={gerarPratica} disabled={gerando}>
-          {gerando ? "Montando..." : "Praticar agora"}
-        </button>
-      </div>
-
-      <h3>Atividades da turma</h3>
-      {carregando ? (
-        <p>Carregando...</p>
-      ) : regulares.length === 0 ? (
-        <p>Nenhuma atividade disponível. Quando seu professor criar uma, ela aparece aqui.</p>
-      ) : (
-        regulares.map((item) => <ItemAtividade key={`r${item.atividadeId}`} item={item} onAbrir={abrir} />)
-      )}
-
-      {praticas.length > 0 && (
+      {atividades && (
         <>
-          <h3>Práticas adaptativas anteriores</h3>
-          {praticas.map((item) => <ItemAtividade key={`p${item.atividadeAlunoId}`} item={item} onAbrir={abrir} />)}
+          {regulares.length === 0 ? (
+            <EstadoVazio
+              titulo="Nenhuma atividade da turma por enquanto"
+              acao={
+                <Link to="/praticar" className="btn btn-outline-primary">
+                  Fazer uma prática adaptativa
+                </Link>
+              }
+            >
+              Quando o seu professor criar uma atividade, ela aparece aqui.
+            </EstadoVazio>
+          ) : (
+            <div className="list-group mb-4">
+              {regulares.map((item) => (
+                <ItemAtividade key={`r${item.atividadeId}`} item={item} abrindo={abrindo} aoAbrir={abrir} />
+              ))}
+            </div>
+          )}
+
+          {praticas.length > 0 && (
+            <>
+              <h2 className="h6 text-secondary text-uppercase mt-4">Práticas adaptativas</h2>
+              <div className="list-group">
+                {praticas.map((item) => (
+                  <ItemAtividade key={`p${item.atividadeAlunoId}`} item={item} abrindo={abrindo} aoAbrir={abrir} />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
-    </div>
+    </>
   );
 }
 
-function ItemAtividade({ item, onAbrir }) {
-  const rotuloBotao = item.situacao === "NAO_INICIADA" ? "Começar" : item.situacao === "CONCLUIDA" ? "Rever" : "Continuar";
+function ItemAtividade({ item, abrindo, aoAbrir }) {
+  const situacao = SITUACOES[item.situacao];
+  const rotuloBotao =
+    item.situacao === "NAO_INICIADA" ? "Começar" : item.situacao === "CONCLUIDA" ? "Rever" : "Continuar";
+  const progresso = item.totalQuestoes > 0 ? Math.round((item.respondidas * 100) / item.totalQuestoes) : 0;
   return (
-    <div className="cartao">
-      <strong>{item.titulo}</strong>
-      {item.turmaNome && <span className="texto-suave"> · {item.turmaNome}</span>}
-      <div className="linha-acoes">
-        <span className="etiqueta etiqueta-neutra">{SITUACOES[item.situacao]}</span>
-        <span className="texto-suave">
+    <div className="list-group-item d-flex flex-wrap align-items-center gap-3 py-3">
+      <div className="flex-grow-1">
+        <div className="fw-semibold">
+          {item.titulo}
+          {item.turmaNome && <span className="text-secondary fw-normal"> · {item.turmaNome}</span>}
+        </div>
+        <div className="small text-secondary">
+          <span className={`badge text-bg-${situacao?.cor ?? "secondary"} me-2`}>{situacao?.rotulo ?? item.situacao}</span>
           {item.respondidas} de {item.totalQuestoes} respondidas
           {item.respondidas > 0 && ` · ${item.acertos} acerto(s)`}
           {item.concluidaEm && ` · concluída em ${formatarDataHora(item.concluidaEm)}`}
-        </span>
-        <button type="button" onClick={() => onAbrir(item)}>{rotuloBotao}</button>
+        </div>
+        {item.situacao === "EM_ANDAMENTO" && (
+          <div
+            className="progress mt-2"
+            role="progressbar"
+            aria-label="Progresso"
+            aria-valuenow={progresso}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div className="progress-bar" style={{ width: `${progresso}%` }} />
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
-
-/**
- * Folha da atividade: as questões entregues ao aluno, na ordem fixada ao iniciar (RN03).
- * Cada questão aceita uma única resposta (RN04); depois de responder, aparece a correção.
- */
-function FolhaAtividade({ folha, aviso, onAtualizar, onVoltar }) {
-  const [enviando, setEnviando] = useState(null);
-  const [erro, setErro] = useState(null);
-
-  async function responder(questao, alternativa) {
-    setErro(null);
-    setEnviando(questao.atividadeAlunoQuestaoId);
-    try {
-      await responderQuestao(folha.atividadeAlunoId, questao.atividadeAlunoQuestaoId, alternativa.id);
-      onAtualizar(await abrirFolha(folha.atividadeAlunoId));
-    } catch (err) {
-      setErro(err.message);
-    } finally {
-      setEnviando(null);
-    }
-  }
-
-  const concluida = Boolean(folha.concluidaEm);
-
-  return (
-    <div className="pagina">
-      <button type="button" onClick={onVoltar}>← Voltar</button>
-      <h2>{folha.titulo}</h2>
-      <Mensagens sucesso={aviso} erro={erro} />
-      <p>
-        <strong>{folha.respondidas}</strong> de {folha.totalQuestoes} respondidas · <strong>{folha.acertos}</strong> acerto(s)
-        {concluida && <span className="etiqueta etiqueta-ok">concluída</span>}
-      </p>
-
-      <ol style={{ paddingLeft: "1.2rem" }}>
-        {folha.questoes.map((questao) => {
-          const resposta = questao.resposta;
-          return (
-            <li key={questao.atividadeAlunoQuestaoId} className="cartao" style={{ listStylePosition: "outside" }}>
-              <p style={{ marginTop: 0 }}>{questao.enunciado}</p>
-              <small className="texto-suave">{questao.topico} · {rotuloNivel(questao.nivelDificuldade)}</small>
-              <ul className="alternativas">
-                {questao.alternativas.map((alternativa) => {
-                  let classe = "alternativa";
-                  if (resposta && alternativa.id === resposta.alternativaCorretaId) {
-                    classe += " alternativa-certa";
-                  } else if (resposta && alternativa.id === resposta.alternativaEscolhidaId) {
-                    classe += " alternativa-errada";
-                  }
-                  return (
-                    <li key={alternativa.id}>
-                      <button
-                        type="button"
-                        className={classe}
-                        disabled={Boolean(resposta) || enviando !== null}
-                        onClick={() => responder(questao, alternativa)}
-                      >
-                        <strong>{alternativa.letra})</strong> {alternativa.texto}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {resposta && (
-                <p style={{ margin: 0 }} role="status">
-                  {resposta.acertou
-                    ? "✔ Você acertou!"
-                    : `✘ Você marcou ${resposta.letraEscolhida}; a resposta certa é ${resposta.letraCorreta}.`}
-                </p>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-
-      {concluida && (
-        <p>
-          Atividade concluída. Seu desempenho foi atualizado — veja em <strong>Meu desempenho</strong> ou faça uma
-          prática adaptativa para treinar os tópicos em que você mais errou.
-        </p>
-      )}
+      <button
+        type="button"
+        className={`btn btn-sm ${item.situacao === "CONCLUIDA" ? "btn-outline-secondary" : "btn-primary"}`}
+        disabled={abrindo === item.atividadeId && !item.atividadeAlunoId}
+        onClick={() => aoAbrir(item)}
+      >
+        {abrindo === item.atividadeId && !item.atividadeAlunoId ? "Abrindo..." : rotuloBotao}
+      </button>
     </div>
   );
 }

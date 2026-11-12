@@ -15,6 +15,16 @@ export function usuarioAtual() {
   return chamarApi("/auth/me");
 }
 
+/** Tela "Minha conta". */
+export function minhaConta() {
+  return chamarApi("/auth/conta");
+}
+
+/** Os dados pessoais do próprio usuário, em JSON (LGPD, art. 18). */
+export function meusDados() {
+  return chamarApi("/auth/meus-dados");
+}
+
 export function trocarSenha(senhaAtual, novaSenha, aceiteTermos) {
   return chamarApi("/auth/trocar-senha", {
     method: "POST",

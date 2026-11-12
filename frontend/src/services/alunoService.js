@@ -12,6 +12,14 @@ export function abrirFolha(atividadeAlunoId) {
   return chamarApi(`/aluno/folhas/${atividadeAlunoId}`);
 }
 
+/** Guarda a alternativa escolhida sem confirmar (não é resposta; pode ser trocada). */
+export function marcarAlternativa(atividadeAlunoId, atividadeAlunoQuestaoId, alternativaId) {
+  return chamarApi(`/aluno/folhas/${atividadeAlunoId}/questoes/${atividadeAlunoQuestaoId}/marcacao`, {
+    method: "PUT",
+    body: JSON.stringify({ alternativaId }),
+  });
+}
+
 export function responderQuestao(atividadeAlunoId, atividadeAlunoQuestaoId, alternativaId) {
   return chamarApi(`/aluno/folhas/${atividadeAlunoId}/questoes/${atividadeAlunoQuestaoId}/resposta`, {
     method: "POST",

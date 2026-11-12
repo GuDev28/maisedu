@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { meuDesempenho } from "../services/alunoService";
+import { Cabecalho } from "../components/Cabecalho";
+import { Carregando } from "../components/Carregando";
 import { PainelDesempenho } from "../components/PainelDesempenho";
 import { Mensagens } from "../components/Mensagens";
 
@@ -13,11 +16,20 @@ export default function MeuDesempenho() {
   }, []);
 
   return (
-    <div className="pagina">
-      <h2>Meu desempenho</h2>
+    <>
+      <Cabecalho
+        titulo="Meu desempenho"
+        acoes={
+          <Link to="/praticar" className="btn btn-primary">
+            Praticar agora
+          </Link>
+        }
+      >
+        Acerto por tópico e nível. É com esses números que o MaisEdu escolhe as questões da sua prática.
+      </Cabecalho>
       <Mensagens erro={erro} />
-      {!desempenho && !erro && <p>Carregando...</p>}
+      {!desempenho && !erro && <Carregando />}
       <PainelDesempenho desempenho={desempenho} />
-    </div>
+    </>
   );
 }

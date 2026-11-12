@@ -1,23 +1,12 @@
-export const linkStyle = {
-  background: "none",
-  border: "none",
-  color: "#0645AD",
-  textDecoration: "underline",
-  cursor: "pointer",
-  padding: 0,
-  font: "inherit",
-};
+import { Link } from "react-router-dom";
 
-export function RodapeLegal({ onAbrirPaginaLegal }) {
+/** Links para os documentos legais nas telas fora do menu (login, primeiro acesso, novo aceite). */
+export function RodapeLegal() {
   return (
-    <footer style={{ textAlign: "center", marginTop: "2rem", fontSize: "0.85rem", color: "#777" }}>
-      <button type="button" style={linkStyle} onClick={() => onAbrirPaginaLegal("termos")}>
-        Termos de Uso
-      </button>
+    <p className="text-center small text-secondary mt-4 mb-0">
+      <Link to="/termos">Termos de Uso</Link>
       {" · "}
-      <button type="button" style={linkStyle} onClick={() => onAbrirPaginaLegal("privacidade")}>
-        Política de Privacidade
-      </button>
-    </footer>
+      <Link to="/privacidade">Política de Privacidade</Link>
+    </p>
   );
 }
