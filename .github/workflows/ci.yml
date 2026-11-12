@@ -1,0 +1,93 @@
+# Pipeline de integração contínua (CI) do MaisEdu.
+#
+# Roda a cada Pull Request aberto ou atualizado contra a main, sempre em uma máquina limpa
+# (ubuntu-latest). São 3 checagens independentes: cada uma é um job, aparece como um check
+# próprio no PR e as três rodam em paralelo. Qualquer falha deixa o check vermelho.
+# Aqui é só CI: não há deploy (CD).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+# Permissão mínima: o GITHUB_TOKEN só lê o código do repositório.
+permissions:
+  contents: read
+
+# Um push novo no mesmo PR cancela a execução anterior, que ficou desatualizada.
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# O back-end (Java 25 + Maven Wrapper) fica na pasta backend/.
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  testes-unitarios:
+    name: Testes unitários
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Instalar o Java 25 (Temurin) com cache do Maven
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Todas as classes *Test, menos as *IntegrationTest: JUnit 5 + Mockito,
+      # sem Spring, sem banco e sem rede.
+      - name: Rodar os testes unitários
+        run: ./mvnw -B -ntp test -Dtest='!*IntegrationTest'
+
+  testes-integracao:
+    name: Testes de integração
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Instalar o Java 25 (Temurin) com cache do Maven
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Só as classes *IntegrationTest: sobem a aplicação inteira (@SpringBootTest) e fazem
+      # requisições HTTP reais até o banco de teste (H2 em memória, perfil "test").
+      # Se o filtro não encontrar nenhum teste, o Surefire falha (failIfNoSpecifiedTests).
+      - name: Rodar os testes de integração
+        run: ./mvnw -B -ntp test -Dtest='*IntegrationTest'
+
+  linter:
+    name: Linter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Instalar o Java 25 (Temurin) com cache do Maven
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Checkstyle com as regras versionadas em backend/checkstyle.xml (src/main e src/test).
+      # Qualquer violação reprova o check.
+      - name: Rodar o Checkstyle
+        run: ./mvnw -B -ntp checkstyle:check
