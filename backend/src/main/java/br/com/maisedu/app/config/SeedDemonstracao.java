@@ -3,7 +3,6 @@ package br.com.maisedu.app.config;
 import br.com.maisedu.app.model.Alternativa;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.AnoEscolar;
-import br.com.maisedu.app.model.Atividade;
 import br.com.maisedu.app.model.AtividadeAluno;
 import br.com.maisedu.app.model.AtividadeAlunoQuestao;
 import br.com.maisedu.app.model.AvaliacaoQuestao;
@@ -465,7 +464,8 @@ public class SeedDemonstracao implements CommandLineRunner {
         executarSql("UPDATE atividade SET criado_em = criado_em - make_interval(days => :dias) WHERE id = :id",
                 dias + 1, atividadeId);
         executarSql("UPDATE atividade_aluno SET iniciada_em = iniciada_em - make_interval(days => :dias), "
-                + "concluida_em = concluida_em - make_interval(days => :dias) WHERE atividade_id = :id", dias, atividadeId);
+                + "concluida_em = concluida_em - make_interval(days => :dias) WHERE atividade_id = :id",
+                dias, atividadeId);
         executarSql("UPDATE resposta r SET respondida_em = r.respondida_em - make_interval(days => :dias) "
                 + "FROM atividade_aluno_questao aaq JOIN atividade_aluno aa ON aa.id = aaq.atividade_aluno_id "
                 + "WHERE r.atividade_aluno_questao_id = aaq.id AND aa.atividade_id = :id", dias, atividadeId);

@@ -79,6 +79,7 @@ public class UsuarioService {
 
     private Role buscarRole(RoleNome nome) {
         return roleRepository.findByNome(nome)
-                .orElseThrow(() -> new IllegalStateException("Papel " + nome + " não está cadastrado (ver migrations)."));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Papel " + nome + " não está cadastrado (ver migrations)."));
     }
 }

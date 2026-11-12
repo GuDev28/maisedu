@@ -24,7 +24,10 @@ public interface QuestaoRepository extends JpaRepository<Questao, Long> {
 
     List<Questao> findByStatusAndAutorIdNotOrderByCriadoEmAsc(StatusQuestao status, Long autorId);
 
-    /** Banco compartilhado (RF15): questões no status informado, de qualquer autor e instituição, com filtros opcionais. */
+    /**
+     * Banco compartilhado (RF15): questões no status informado, de qualquer autor e instituição,
+     * com filtros opcionais.
+     */
     @Query("select q from Questao q join fetch q.topico t join fetch q.autor " +
             "where q.status = :status " +
             "and (:topicoId is null or t.id = :topicoId) " +

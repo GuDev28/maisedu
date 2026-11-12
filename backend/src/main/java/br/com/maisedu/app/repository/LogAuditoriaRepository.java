@@ -39,7 +39,8 @@ public interface LogAuditoriaRepository extends JpaRepository<LogAuditoria, Long
 
     /** Anonimização: troca o nome e apaga o identificador digitado nos registros do usuário. */
     @Modifying
-    @Query("update LogAuditoria l set l.usuarioNome = :nome, l.identificadorAcesso = null where l.usuarioId = :usuarioId")
+    @Query("update LogAuditoria l set l.usuarioNome = :nome, l.identificadorAcesso = null "
+            + "where l.usuarioId = :usuarioId")
     int anonimizarRegistrosDoUsuario(@Param("usuarioId") Long usuarioId, @Param("nome") String nome);
 
     /** Anonimização: remove detalhes que podem conter dado pessoal (ex.: e-mail no ENVIO_EMAIL). */
@@ -48,7 +49,10 @@ public interface LogAuditoriaRepository extends JpaRepository<LogAuditoria, Long
     int substituirDetalhes(@Param("usuarioId") Long usuarioId, @Param("acao") AcaoAuditoria acao,
                            @Param("detalhes") String detalhes);
 
-    /** Anonimização: limpa detalhes de registros feitos por outros usuários sobre esta pessoa (ex.: correção do nome). */
+    /**
+     * Anonimização: limpa detalhes de registros feitos por outros usuários sobre esta pessoa
+     * (ex.: correção do nome).
+     */
     @Modifying
     @Query("update LogAuditoria l set l.detalhes = :detalhes " +
             "where l.entidade = :entidade and l.entidadeId = :entidadeId and l.acao = :acao")

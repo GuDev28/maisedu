@@ -52,7 +52,10 @@ public class AuditoriaService {
         gravar(ator.id(), ator.nome(), ator.instituicaoId(), null, acao, entidade, entidadeId, sucesso, detalhes);
     }
 
-    /** Mesma ideia, quando quem chama já tem o usuário carregado (ex.: dentro de AutenticacaoService), sem identificador de acesso a registrar. */
+    /**
+     * Mesma ideia, quando quem chama já tem o usuário carregado (ex.: dentro de AutenticacaoService),
+     * sem identificador de acesso a registrar.
+     */
     public void registrar(Long usuarioId, String usuarioNome, AcaoAuditoria acao, String entidade, Long entidadeId,
                            boolean sucesso, String detalhes) {
         gravar(usuarioId, usuarioNome, null, null, acao, entidade, entidadeId, sucesso, detalhes);

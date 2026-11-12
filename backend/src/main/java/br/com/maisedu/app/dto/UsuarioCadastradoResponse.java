@@ -9,13 +9,13 @@ public record UsuarioCadastradoResponse(
         String identificadorDeAcesso,
         String senhaProvisoria) {
 
-    
+
     public static UsuarioCadastradoResponse from(Usuario usuario, String senhaProvisoria) {
         return new UsuarioCadastradoResponse(
                 usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(), senhaProvisoria);
     }
 
-    
+
     public static UsuarioCadastradoResponse semSenha(Usuario usuario) {
         return new UsuarioCadastradoResponse(
                 usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(), null);

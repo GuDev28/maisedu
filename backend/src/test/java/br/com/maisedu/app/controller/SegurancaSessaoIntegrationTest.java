@@ -49,7 +49,8 @@ class SegurancaSessaoIntegrationTest extends IntegracaoTestBase {
         Conta professor = cadastrarProfessor(admin);
         assertEquals(HttpStatus.OK, statusDoMe(professor));
 
-        ResponseEntity<UsuarioGestaoResponse> desativado = client.post().uri("/usuarios/" + professor.id() + "/desativar")
+        ResponseEntity<UsuarioGestaoResponse> desativado = client.post()
+                .uri("/usuarios/" + professor.id() + "/desativar")
                 .header(HttpHeaders.COOKIE, cookie(admin)).retrieve().toEntity(UsuarioGestaoResponse.class);
         assertEquals(HttpStatus.OK, desativado.getStatusCode());
         assertFalse(desativado.getBody().ativo());

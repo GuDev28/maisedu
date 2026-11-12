@@ -105,7 +105,8 @@ class GestaoUsuarioServiceTest {
         // As sessões abertas do aluno deixam de valer
         assertEquals(versaoAntes + 1, aluno.getVersaoSessao());
         verifyNoInteractions(emailService);
-        verify(auditoriaService).registrar(atorProfessor, AcaoAuditoria.REDEFINICAO_SENHA, "Usuario", ALUNO_ID, true, null);
+        verify(auditoriaService).registrar(
+                atorProfessor, AcaoAuditoria.REDEFINICAO_SENHA, "Usuario", ALUNO_ID, true, null);
     }
 
     @Test
@@ -183,7 +184,8 @@ class GestaoUsuarioServiceTest {
         verify(professorTurmaRepository).excluirVinculosDoProfessor(ALUNO_ID);
         verify(logAuditoriaRepository).anonimizarRegistrosDoUsuario(ALUNO_ID, "Usuário anonimizado #20");
         verify(logAuditoriaRepository).substituirDetalhes(ALUNO_ID, AcaoAuditoria.ENVIO_EMAIL, "Dados anonimizados");
-        verify(auditoriaService).registrar(atorAdmin, AcaoAuditoria.ANONIMIZACAO_USUARIO, "Usuario", ALUNO_ID, true, null);
+        verify(auditoriaService).registrar(
+                atorAdmin, AcaoAuditoria.ANONIMIZACAO_USUARIO, "Usuario", ALUNO_ID, true, null);
     }
 
     @Test

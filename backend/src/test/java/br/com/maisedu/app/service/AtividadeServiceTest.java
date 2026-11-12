@@ -173,7 +173,8 @@ class AtividadeServiceTest {
         when(atividadeRepository.findById(ATIVIDADE_ID)).thenReturn(Optional.of(atividade));
         when(alunoTurmaRepository.existsByAlunoIdAndTurmaId(ALUNO_ID, TURMA_ID)).thenReturn(true);
         when(atividadeAlunoRepository.findByAlunoIdAndAtividadeId(ALUNO_ID, ATIVIDADE_ID)).thenReturn(Optional.empty());
-        when(atividadeAlunoRepository.save(any(AtividadeAluno.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(atividadeAlunoRepository.save(any(AtividadeAluno.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         AtividadeAluno iniciada = service.iniciar(ALUNO_ID, ATIVIDADE_ID);
 

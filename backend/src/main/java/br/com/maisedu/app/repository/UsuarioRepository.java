@@ -29,7 +29,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * Estado mínimo conferido pelo filtro JWT a cada requisição: conta ativa, versão da sessão,
      * senha provisória e versão dos termos aceita. Consulta pela chave primária, sem carregar a entidade.
      */
-    @Query("select new br.com.maisedu.app.security.EstadoSessao(u.ativo, u.versaoSessao, u.senhaTemporaria, u.termosVersao) "
+    @Query("select new br.com.maisedu.app.security.EstadoSessao("
+            + "u.ativo, u.versaoSessao, u.senhaTemporaria, u.termosVersao) "
             + "from Usuario u where u.id = :id")
     Optional<EstadoSessao> buscarEstadoSessao(@Param("id") Long id);
 

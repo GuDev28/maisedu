@@ -66,8 +66,10 @@ class AvaliacaoQuestaoServiceTest {
     }
 
     private void placarDepois(long aprovacoes, long rejeicoes) {
-        when(avaliacaoQuestaoRepository.countByQuestaoIdAndVoto(QUESTAO_ID, VotoAvaliacao.APROVAR)).thenReturn(aprovacoes);
-        when(avaliacaoQuestaoRepository.countByQuestaoIdAndVoto(QUESTAO_ID, VotoAvaliacao.REJEITAR)).thenReturn(rejeicoes);
+        when(avaliacaoQuestaoRepository.countByQuestaoIdAndVoto(QUESTAO_ID, VotoAvaliacao.APROVAR))
+                .thenReturn(aprovacoes);
+        when(avaliacaoQuestaoRepository.countByQuestaoIdAndVoto(QUESTAO_ID, VotoAvaliacao.REJEITAR))
+                .thenReturn(rejeicoes);
     }
 
     @Test

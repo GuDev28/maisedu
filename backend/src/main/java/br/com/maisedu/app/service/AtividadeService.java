@@ -171,7 +171,8 @@ public class AtividadeService {
                 lista.add(resumir(atividadeAluno));
             }
         }
-        for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(alunoId, TipoAtividade.ADAPTATIVA)) {
+        for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(
+                alunoId, TipoAtividade.ADAPTATIVA)) {
             lista.add(resumir(pratica));
         }
         return lista;

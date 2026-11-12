@@ -65,7 +65,8 @@ public class TurmaController {
 
     @PostMapping("/{turmaId}/desativar")
     @PreAuthorize("hasRole('ADMIN')")
-    public TurmaGestaoResponse desativar(@AuthenticationPrincipal UsuarioAutenticado admin, @PathVariable Long turmaId) {
+    public TurmaGestaoResponse desativar(@AuthenticationPrincipal UsuarioAutenticado admin,
+                                         @PathVariable Long turmaId) {
         return TurmaGestaoResponse.from(turmaService.alterarSituacao(admin, turmaId, false));
     }
 

@@ -63,7 +63,10 @@ public class GlobalExceptionHandler {
                 .body(new ErroResponse("Sem permissão para esta operação."));
     }
 
-    /** Corrida entre duas requisições (ex.: mesmo e-mail cadastrado duas vezes ao mesmo tempo): o banco barra a segunda. */
+    /**
+     * Corrida entre duas requisições (ex.: mesmo e-mail cadastrado duas vezes ao mesmo tempo):
+     * o banco barra a segunda.
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErroResponse> handleIntegridade(DataIntegrityViolationException ex) {
         log.info("Violação de integridade barrada pelo banco: {}", ex.getMostSpecificCause().getMessage());

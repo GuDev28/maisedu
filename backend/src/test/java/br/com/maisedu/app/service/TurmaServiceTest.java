@@ -51,7 +51,8 @@ class TurmaServiceTest {
     void setUp() {
         escola = new Instituicao("Escola", "00.000.000/0001-00", "Rua 1");
         ReflectionTestUtils.setField(escola, "id", INSTITUICAO_ID);
-        admin = new UsuarioAutenticado(1L, "Admin", INSTITUICAO_ID, EnumSet.of(RoleNome.ADMIN, RoleNome.PROFESSOR), false);
+        admin = new UsuarioAutenticado(
+                1L, "Admin", INSTITUICAO_ID, EnumSet.of(RoleNome.ADMIN, RoleNome.PROFESSOR), false);
         professor = new UsuarioAutenticado(7L, "Paulo", INSTITUICAO_ID, EnumSet.of(RoleNome.PROFESSOR), false);
     }
 

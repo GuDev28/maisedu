@@ -19,7 +19,7 @@ public class Role {
     @Column(nullable = false, unique = true)
     private RoleNome nome;
 
-    public Role(RoleNome nome){
+    public Role(RoleNome nome) {
         this.nome = nome;
     }
 }

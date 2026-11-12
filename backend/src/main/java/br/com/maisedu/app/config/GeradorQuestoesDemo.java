@@ -263,7 +263,8 @@ public final class GeradorQuestoesDemo {
         modelo(t, AnoEscolar.SEXTO_ANO, NivelDificuldade.FACIL, r -> {
             int base = entre(r, 3, 15);
             return new Item("Quanto é " + base + "²?", n(base * base),
-                    lista(n(2 * base), n(base + 2), n(base * base + 1), n((base + 1) * (base + 1)), n(base * base - 1)));
+                    lista(n(2 * base), n(base + 2), n(base * base + 1),
+                            n((base + 1) * (base + 1)), n(base * base - 1)));
         });
         modelo(t, AnoEscolar.OITAVO_ANO, NivelDificuldade.MEDIO, r -> {
             int raiz = entre(r, 6, 20);
