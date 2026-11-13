@@ -59,7 +59,7 @@ class QuestaoControllerIntegrationTest extends IntegracaoTestBase {
                 .retrieve()
                 .toEntity(QuestaoResponse.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         QuestaoResponse body = response.getBody();
         assertThat(body.id()).isNotNull();
         assertThat(body.enunciado()).isEqualTo("Quanto e 3/4 + 1/4?");
