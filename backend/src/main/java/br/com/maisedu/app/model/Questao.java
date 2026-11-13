@@ -76,7 +76,7 @@ public class Questao {
         return Collections.unmodifiableList(alternativas);
     }
 
-  
+
     public void definirAlternativas(List<String> textos, int indiceCorreta) {
         if (status != StatusQuestao.RASCUNHO) {
             throw new NegocioException("Só é possível alterar alternativas enquanto a questão é um rascunho");
@@ -97,7 +97,7 @@ public class Questao {
         }
     }
 
-    
+
     public void enviarParaValidacao() {
         if (status != StatusQuestao.RASCUNHO) {
             throw new NegocioException("Só um rascunho pode ser enviado para validação");

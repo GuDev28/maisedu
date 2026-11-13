@@ -121,7 +121,8 @@ class VinculoTurmaServiceTest {
         when(usuarioRepository.findById(PROFESSOR_ID)).thenReturn(Optional.of(professor));
         when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
         when(professorTurmaRepository.existsByProfessorIdAndTurmaId(PROFESSOR_ID, TURMA_ID)).thenReturn(false);
-        when(professorTurmaRepository.save(any(ProfessorTurma.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(professorTurmaRepository.save(any(ProfessorTurma.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         // Act
         ProfessorTurma vinculo = service.vincularProfessor(PROFESSOR_ID, TURMA_ID, atorAdmin);

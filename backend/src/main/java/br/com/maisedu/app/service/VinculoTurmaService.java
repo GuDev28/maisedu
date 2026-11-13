@@ -126,7 +126,8 @@ public class VinculoTurmaService {
     public List<Usuario> listarAlunosDisponiveis(Long turmaId, UsuarioAutenticado ator) {
         Turma turma = buscarTurma(turmaId);
         autorizarAtorNaTurma(ator, turma);
-        return usuarioRepository.findAlunosDisponiveisParaTurma(RoleNome.ALUNO, turma.getInstituicao().getId(), turmaId);
+        return usuarioRepository.findAlunosDisponiveisParaTurma(
+                RoleNome.ALUNO, turma.getInstituicao().getId(), turmaId);
     }
 
     /** Professores ainda não vinculados à turma informada, para a tela "Vincular professor" (só admin). */

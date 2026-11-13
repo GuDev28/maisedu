@@ -161,6 +161,40 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Linter (Checkstyle): regras versionadas em checkstyle.xml.
+			     Rodar: ./mvnw checkstyle:check (também roda no "mvn verify"). -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
+				<dependencies>
+					<!-- O plugin traz o Checkstyle 9.3 por padrão, que não entende Java 25 -->
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>14.4.0</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<configLocation>${project.basedir}/checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
+					<failOnViolation>true</failOnViolation>
+					<!-- Reprova com qualquer violação, inclusive as de severidade warning -->
+					<violationSeverity>warning</violationSeverity>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<includeResources>false</includeResources>
+					<includeTestResources>false</includeTestResources>
+				</configuration>
+				<executions>
+					<execution>
+						<id>checkstyle</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

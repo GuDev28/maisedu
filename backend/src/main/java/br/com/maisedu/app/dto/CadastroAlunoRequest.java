@@ -10,6 +10,7 @@ public record CadastroAlunoRequest(
         String nome,
         @NotBlank(message = "Informe o login do aluno")
         @Pattern(regexp = "^\\s*[A-Za-z0-9._-]{3,50}\\s*$",
-                message = "O login deve ter de 3 a 50 caracteres: letras sem acento, números, ponto, hífen ou sublinhado")
+                message = "O login deve ter de 3 a 50 caracteres: letras sem acento, números, "
+                        + "ponto, hífen ou sublinhado")
         String login) {
 }

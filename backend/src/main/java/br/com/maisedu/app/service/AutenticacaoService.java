@@ -64,7 +64,8 @@ public class AutenticacaoService {
             auditoriaService.registrar(usuario.getId(), usuario.getNome(), identificador, AcaoAuditoria.LOGIN,
                     null, null, false, "Bloqueado por excesso de tentativas");
             throw new AutenticacaoException(
-                    "Login bloqueado por excesso de tentativas. Tente novamente em " + minutosRestantes + " minuto(s).");
+                    "Login bloqueado por excesso de tentativas. Tente novamente em "
+                            + minutosRestantes + " minuto(s).");
         }
 
         if (!passwordEncoder.matches(senha, usuario.getSenha())) {

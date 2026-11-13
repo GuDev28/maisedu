@@ -54,7 +54,8 @@ public class PraticaAdaptativaService {
                                     @Value("${maisedu.adaptativo.maximo-topicos:3}") int maximoTopicos,
                                     @Value("${maisedu.adaptativo.questoes-por-pratica:10}") int questoesPorPratica,
                                     @Value("${maisedu.adaptativo.minimo-respostas-dominio:5}") int minimoRespostas,
-                                    @Value("${maisedu.adaptativo.percentual-dominio:70}") BigDecimal percentualDominio) {
+                                    @Value("${maisedu.adaptativo.percentual-dominio:70}")
+                                    BigDecimal percentualDominio) {
         this.usuarioRepository = usuarioRepository;
         this.desempenhoTopicoRepository = desempenhoTopicoRepository;
         this.questaoRepository = questaoRepository;
@@ -77,7 +78,8 @@ public class PraticaAdaptativaService {
             throw new AccessDeniedException("Só alunos geram práticas adaptativas.");
         }
 
-        for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(alunoId, TipoAtividade.ADAPTATIVA)) {
+        for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(
+                alunoId, TipoAtividade.ADAPTATIVA)) {
             if (!pratica.isConcluida()) {
                 return resumir(pratica, false);
             }
@@ -98,7 +100,8 @@ public class PraticaAdaptativaService {
         Map<Long, Questao> questoesPorId = new HashMap<>();
         List<MotorAdaptativo.Candidata> candidatas = new ArrayList<>();
         for (MotorAdaptativo.TopicoPlanejado topico : plano) {
-            for (Questao questao : questaoRepository.findByStatusAndTopicoId(StatusQuestao.APROVADA, topico.topicoId())) {
+            for (Questao questao : questaoRepository.findByStatusAndTopicoId(
+                    StatusQuestao.APROVADA, topico.topicoId())) {
                 questoesPorId.put(questao.getId(), questao);
                 candidatas.add(new MotorAdaptativo.Candidata(questao.getId(), topico.topicoId(),
                         questao.getNivelDificuldade()));

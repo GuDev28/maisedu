@@ -10,7 +10,6 @@ import br.com.maisedu.app.dto.DesempenhoTurmaResponse;
 import br.com.maisedu.app.dto.FolhaAtividadeResponse;
 import br.com.maisedu.app.dto.PraticaAdaptativaResponse;
 import br.com.maisedu.app.dto.ProfessorTurmaResponse;
-import br.com.maisedu.app.dto.QuestaoResponse;
 import br.com.maisedu.app.dto.ResponderQuestaoRequest;
 import br.com.maisedu.app.dto.RespostaResultadoResponse;
 import br.com.maisedu.app.dto.TurmaGestaoResponse;
@@ -66,7 +65,8 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
 
         // RN02: duas questões aprovadas por quórum de 3 avaliadores
         Conta autor = cadastrarProfessor(admin);
-        List<Conta> avaliadores = List.of(cadastrarProfessor(admin), cadastrarProfessor(admin), cadastrarProfessor(admin));
+        List<Conta> avaliadores = List.of(
+                cadastrarProfessor(admin), cadastrarProfessor(admin), cadastrarProfessor(admin));
         Long q1 = criarQuestaoPendente(autor, "Fluxo Q1 " + ts);
         Long q2 = criarQuestaoPendente(autor, "Fluxo Q2 " + ts);
         for (Conta avaliador : avaliadores) {
@@ -104,8 +104,8 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
         // Questões criadas pelo helper têm a alternativa C como correta
         FolhaAtividadeResponse.QuestaoEntregue primeira = folha.questoes().get(0);
         FolhaAtividadeResponse.QuestaoEntregue segunda = folha.questoes().get(1);
-        String uriPrimeira = "/aluno/folhas/" + folha.atividadeAlunoId() + "/questoes/" + primeira.atividadeAlunoQuestaoId()
-                + "/resposta";
+        String uriPrimeira = "/aluno/folhas/" + folha.atividadeAlunoId()
+                + "/questoes/" + primeira.atividadeAlunoQuestaoId() + "/resposta";
         RespostaResultadoResponse certa = postar(aluno, uriPrimeira,
                 new ResponderQuestaoRequest(alternativa(primeira, 'C')), RespostaResultadoResponse.class).getBody();
         assertTrue(certa.acertou());
@@ -117,7 +117,8 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
         assertEquals(HttpStatus.BAD_REQUEST, repetida.getStatusCode());
 
         RespostaResultadoResponse errada = postar(aluno,
-                "/aluno/folhas/" + folha.atividadeAlunoId() + "/questoes/" + segunda.atividadeAlunoQuestaoId() + "/resposta",
+                "/aluno/folhas/" + folha.atividadeAlunoId()
+                        + "/questoes/" + segunda.atividadeAlunoQuestaoId() + "/resposta",
                 new ResponderQuestaoRequest(alternativa(segunda, 'A')), RespostaResultadoResponse.class).getBody();
         assertFalse(errada.acertou());
         assertEquals('C', errada.letraCorreta());

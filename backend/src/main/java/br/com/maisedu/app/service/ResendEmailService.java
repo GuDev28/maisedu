@@ -49,10 +49,12 @@ public class ResendEmailService {
     }
 
     /** E-mail com a nova senha provisória gerada pela administração (redefinição de senha). */
-    public void enviarNovaSenhaProvisoria(Long usuarioId, String usuarioNome, String destinatario, String senhaProvisoria) {
+    public void enviarNovaSenhaProvisoria(Long usuarioId, String usuarioNome, String destinatario,
+                                          String senhaProvisoria) {
         String assunto = "MaisEdu — sua senha foi redefinida";
         String html = construirHtml(usuarioNome, destinatario, senhaProvisoria,
-                "A administração da sua escola redefiniu a sua senha no MaisEdu. Use os dados abaixo no próximo acesso:");
+                "A administração da sua escola redefiniu a sua senha no MaisEdu. "
+                        + "Use os dados abaixo no próximo acesso:");
         enviarAposCommit(usuarioId, usuarioNome, destinatario, assunto, html, senhaProvisoria);
     }
 
