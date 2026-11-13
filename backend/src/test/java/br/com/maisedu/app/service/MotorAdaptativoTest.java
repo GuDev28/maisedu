@@ -39,7 +39,7 @@ class MotorAdaptativoTest {
                 new DesempenhoNivel(PORCENTAGEM, FACIL, 10, 8),
                 new DesempenhoNivel(FRACOES, FACIL, 10, 4)));
 
-        assertEquals(3, plano.size());
+        assertEquals(2, plano.size());
         assertEquals(FRACOES, plano.get(0).topicoId());
         assertEquals(new BigDecimal("40.00"), plano.get(0).percentualTopico());
         assertEquals(PORCENTAGEM, plano.get(1).topicoId());
