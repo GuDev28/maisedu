@@ -13,28 +13,30 @@ O MaisEdu permite que professores criem questões de Matemática por tópico, n�
 | Requisito | Funcionalidade | Perfil |
 |---|---|---|
 | RF01–RF03 | Login por cookie HttpOnly, troca da senha provisória com aceite dos termos, logout que invalida a sessão no servidor | Todos |
-| RF04, RF05 | Cadastro de professores (senha por e-mail via Resend) e de alunos (sem e-mail) | Admin, Professor |
+| RF04, RF05 | Cadastro de professores (senha por e-mail via Resend) e de alunos (sem e-mail), já podendo escolher a turma | Admin, Professor |
 | RF06 | Cadastro e desativação de turmas | Admin |
-| RF07, RF08 | Vínculo de professores e alunos às turmas (RN01) | Admin, Professor |
-| RF09–RF11 | Questões com 5 alternativas, envio para validação e votação por quórum (RN02) | Professor |
+| RF07, RF08 | Tela da Turma: professores e alunos, vincular e desvincular (RN01) | Admin, Professor |
+| RF09–RF11 | Questões com 5 alternativas (rascunho editável), envio para validação e votação por quórum com motivo da rejeição e placar para o autor (RN02) | Professor |
 | RF12, RF13 | Trilha de auditoria isolada por instituição, com tela de consulta | Admin |
 | RF14 | Termos de Uso e Política de Privacidade, versionados (nova versão exige novo aceite) | Todos |
-| RF15 | Atividades com questões aprovadas do banco compartilhado | Professor |
+| RF15 | Banco de questões compartilhado (com escola de origem) e atividades com as questões aprovadas | Professor |
 | RF16 | Resolução com snapshot das questões (RN03), resposta única e correção automática (RN04) | Aluno |
 | RF17 | Desempenho acumulado por tópico e nível, atualizado a cada resposta (RN05) | Sistema |
-| RF18 | Prática adaptativa (RN06) | Aluno |
+| RF18 | Prática adaptativa (RN06), com prática diagnóstica para quem ainda não respondeu nada | Aluno |
 | RF19 | Painel de desempenho do aluno e da turma, com evolução semanal | Aluno, Professor |
 | LGPD | Redefinição de senha, correção, desativação, exportação (JSON) e anonimização de usuários; retenção automática dos logs | Admin |
+| LGPD | Minha conta: dados, troca de senha, aceite dos termos e "baixar meus dados" pelo próprio titular | Todos |
+| — | Página Início por perfil, menu lateral, "Como funciona" | Todos |
 
 ## Arquitetura
 
 ![Diagrama de arquitetura do MaisEdu](docs/diagrams/arquitetura.png)
 
-- **Front-end**: SPA em React + Vite. Chama a API sempre em `/api` (proxy do Vite em desenvolvimento, nginx no Docker), então front e API ficam na mesma origem.
-- **Back-end**: API REST em Spring Boot, em camadas Controller → Service → Repository. O motor adaptativo (`MotorAdaptativo`) é uma classe pura, sem Spring, testada isoladamente.
+- **Front-end**: SPA em React + Vite, com React Router (uma rota por tela, o Voltar do navegador funciona) e Bootstrap 5.3. Menu lateral por perfil (gaveta no celular). Chama a API sempre em `/api` (proxy do Vite em desenvolvimento, nginx no Docker), então front e API ficam na mesma origem.
+- **Back-end**: API REST em Spring Boot, em camadas Controller → Service → Repository. A regra de acesso à turma fica num lugar só (`AcessoTurma`). O motor adaptativo (`MotorAdaptativo`) é uma classe pura, sem Spring, testada isoladamente, e um único bean dele serve a prática e o painel de desempenho.
 - **Autenticação**: Spring Security + JWT em cookie HttpOnly/SameSite=Strict, RBAC por papéis. A cada requisição o filtro confere no banco se a conta está ativa e se a sessão não foi encerrada.
-- **Persistência**: PostgreSQL via Spring Data JPA / Hibernate; esquema evoluído só por migrations Flyway (`V1` a `V8`).
-- **Serviço externo**: Resend, para os e-mails de senha provisória de professores e administradores (enviados só depois do commit).
+- **Persistência**: PostgreSQL via Spring Data JPA / Hibernate; esquema evoluído só por migrations Flyway (`V1` a `V10`). Modelo de dados: [docs/diagrams/er_diagram.png](docs/diagrams/er_diagram.png).
+- **Serviço externo**: Resend, para os e-mails de senha provisória: de professores e administradores para o próprio e-mail; de alunos, para o e-mail do responsável (enviados só depois do commit).
 
 ## Como executar
 
@@ -64,7 +66,7 @@ cp .env.example .env          # preencha DB_PASSWORD e JWT_SECRET (o Spring lê 
 
 # front-end (outro terminal)
 cd frontend
-npm install
+npm install                    # na primeira vez e sempre que o package.json mudar
 npm run dev                    # http://localhost:5173 (o Vite repassa /api para a porta 8080)
 ```
 
@@ -80,11 +82,11 @@ Criado só quando o banco está vazio. Todos os dados são fictícios. Senha de 
 | `admin.b@maisedu.dev` | Administrador do Colégio Municipal Cecília Meireles |
 | `carla@maisedu.dev` | Professora do 8º ano C (outra escola) |
 | `diego@maisedu.dev` | Professor sem turma (outra escola) |
-| `a7001` … `a7006` | Alunos do 7º ano A (`a7006` ainda não fez nada) |
+| `a7001` … `a7006` | Alunos do 7º ano A (`a7006` ainda não fez nada: "Praticar agora" gera a prática diagnóstica) |
 | `a6001` … `a6004`, `b8001` … `b8004` | Alunos do 6º ano B e do 8º ano C |
 | `elisa@maisedu.dev`, `a7099` | Primeiro acesso: senha provisória **`Provisoria1`** |
 
-Inclui 96 questões aprovadas (8 tópicos × 3 níveis, com gabarito calculado), questões pendentes na fila de validação, uma rejeitada, um rascunho, atividades respondidas em semanas diferentes e duas práticas adaptativas já feitas. Sem `RESEND_API_KEY`, o conteúdo dos e-mails aparece no log do back-end.
+Inclui 96 questões aprovadas (8 tópicos × 3 níveis, com gabarito calculado), questões pendentes na fila de validação, uma rejeitada, um rascunho, atividades respondidas em semanas diferentes e duas práticas adaptativas já feitas. Cada aluno do seed tem como e-mail do responsável `responsavel.<login>@maisedu.dev` (endereço fictício). Sem `RESEND_API_KEY`, o conteúdo dos e-mails (inclusive a senha provisória enviada ao responsável) aparece no log do back-end.
 
 ## Testes
 
@@ -103,10 +105,10 @@ cd backend
 ```
 maisedu/
 ├── backend/            # API REST (Spring Boot) — Dockerfile próprio
-│   └── src/main/resources/db/migration/   # V1..V8 (Flyway)
+│   └── src/main/resources/db/migration/   # V1..V10 (Flyway)
 ├── frontend/           # SPA (React + Vite) — Dockerfile + nginx.conf
 ├── docs/
-│   ├── diagrams/       # arquitetura e diagrama entidade-relacionamento
+│   ├── diagrams/       # arquitetura e diagrama entidade-relacionamento (PNG + fonte .dot)
 │   ├── integracao-resend.md
 │   ├── ALTERACOES.md   # o que mudou nesta versão e como foi verificado
 │   └── AJUSTES_MONOGRAFIA.md
@@ -122,6 +124,7 @@ maisedu/
 | `JWT_SECRET` | Segredo do JWT (mínimo 32 bytes; a aplicação não sobe com menos) |
 | `JWT_COOKIE_SECURE` | `true` atrás de HTTPS |
 | `RESEND_API_KEY`, `RESEND_REMETENTE` | E-mail transacional. Com `onboarding@resend.dev`, o Resend só entrega para o e-mail dono da conta; para outros destinatários, verifique um domínio |
+| `APP_URL` | Endereço do sistema usado nos links dos e-mails (padrão `http://localhost:8081`) |
 | `CORS_ORIGENS` | Só se o front chamar a API em outra origem |
 | `FORWARD_HEADERS_STRATEGY` | `native` atrás de proxy reverso (o compose já define) |
 

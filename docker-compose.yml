@@ -31,6 +31,7 @@ services:
       JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-false}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_REMETENTE: ${RESEND_REMETENTE:-MaisEdu <onboarding@resend.dev>}
+      APP_URL: ${APP_URL:-http://localhost:8081}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       # O nginx do front repassa o IP real do cliente; o Tomcat só confia nesse cabeçalho vindo da rede interna.
       FORWARD_HEADERS_STRATEGY: native
