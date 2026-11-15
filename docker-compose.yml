@@ -4,6 +4,7 @@
 #
 # Por padrão roda no perfil "dev": com o banco vazio, cria o cenário de demonstração
 # (contas na saída do back-end: docker compose logs backend). Variáveis em .env (veja .env.example).
+# Para a escola de volume (1000 alunos simulados, para os painéis): SPRING_PROFILES_ACTIVE=dev,demo-volume
 
 services:
   db:
@@ -33,6 +34,8 @@ services:
       RESEND_REMETENTE: ${RESEND_REMETENTE:-MaisEdu <onboarding@resend.dev>}
       APP_URL: ${APP_URL:-http://localhost:8081}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # Prazos de entrega e datas da plataforma no horário de Brasília (o contêiner usa UTC por padrão)
+      TZ: ${TZ:-America/Sao_Paulo}
       # O nginx do front repassa o IP real do cliente; o Tomcat só confia nesse cabeçalho vindo da rede interna.
       FORWARD_HEADERS_STRATEGY: native
     depends_on:
