@@ -12,6 +12,7 @@ public record UsuarioGestaoResponse(
         Long id,
         String nome,
         String identificadorDeAcesso,
+        String emailResponsavel,
         Set<RoleNome> roles,
         boolean ativo,
         boolean bloqueado,
@@ -24,7 +25,8 @@ public record UsuarioGestaoResponse(
         for (Role role : usuario.getRoles()) {
             roles.add(role.getNome());
         }
-        return new UsuarioGestaoResponse(usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(), roles,
+        return new UsuarioGestaoResponse(usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(),
+                usuario.getEmailResponsavel(), roles,
                 usuario.isAtivo(), usuario.estaBloqueado(), usuario.isSenhaTemporaria(), usuario.isAnonimizado(),
                 usuario.getCriadoEm());
     }

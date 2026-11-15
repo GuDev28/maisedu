@@ -1,9 +1,141 @@
-# Alterações desta versão
+# Alterações
+
+## Ajustes depois da revisão (16 de novembro de 2026)
+
+### Antes de rodar
+
+Nada novo para instalar. A migration `V10` roda sozinha. A versão dos termos subiu para **2**: no
+próximo login, todos (inclusive os usuários do seed) leem e aceitam a nova Política e os novos Termos.
+Em produção, defina `APP_URL` com o endereço público (vai nos links dos e-mails).
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Auditoria (erro ao abrir) | No PostgreSQL, a consulta com `:de is null` recebia o parâmetro de data nulo sem tipo e o banco respondia "could not determine data type of parameter", e a tela mostrava "Erro inesperado". O filtro agora é montado com `Specification`: cada condição só entra quando o filtro foi preenchido. O H2 dos testes não reproduzia o erro; há um teste de integração novo cobrindo a tela sem filtros | `repository/FiltroAuditoria.java`, `LogAuditoriaRepository`, `AuditoriaService` |
+| E-mail do responsável | O cadastro do aluno pede o e-mail do responsável (obrigatório). O login e a senha provisória vão para esse e-mail, e não aparecem mais para o professor. "Nova senha" também envia para o responsável. O professor da turma (e o admin) corrige o e-mail e pode, no mesmo passo, mandar uma senha nova. Aluno antigo sem e-mail do responsável continua recebendo a senha pela tela, como antes | `Usuario.emailResponsavel`, `UsuarioService`, `GestaoUsuarioService`, `ResendEmailService`, `PUT /usuarios/{id}/email-responsavel`, `pages/Turma.jsx`, `components/EmailDoResponsavel.jsx` |
+| E-mail ao responsável (conteúdo) | Só o primeiro nome do aluno, o login, a senha provisória, o nome da escola e links para o sistema e para a Política. A auditoria registra o envio, mas não o endereço | `ResendEmailService` |
+| Marcar antes de responder | Clicar numa alternativa só a marca; a resposta vale em "Confirmar resposta". A marcação fica no servidor (o aluno sai e volta sem perder), pode ser trocada quantas vezes quiser e é apagada ao confirmar. A navegação mostra as questões marcadas e não confirmadas. A resposta continua única (RN04) e a ordem das respostas confirmadas, que o motor adaptativo usa, não muda | `AtividadeAlunoQuestao.alternativaMarcada`, `RespostaService.marcar`, `PUT /aluno/folhas/{id}/questoes/{id}/marcacao`, `pages/FolhaAtividade.jsx` |
+| Banco (`V10`) | `usuario.email_responsavel`; `atividade_aluno_questao.alternativa_marcada_id` e `marcada_em`, com gatilho que recusa alternativa de outra questão | `db/migration/V10__email_responsavel_e_marcacao.sql` |
+| Política de Privacidade e Termos (versão 2) | Novo dado (e-mail do responsável), finalidade e base legal, o que o Resend passa a receber, correção, eliminação e retenção; Termos descrevem o cadastro com e-mail do responsável e a confirmação da resposta | `pages/PoliticaPrivacidade.jsx`, `pages/TermosUso.jsx`, `maisedu.termos.versao-atual=2` |
+| Textos | Login, Como funciona e Minha conta (aluno vê o e-mail do responsável cadastrado) | `pages/Login.jsx`, `pages/ComoFunciona.jsx`, `pages/MinhaConta.jsx` |
+| Configuração | `APP_URL` (links dos e-mails) | `application.properties`, `.env.example`, `docker-compose.yml` |
+
+Testes novos: auditoria sem filtros e com filtro de ação e período; cadastro e senha nova com envio
+ao responsável; correção do e-mail (professor da turma, professor de outra turma, professor sem esse
+campo); anonimização apaga o e-mail do responsável; marcar, trocar, confirmar, marcação apagada e
+recusa de marcação em questão já respondida.
+
+## Versão para a apresentação do PFC (novembro de 2026)
+
+Implementa a análise do projeto feita antes da apresentação: pendências, simplificações de fluxo e
+de código, telas novas e o menu lateral com React Router e Bootstrap. Ficaram como trabalhos
+futuros, como na análise: motor estatístico (BKT/TRI), testes com PostgreSQL real
+(Testcontainers), prazos de entrega e de votação e importação de alunos por CSV.
+
+### Antes de rodar: `npm install` no front-end
+
+O `package.json` ganhou `react-router-dom` e `bootstrap`. O `package-lock.json` não pôde ser
+atualizado aqui (sem acesso ao registro npm), e o `Dockerfile` usa `npm ci`, que exige os dois em
+sincronia. Rode uma vez e faça commit do lock:
+
+```bash
+cd frontend && npm install && cd ..
+git add frontend/package-lock.json
+```
+
+Depois: `cd backend && ./mvnw test` e `docker compose down -v && docker compose up --build`.
+
+### Telas e navegação
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Menu lateral | Seções por perfil, item atual destacado, contador de questões esperando voto, gaveta no celular, rodapé com Minha conta, Como funciona, Termos, Privacidade e Sair | `navegacao.js`, `components/Layout.jsx` |
+| React Router | Uma rota por tela; Termos e Privacidade em `/termos` e `/privacidade` (o Voltar do navegador funciona) | `App.jsx`, `main.jsx` |
+| Bootstrap 5.3 | Todas as telas; as 7 telas antigas com estilo inline foram refeitas; modal e avisos no lugar de `window.confirm`/`prompt` | `estilo.css`, `context/InterfaceContext.jsx` |
+| Início | Admin: números da escola e alertas (contas bloqueadas, 1º acesso pendente). Professor: questões esperando voto e, por turma, tópico mais fraco e alunos que não começaram. Aluno: acerto geral, tópico que precisa de atenção, próxima atividade e "Praticar agora" | `pages/inicio/`, `GET /painel/instituicao` |
+| Turma | Tela única com abas Pessoas, Atividades e Desempenho. Em Pessoas: cadastrar já vinculando, vincular quem já tem conta, tirar da turma e gerar senha nova. Substitui Cadastrar aluno, Cadastrar professor, Vincular aluno, Vincular professor e Meus alunos | `pages/Turma.jsx` |
+| Banco de questões | Tela própria, com autor, escola de origem e contagem por tópico | `pages/BancoQuestoes.jsx` |
+| Minhas questões | Placar ("2 de 3 aprovações"), motivos da rejeição, editar e excluir rascunho, filtro por status | `pages/MinhasQuestoes.jsx` |
+| Criar/editar questão | Botões "Salvar rascunho" e "Salvar e enviar para validação" | `pages/FormQuestao.jsx` |
+| Avaliar questões | Botões Aprovar e Rejeitar (com motivo obrigatório) e placar parcial | `pages/AvaliarQuestoes.jsx` |
+| Folha da atividade | Uma questão por vez, barra de progresso, navegação entre questões e tela final com acertos por tópico; usa o retorno do POST da resposta (uma requisição a menos por clique) | `pages/FolhaAtividade.jsx` |
+| Praticar agora | Item próprio no menu; mostra os tópicos e níveis escolhidos pelo motor antes de começar | `pages/Praticar.jsx` |
+| Minha conta | Dados, escola, papéis, alterar senha, versão e data do aceite, baixar meus dados (JSON) | `pages/MinhaConta.jsx`, `GET /auth/conta`, `GET /auth/meus-dados` |
+| Como funciona | Fluxo por perfil, com links para as telas | `pages/ComoFunciona.jsx` |
+| Auditoria | Ações com nome em português e lista vinda do back-end; filtro por nome do usuário em vez do id | `pages/Auditoria.jsx`, `GET /auditoria/acoes` |
+| Rótulos | Ano, nível, status, situação e ações da auditoria sem códigos crus | `components/rotulos.js` |
+| Identidade | Logo, cor própria (verde-azulado), favicon, título "MaisEdu", `lang="pt-BR"`; arquivos do template do Vite apagados | `components/Logo.jsx`, `index.html`, `public/favicon.svg` |
+
+### Back-end
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Prática diagnóstica | Aluno sem nenhuma resposta recebe questões fáceis de até 3 tópicos do ano da turma (antes, "Praticar agora" dava erro) | `MotorAdaptativo.planejarDiagnostico`, `PraticaAdaptativaService` |
+| Desvincular | `DELETE /turmas/{id}/alunos/{alunoId}` (admin ou professor da turma) e `/professores/{id}` (só admin), com auditoria; histórico do aluno é mantido | `VinculoTurmaService`, `VinculoTurmaController` |
+| Membros da turma | `GET /turmas/{id}/membros` | `VinculoTurmaService.listarMembros` |
+| Cadastro com turma | `turmaId` opcional em `POST /alunos` e `POST /professores`: cria e vincula na mesma transação | `UsuarioService` |
+| Rascunho | `PUT` e `DELETE /questoes/{id}`, só do autor e só em rascunho | `QuestaoService`, `Questao.editar` |
+| Motivo da rejeição | Campo `comentario` (obrigatório ao rejeitar); o autor vê os motivos sem saber quem votou; a fila do avaliador mostra o placar parcial mas não os motivos | `AvaliacaoQuestao`, migration **V9**, `QuestaoResponse` |
+| Placar e escola | `QuestaoResponse` com aprovações, rejeições, motivos e escola do autor | `QuestaoService.comPlacar` |
+| Troca voluntária de senha | Em Minha conta, sem novo aceite; no primeiro acesso ou com termos novos, o aceite continua obrigatório | `AutenticacaoService.trocarSenha` |
+| Mensagem | "use Minha conta → Alterar senha" (antes citava uma opção que não existia) | `GestaoUsuarioService.redefinirSenha` |
+| Sessão | `GET /auth/me` traz o nome da escola para o menu | `UsuarioResumoResponse` |
+
+### Simplificações de código
+
+| Antes | Agora |
+|---|---|
+| Regra "admin da instituição ou professor da turma" em 4 lugares | `AcessoTurma` com `buscarComAcesso`, `buscarComoAdmin` e `buscarComoProfessorDaTurma` |
+| "Nível dominado" calculado em dois lugares e parâmetros lidos duas vezes com `@Value` | Um bean `MotorAdaptativo` (`AdaptativoConfig`); `DesempenhoService` usa `motor.dominado`; `DesempenhoTopico.dominado` removido |
+| Services recebendo ora `Long id`, ora `UsuarioAutenticado` | `UsuarioAutenticado` em questões, avaliação e cadastro; `AuditoriaService` com 2 sobrecargas de `registrar` em vez de 3 |
+| `setStatus` na questão a partir do service | `Questao.apurarVotos(aprovacoes, rejeicoes)`; `@Setter` removido |
+| Consultas dentro de laços (N+1) | Fila de avaliação com `not exists`; contagens de atividades e placares agregados no banco (`PlacarAtividade`) |
+| Contagem de acertos repetida | `Placar` |
+| Turma/usuário inexistente devolvia 400 | 404 (`RecursoNaoEncontradoException`) |
+| JSON de erro escrito à mão em dois lugares | `RespostaErroJson` |
+| `stream()` em `Questao.definirAlternativas` | `for`, como no resto do projeto |
+| `UsuarioRepository.findByEmail`/`findByLogin` sem uso | Removidos; `findByTurmaIdComProfessor` passou a ser usado |
+
+### Documentos
+
+- Termos de Uso e Política de Privacidade: professor pode tirar aluno da turma; rascunho editável;
+  motivo da rejeição (lido pelo autor, sem identificar quem votou); "baixar meus dados" em Minha
+  conta. Continuam na versão 1 (ajustes de redação e de funcionalidades já previstas). Se o grupo
+  considerar a mudança relevante, troque `maisedu.termos.versao-atual` para 2 e todos aceitarão de
+  novo no próximo acesso.
+- `docs/diagrams/er_diagram.png`: agora é o modelo de dados de verdade, gerado do banco criado pelas
+  migrations V1 a V9 (fonte em `er_diagram.dot`).
+- `docs/diagrams/arquitetura.png`: inclui o nginx com proxy `/api`, os três contêineres e o Resend
+  (fonte em `arquitetura.dot`).
+
+### Como foi verificado
+
+O ambiente onde as mudanças foram feitas não tem acesso ao Maven Central nem ao registro npm, então:
+
+- **Java**: compilação com `javac` contra os fontes do projeto, sem as bibliotecas (Spring, Lombok).
+  Conferido: nenhum erro de sintaxe; nenhum método, construtor ou campo do projeto chamado com nome
+  ou número de argumentos errado (em `main` e em `test`); getters/setters do Lombok usados só onde a
+  classe tem a anotação e o campo. Os construtores gerados pelo `@RequiredArgsConstructor` usados
+  nos testes foram conferidos à mão, na ordem dos campos.
+- **Migrations**: V1 a V9 aplicadas em sequência num PostgreSQL 16 zerado, sem erro.
+- **Front-end**: ESLint (variáveis não definidas ou sem uso) sem apontamentos; empacotado com esbuild e
+  aberto no Chromium (Playwright) com a API simulada, nos três perfis, em todas as telas, no computador
+  e no celular; nenhum erro no console.
+- **Testes**: atualizados para as assinaturas novas, e testes novos para prática diagnóstica,
+  quórum na entidade, edição e exclusão de rascunho, motivo da rejeição, placar, desvincular,
+  membros da turma, cadastro já vinculando, troca voluntária de senha, Minha conta, Início do admin
+  e lista de atividades do aluno com placar agregado.
+
+**Falta rodar com as bibliotecas reais**: `./mvnw test`, `npm run build`, `npm run lint` e
+`docker compose up --build`.
+
+---
+
+## Versão anterior (funcionalidades obrigatórias)
 
 Resumo do que foi implementado a partir da análise do projeto, onde está no código, as decisões
 tomadas onde a monografia deixava margem e o que foi (e o que ainda precisa ser) verificado.
 
-## 1. Funcionalidades novas
+### 1. Funcionalidades novas
 
 | Item | O que foi feito | Onde |
 |---|---|---|
@@ -22,7 +154,7 @@ tomadas onde a monografia deixava margem e o que foi (e o que ainda precisa ser)
 | Demonstração | Perfil `dev` cria duas escolas, professores, turmas, alunos, 96 questões aprovadas e respostas | `SeedDemonstracao`, `GeradorQuestoesDemo` |
 | Docker | `docker compose up --build` sobe banco, back-end e front-end (nginx com proxy `/api`) | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` |
 
-## 2. Correções
+### 2. Correções
 
 | Problema | Correção |
 |---|---|
@@ -40,12 +172,12 @@ tomadas onde a monografia deixava margem e o que foi (e o que ainda precisa ser)
 | Front não reagia ao 401 | Evento global de sessão expirada → volta ao login com aviso |
 | Política/Termos prometiam o que o sistema não fazia | Textos reescritos conforme o funcionamento real (seção 4 da Política: Resend como transferência internacional e autoria no banco compartilhado) |
 
-## 3. Banco de dados
+### 3. Banco de dados
 
 - **V7** — `log_auditoria.instituicao_id`; normalização de e-mail/login; `usuario.versao_sessao`, `termos_versao`, `anonimizado_em`.
 - **V8** — `questao.ano_escolar`; CHECKs de status e ano; tabelas `atividade`, `atividade_questao`, `atividade_aluno`, `atividade_aluno_questao`, `resposta`, `desempenho_topico`; trigger que garante no banco que a alternativa da resposta pertence à questão entregue (RN04).
 
-## 4. Decisões tomadas onde a monografia deixava margem
+### 4. Decisões tomadas onde a monografia deixava margem
 
 1. **Prática em andamento é retomada.** Se o aluno já tem uma prática adaptativa não concluída, pedir outra devolve a mesma (evita acumular práticas e "trocar" uma prática difícil).
 2. **Seleção das questões (RN06, passo c).** Em cada tópico: primeiro o nível-alvo (inéditas antes das já respondidas), depois os níveis adjacentes (FÁCIL→MÉDIO; MÉDIO→FÁCIL, DIFÍCIL; DIFÍCIL→MÉDIO). Os tópicos são intercalados a partir do mais fraco (10 vagas em 3 tópicos = 4/3/3). Vagas que um tópico não preencher ficam para os outros. Se houver menos de 10 questões compatíveis, a prática sai menor; com zero, não é gerada (CA03).
@@ -56,7 +188,7 @@ tomadas onde a monografia deixava margem e o que foi (e o que ainda precisa ser)
 7. **Bloqueio por tentativas** continua informando o tempo restante antes de conferir a senha (CA03 do RF01).
 8. **Ano escolar** é obrigatório para questões novas e nulo nas criadas antes da V8.
 
-## 5. Como foi verificado
+### 5. Como foi verificado
 
 Neste ambiente o Maven Central estava bloqueado, então **não foi possível compilar com as bibliotecas reais nem rodar `./mvnw test`**. O que foi feito:
 
@@ -75,7 +207,7 @@ docker compose up --build           # sobe tudo; o Hibernate valida o schema con
 
 Se algo falhar, os pontos mais prováveis são detalhes de API que os stubs não reproduzem (por exemplo, assinatura exata de algum método do Spring 7/Hibernate 7) — o restante da lógica já foi exercitado.
 
-## 6. Arquivos (em relação ao zip original)
+### 6. Arquivos (em relação ao zip original)
 
 **Novos (95):**
 

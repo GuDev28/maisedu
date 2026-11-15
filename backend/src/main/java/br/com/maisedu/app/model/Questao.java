@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,6 +17,12 @@ import java.util.List;
 public class Questao {
 
     public static final int NUMERO_ALTERNATIVAS = 5;
+
+    /** RN02: votos iguais que decidem a validação colaborativa (aprovar ou rejeitar). */
+    public static final int VOTOS_PARA_DECIDIR = 3;
+
+    /** RN02: cada questão recebe no máximo este número de votos, um por professor. */
+    public static final int MAXIMO_VOTOS = 5;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +55,7 @@ public class Questao {
     @OrderBy("ordem ASC")
     private List<Alternativa> alternativas = new ArrayList<>();
 
-    @Setter
+    /** Só muda pelas regras da entidade: {@link #enviarParaValidacao()} e {@link #apurarVotos(long, long)}. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private StatusQuestao status;
@@ -84,8 +89,10 @@ public class Questao {
         if (textos == null || textos.size() != NUMERO_ALTERNATIVAS) {
             throw new NegocioException("A questão deve ter exatamente " + NUMERO_ALTERNATIVAS + " alternativas");
         }
-        if (textos.stream().anyMatch(t -> t == null || t.isBlank())) {
-            throw new NegocioException("Todas as alternativas devem ter texto");
+        for (String texto : textos) {
+            if (texto == null || texto.isBlank()) {
+                throw new NegocioException("Todas as alternativas devem ter texto");
+            }
         }
         if (indiceCorreta < 0 || indiceCorreta >= textos.size()) {
             throw new NegocioException("Indique qual alternativa é a correta");
@@ -107,6 +114,42 @@ public class Questao {
                     + " alternativas antes de enviar a questão para validação");
         }
         status = StatusQuestao.PENDENTE;
+    }
+
+    /**
+     * Edição do rascunho pelo autor: enquanto a questão não foi enviada para validação, todos os
+     * campos podem mudar. Depois do envio, a questão fica congelada para os votos valerem.
+     */
+    public void editar(String novoEnunciado, Topico novoTopico, NivelDificuldade novoNivel, AnoEscolar novoAno,
+                       List<String> textos, int indiceCorreta) {
+        if (status != StatusQuestao.RASCUNHO) {
+            throw new NegocioException("Só é possível editar a questão enquanto ela é um rascunho");
+        }
+        definirAlternativas(textos, indiceCorreta);
+        this.enunciado = novoEnunciado;
+        this.topico = novoTopico;
+        this.nivelDificuldade = novoNivel;
+        this.anoEscolar = novoAno;
+    }
+
+    /**
+     * RN02: apura o placar depois de cada voto. A questão é aprovada (entra no banco compartilhado)
+     * ou rejeitada quando atinge {@link #VOTOS_PARA_DECIDIR} votos no mesmo sentido; antes disso,
+     * continua pendente.
+     */
+    public void apurarVotos(long aprovacoes, long rejeicoes) {
+        if (status != StatusQuestao.PENDENTE) {
+            throw new NegocioException("A validação desta questão já foi encerrada");
+        }
+        if (aprovacoes >= VOTOS_PARA_DECIDIR) {
+            status = StatusQuestao.APROVADA;
+        } else if (rejeicoes >= VOTOS_PARA_DECIDIR) {
+            status = StatusQuestao.REJEITADA;
+        }
+    }
+
+    public boolean isRascunho() {
+        return status == StatusQuestao.RASCUNHO;
     }
 
     public boolean isAutor(Long usuarioId) {

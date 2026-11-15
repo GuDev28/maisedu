@@ -13,7 +13,6 @@ import br.com.maisedu.app.model.ProfessorTurma;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.model.Role;
 import br.com.maisedu.app.model.RoleNome;
-import br.com.maisedu.app.model.StatusQuestao;
 import br.com.maisedu.app.model.Topico;
 import br.com.maisedu.app.model.Turma;
 import br.com.maisedu.app.model.Usuario;
@@ -212,7 +211,8 @@ public class SeedDemonstracao implements CommandLineRunner {
         }
         // Aluno ainda no primeiro acesso: senha provisória, sem aceite dos termos
         Usuario novato = usuarioRepository.save(comPapel(
-                Usuario.novoAluno("Rafael Tavares", "a7099", hashProvisorio, escolaA), RoleNome.ALUNO));
+                Usuario.novoAluno("Rafael Tavares", "a7099", hashProvisorio, escolaA,
+                        emailDoResponsavel("a7099")), RoleNome.ALUNO));
         alunoTurmaRepository.save(new AlunoTurma(novato, setimoA));
         return cenario;
     }
@@ -227,9 +227,15 @@ public class SeedDemonstracao implements CommandLineRunner {
         return usuarioRepository.save(usuario);
     }
 
+    /** E-mails fictícios de responsáveis (domínio de teste: nenhum e-mail sai de verdade daqui). */
+    private static String emailDoResponsavel(String login) {
+        return "responsavel." + login + "@maisedu.dev";
+    }
+
     private Usuario aluno(String nome, String login, String hash, Instituicao instituicao, Turma turma,
                           Cenario cenario) {
-        Usuario aluno = comPapel(Usuario.novoAluno(nome, login, hash, instituicao), RoleNome.ALUNO);
+        Usuario aluno = comPapel(Usuario.novoAluno(nome, login, hash, instituicao, emailDoResponsavel(login)),
+                RoleNome.ALUNO);
         ativar(aluno, hash);
         Usuario salvo = usuarioRepository.save(aluno);
         alunoTurmaRepository.save(new AlunoTurma(salvo, turma));
@@ -275,7 +281,7 @@ public class SeedDemonstracao implements CommandLineRunner {
                 avaliacaoQuestaoRepository.save(new AvaliacaoQuestao(questao, avaliador, VotoAvaliacao.APROVAR));
                 votos++;
             }
-            questao.setStatus(StatusQuestao.APROVADA);
+            questao.apurarVotos(votos, 0);
             cenario.aprovadasPorTopicoENivel
                     .computeIfAbsent(demo.topico() + "|" + demo.nivel(), c -> new ArrayList<>())
                     .add(questao.getId());
@@ -304,10 +310,15 @@ public class SeedDemonstracao implements CommandLineRunner {
         errada.definirAlternativas(List.of("54", "56", "58", "64", "48"), 0);
         questaoRepository.save(errada);
         errada.enviarParaValidacao();
+        String[] motivos = {
+                "A alternativa marcada como correta está errada: 7 × 8 = 56.",
+                "Gabarito incorreto. A resposta certa é 56 (alternativa B).",
+                "Conferi a conta: 7 × 8 dá 56, não 54."};
         for (int k = 2; k <= 4; k++) {
-            avaliacaoQuestaoRepository.save(new AvaliacaoQuestao(errada, professores.get(k), VotoAvaliacao.REJEITAR));
+            avaliacaoQuestaoRepository.save(new AvaliacaoQuestao(errada, professores.get(k), VotoAvaliacao.REJEITAR,
+                    motivos[k - 2]));
         }
-        errada.setStatus(StatusQuestao.REJEITADA);
+        errada.apurarVotos(0, motivos.length);
 
         // Rascunho da Ana, para mostrar o envio para validação
         Questao rascunho = new Questao("Qual é o MMC de 4 e 6?", professores.get(0), topicos.get("Frações"),

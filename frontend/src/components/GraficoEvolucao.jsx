@@ -6,7 +6,7 @@ import { formatarData } from "./rotulos";
  */
 export function GraficoEvolucao({ pontos }) {
   if (!pontos || pontos.length === 0) {
-    return <p className="texto-suave">Ainda não há respostas para mostrar a evolução.</p>;
+    return <p className="text-secondary">Ainda não há respostas para mostrar a evolução.</p>;
   }
 
   const largura = 560;
@@ -20,7 +20,7 @@ export function GraficoEvolucao({ pontos }) {
   const linha = pontos.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.percentualAcumulado)}`).join(" ");
 
   return (
-    <figure className="grafico">
+    <figure className="grafico mb-0">
       <svg viewBox={`0 0 ${largura} ${altura}`} role="img"
            aria-label="Percentual de acerto acumulado por semana">
         {[0, 50, 70, 100].map((marca) => (
@@ -49,7 +49,7 @@ export function GraficoEvolucao({ pontos }) {
           </g>
         ))}
       </svg>
-      <figcaption className="texto-suave">
+      <figcaption className="small text-secondary mt-2">
         Linha: acerto acumulado. Pontos claros: acerto de cada semana. Linha tracejada: 70% (domínio).
       </figcaption>
     </figure>

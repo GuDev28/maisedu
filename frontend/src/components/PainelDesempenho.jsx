@@ -11,64 +11,84 @@ export function PainelDesempenho({ desempenho }) {
     return null;
   }
   if (desempenho.totalRespostas === 0) {
-    return <p>Nenhuma resposta registrada ainda.</p>;
+    return <p className="text-secondary">Nenhuma resposta registrada ainda.</p>;
   }
 
   return (
     <div>
-      <div className="resumo-numeros">
-        <div className="cartao-numero">
-          <span className="numero">{desempenho.totalRespostas}</span>
-          <span className="texto-suave">respostas</span>
+      <div className="row g-3 mb-4">
+        <div className="col-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <div className="me-numero">{desempenho.totalRespostas}</div>
+              <div className="small text-secondary">respostas</div>
+            </div>
+          </div>
         </div>
-        <div className="cartao-numero">
-          <span className="numero">{desempenho.totalAcertos}</span>
-          <span className="texto-suave">acertos</span>
+        <div className="col-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <div className="me-numero">{desempenho.totalAcertos}</div>
+              <div className="small text-secondary">acertos</div>
+            </div>
+          </div>
         </div>
-        <div className="cartao-numero">
-          <BarraPercentual valor={desempenho.percentualGeral} destaque />
-          <span className="texto-suave">acerto geral</span>
+        <div className="col-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <BarraPercentual valor={desempenho.percentualGeral} destaque />
+              <div className="small text-secondary mt-1">acerto geral</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <h3>Por tópico</h3>
-      <table className="tabela">
-        <thead>
-          <tr>
-            <th>Tópico</th>
-            <th>Respostas</th>
-            <th>Acerto</th>
-            <th>Por nível</th>
-          </tr>
-        </thead>
-        <tbody>
-          {desempenho.topicos.map((topico, indice) => (
-            <tr key={topico.topicoId}>
-              <td>
-                {topico.topico}
-                {indice === 0 && desempenho.topicos.length > 1 && (
-                  <span className="etiqueta etiqueta-alerta">precisa de atenção</span>
-                )}
-              </td>
-              <td>{topico.totalRespostas}</td>
-              <td>
-                <BarraPercentual valor={topico.percentual} />
-              </td>
-              <td>
-                {topico.niveis.map((nivel) => (
-                  <div key={nivel.nivelDificuldade} className="linha-nivel">
-                    {rotuloNivel(nivel.nivelDificuldade)}: {nivel.totalAcertos}/{nivel.totalRespostas}
-                    {nivel.dominado && <span className="etiqueta etiqueta-ok">dominado</span>}
-                  </div>
-                ))}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2 className="h6 text-secondary text-uppercase">Por tópico</h2>
+      <div className="card mb-4">
+        <div className="table-responsive">
+          <table className="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Tópico</th>
+                <th className="text-end">Respostas</th>
+                <th>Acerto</th>
+                <th>Por nível</th>
+              </tr>
+            </thead>
+            <tbody>
+              {desempenho.topicos.map((topico, indice) => (
+                <tr key={topico.topicoId}>
+                  <td>
+                    {topico.topico}
+                    {indice === 0 && desempenho.topicos.length > 1 && (
+                      <span className="badge text-bg-warning ms-2">precisa de atenção</span>
+                    )}
+                  </td>
+                  <td className="text-end">{topico.totalRespostas}</td>
+                  <td>
+                    <BarraPercentual valor={topico.percentual} />
+                  </td>
+                  <td className="small">
+                    {topico.niveis.map((nivel) => (
+                      <div key={nivel.nivelDificuldade}>
+                        {rotuloNivel(nivel.nivelDificuldade)}: {nivel.totalAcertos}/{nivel.totalRespostas}
+                        {nivel.dominado && <span className="badge text-bg-success ms-1">dominado</span>}
+                      </div>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <h3>Evolução</h3>
-      <GraficoEvolucao pontos={desempenho.evolucao} />
+      <h2 className="h6 text-secondary text-uppercase">Evolução</h2>
+      <div className="card">
+        <div className="card-body">
+          <GraficoEvolucao pontos={desempenho.evolucao} />
+        </div>
+      </div>
     </div>
   );
 }

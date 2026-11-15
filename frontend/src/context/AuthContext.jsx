@@ -53,7 +53,8 @@ export function AuthProvider({ children }) {
 
   async function trocarSenha(senhaAtual, novaSenha, aceiteTermos) {
     await authService.trocarSenha(senhaAtual, novaSenha, aceiteTermos);
-    // o backend já invalidou o cookie antigo: força um novo login
+    // o backend já invalidou o cookie antigo: força um novo login, agora com a senha nova
+    setAvisoSessao("Senha alterada. Entre de novo com a senha nova.");
     setUsuario(null);
   }
 

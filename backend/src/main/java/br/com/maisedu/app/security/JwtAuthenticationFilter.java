@@ -78,12 +78,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String rota = request.getServletPath();
 
             if (!preflight && usuario.senhaTemporaria() && !ROTAS_PERMITIDAS_COM_SENHA_TEMPORARIA.contains(rota)) {
-                recusar(response, "Troque a senha provisória antes de continuar.");
+                RespostaErroJson.escrever(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Troque a senha provisória antes de continuar.");
                 return;
             }
             if (!preflight && usuario.termosPendentes() && !ROTAS_PERMITIDAS_COM_TERMOS_PENDENTES.contains(rota)) {
-                recusar(response, "Os Termos de Uso e a Política de Privacidade foram atualizados. "
-                        + "Aceite a nova versão para continuar.");
+                RespostaErroJson.escrever(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Os Termos de Uso e a Política de Privacidade foram atualizados. "
+                                + "Aceite a nova versão para continuar.");
                 return;
             }
         }
@@ -100,11 +102,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return Optional.of(doToken.comEstado(estado.get(), versaoTermosAtual));
     }
 
-    private void recusar(HttpServletResponse response, String mensagem) throws IOException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"mensagem\":\"" + mensagem.replace("\"", "\\\"") + "\"}");
-    }
 
     private Optional<String> extrairToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();

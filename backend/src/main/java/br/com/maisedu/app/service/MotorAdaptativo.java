@@ -93,6 +93,23 @@ public final class MotorAdaptativo {
         return topicos;
     }
 
+    /**
+     * Prática diagnóstica, para quem ainda não tem nenhuma resposta: os primeiros tópicos informados
+     * (até {@code maximoTopicos}), todos no nível FÁCIL (MÉDIO entra como reserva quando faltam
+     * fáceis). Com as vagas intercaladas por tópico, o aluno vê questões de vários assuntos e o
+     * motor passa a ter histórico para planejar as próximas práticas.
+     */
+    public List<TopicoPlanejado> planejarDiagnostico(List<Long> topicoIds) {
+        List<TopicoPlanejado> topicos = new ArrayList<>();
+        for (Long topicoId : topicoIds) {
+            if (topicos.size() >= parametros.maximoTopicos()) {
+                break;
+            }
+            topicos.add(new TopicoPlanejado(topicoId, BigDecimal.ZERO.setScale(2), 0, NivelDificuldade.FACIL));
+        }
+        return topicos;
+    }
+
     /** O nível mais baixo ainda não dominado; DIFÍCIL se todos estiverem dominados. */
     public NivelDificuldade nivelAlvo(Map<NivelDificuldade, DesempenhoNivel> porNivel) {
         for (NivelDificuldade nivel : NivelDificuldade.values()) {

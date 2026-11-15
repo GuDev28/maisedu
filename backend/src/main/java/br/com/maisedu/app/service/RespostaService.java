@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 /** RF16 (responder com correção automática), RN04 (integridade e unicidade) e RF17 (atualização do desempenho). */
 @Service
@@ -54,25 +53,41 @@ public class RespostaService {
                 .orElseThrow(() -> new NegocioException("Alternativa não encontrada."));
         // RN04: a alternativa precisa pertencer à questão (validado no construtor e por trigger no banco).
         Resposta resposta = respostaRepository.save(new Resposta(entregue, alternativa));
+        entregue.limparMarcacao();
         boolean acertou = resposta.acertou();
 
         // RF17/CA03: o desempenho é atualizado na mesma transação da resposta.
         desempenhoService.registrarResposta(aluno, entregue.getQuestao(), acertou);
 
-        List<Resposta> respostasDaAtividade = respostaRepository.findByAtividadeAluno(atividadeAluno.getId());
-        int acertos = 0;
-        for (Resposta registrada : respostasDaAtividade) {
-            if (registrada.acertou()) {
-                acertos++;
-            }
-        }
+        Placar placar = Placar.de(respostaRepository.findByAtividadeAluno(atividadeAluno.getId()));
         int total = atividadeAluno.getQuestoes().size();
-        if (respostasDaAtividade.size() >= total) {
+        if (placar.respondidas() >= total) {
             atividadeAluno.concluir();
         }
 
         Alternativa correta = entregue.getQuestao().alternativaCorreta();
         return new RespostaResultadoResponse(acertou, alternativa.getId(), correta.getId(), correta.letra(),
-                atividadeAluno.isConcluida(), respostasDaAtividade.size(), acertos, total);
+                atividadeAluno.isConcluida(), placar.respondidas(), placar.acertos(), total);
+    }
+
+    /**
+     * Marcação provisória (antes de confirmar): guarda a alternativa escolhida para a questão, sem criar
+     * resposta e sem mexer no desempenho. Pode ser trocada à vontade até a confirmação.
+     */
+    @Transactional
+    public void marcar(Long alunoId, Long atividadeAlunoId, Long atividadeAlunoQuestaoId, Long alternativaId) {
+        AtividadeAlunoQuestao entregue = atividadeAlunoQuestaoRepository.findById(atividadeAlunoQuestaoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Questão não encontrada nesta atividade."));
+        AtividadeAluno atividadeAluno = entregue.getAtividadeAluno();
+        if (!atividadeAluno.getId().equals(atividadeAlunoId) || !atividadeAluno.pertenceAo(alunoId)) {
+            throw new RecursoNaoEncontradoException("Questão não encontrada nesta atividade.");
+        }
+        if (respostaRepository.existsByAtividadeAlunoQuestaoId(entregue.getId())) {
+            throw new NegocioException("Esta questão já foi respondida e a resposta não pode ser alterada.");
+        }
+        Alternativa alternativa = alternativaRepository.findById(alternativaId)
+                .orElseThrow(() -> new NegocioException("Alternativa não encontrada."));
+        entregue.marcar(alternativa);
+        // sem save explícito: "entregue" é gerenciada pela transação (dirty checking)
     }
 }

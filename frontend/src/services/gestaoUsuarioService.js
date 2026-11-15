@@ -8,6 +8,14 @@ export function redefinirSenha(usuarioId) {
   return chamarApi(`/usuarios/${usuarioId}/redefinir-senha`, { method: "POST" });
 }
 
+/** Só alunos: admin ou professor de uma turma do aluno. */
+export function corrigirEmailResponsavel(usuarioId, emailResponsavel) {
+  return chamarApi(`/usuarios/${usuarioId}/email-responsavel`, {
+    method: "PUT",
+    body: JSON.stringify({ emailResponsavel }),
+  });
+}
+
 export function corrigirNome(usuarioId, nome) {
   return chamarApi(`/usuarios/${usuarioId}`, { method: "PATCH", body: JSON.stringify({ nome }) });
 }

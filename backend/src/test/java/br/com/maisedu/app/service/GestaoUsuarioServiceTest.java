@@ -89,7 +89,58 @@ class GestaoUsuarioServiceTest {
     }
 
     @Test
-    void professorRedefineASenhaDeAlunoDaSuaTurmaEARecebeParaRepassar() {
+    void senhaNovaDoAlunoVaiParaOEmailDoResponsavelENaoVoltaParaOProfessor() {
+        aluno.corrigirEmailResponsavel("mae@familia.test");
+        when(usuarioRepository.findById(ALUNO_ID)).thenReturn(Optional.of(aluno));
+        when(alunoTurmaRepository.alunoEstaEmTurmaDoProfessor(ALUNO_ID, PROFESSOR_ID)).thenReturn(true);
+        when(senhaGeradora.gerar()).thenReturn("NovaSenha12");
+        when(passwordEncoder.encode("NovaSenha12")).thenReturn("hash-novo");
+
+        SenhaRedefinidaResponse resposta = service.redefinirSenha(atorProfessor, ALUNO_ID);
+
+        assertNull(resposta.senhaProvisoria());
+        assertTrue(resposta.enviadaPorEmail());
+        assertTrue(aluno.isSenhaTemporaria());
+        verify(emailService).enviarNovaSenhaAoResponsavel(ALUNO_ID, "Ana Aluna", "2026001", "Escola",
+                "mae@familia.test", "NovaSenha12");
+    }
+
+    @Test
+    void professorCorrigeOEmailDoResponsavelDeAlunoDaSuaTurmaSemCopiarOEnderecoNaAuditoria() {
+        when(usuarioRepository.findById(ALUNO_ID)).thenReturn(Optional.of(aluno));
+        when(alunoTurmaRepository.alunoEstaEmTurmaDoProfessor(ALUNO_ID, PROFESSOR_ID)).thenReturn(true);
+
+        service.corrigirEmailResponsavel(atorProfessor, ALUNO_ID, " Pai@Familia.test ");
+
+        assertEquals("pai@familia.test", aluno.getEmailResponsavel());
+        verify(auditoriaService).registrar(atorProfessor, AcaoAuditoria.CORRECAO_DADOS_USUARIO, "Usuario", ALUNO_ID,
+                true, "e-mail do responsável alterado");
+    }
+
+    @Test
+    void professorNaoCorrigeEmailDoResponsavelDeAlunoDeOutraTurma() {
+        when(usuarioRepository.findById(ALUNO_ID)).thenReturn(Optional.of(aluno));
+        when(alunoTurmaRepository.alunoEstaEmTurmaDoProfessor(ALUNO_ID, PROFESSOR_ID)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> service.corrigirEmailResponsavel(atorProfessor, ALUNO_ID, "pai@familia.test"));
+
+        assertNull(aluno.getEmailResponsavel());
+        verifyNoInteractions(auditoriaService);
+    }
+
+    @Test
+    void professorNaoTemEmailDoResponsavel() {
+        when(usuarioRepository.findById(PROFESSOR_ID)).thenReturn(Optional.of(professor));
+
+        NegocioException ex = assertThrows(NegocioException.class,
+                () -> service.corrigirEmailResponsavel(atorAdmin, PROFESSOR_ID, "x@familia.test"));
+
+        assertEquals("Só alunos têm e-mail do responsável.", ex.getMessage());
+    }
+
+    @Test
+    void alunoAntigoSemEmailDoResponsavelRecebeASenhaPeloProfessor() {
         when(usuarioRepository.findById(ALUNO_ID)).thenReturn(Optional.of(aluno));
         when(alunoTurmaRepository.alunoEstaEmTurmaDoProfessor(ALUNO_ID, PROFESSOR_ID)).thenReturn(true);
         when(senhaGeradora.gerar()).thenReturn("NovaSenha12");
@@ -168,6 +219,7 @@ class GestaoUsuarioServiceTest {
 
     @Test
     void anonimizarRemoveDadosPessoaisVinculosENomeNaAuditoria() {
+        aluno.corrigirEmailResponsavel("mae@familia.test");
         when(usuarioRepository.findById(ALUNO_ID)).thenReturn(Optional.of(aluno));
         when(passwordEncoder.encode(anyString())).thenReturn("hash-aleatorio");
 
@@ -176,6 +228,7 @@ class GestaoUsuarioServiceTest {
         assertEquals("Usuário anonimizado #20", aluno.getNome());
         assertEquals("anonimizado-20", aluno.getLogin());
         assertNull(aluno.getEmail());
+        assertNull(aluno.getEmailResponsavel());
         assertFalse(aluno.isAtivo());
         assertTrue(aluno.isAnonimizado());
         assertEquals("hash-aleatorio", aluno.getSenha());

@@ -45,15 +45,4 @@ class DesempenhoTopicoTest {
         assertEquals(new BigDecimal("0.00"), DesempenhoTopico.percentual(0, 0));
     }
 
-    @Test
-    void dominioExigeMinimoDeRespostasEPercentual() {
-        DesempenhoTopico registro = new DesempenhoTopico(null, new Topico("Frações"), NivelDificuldade.FACIL);
-        for (int i = 0; i < 4; i++) {
-            registro.registrarResposta(true);
-        }
-        assertFalse(registro.dominado(5, BigDecimal.valueOf(70)), "4 respostas ainda não bastam");
-
-        registro.registrarResposta(false);
-        assertTrue(registro.dominado(5, BigDecimal.valueOf(70)), "4 de 5 = 80% domina");
-    }
 }

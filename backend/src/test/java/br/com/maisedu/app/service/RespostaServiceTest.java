@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -89,8 +92,12 @@ class RespostaServiceTest {
         when(respostaRepository.findByAtividadeAluno(ATIVIDADE_ALUNO_ID))
                 .thenReturn(List.of(new Resposta(entregue1, correta)));
 
+        entregue1.marcar(questao1.getAlternativas().get(0));
+
         RespostaResultadoResponse resultado = service.responder(ALUNO_ID, ATIVIDADE_ALUNO_ID, 70L, 102L);
 
+        // confirmar vale o que foi enviado e apaga a marcação provisória
+        assertNull(entregue1.getAlternativaMarcada());
         assertTrue(resultado.acertou());
         assertEquals(102L, resultado.alternativaCorretaId());
         assertEquals('C', resultado.letraCorreta());
@@ -192,7 +199,61 @@ class RespostaServiceTest {
         for (int i = 0; i < 5; i++) {
             ReflectionTestUtils.setField(questao.getAlternativas().get(i), "id", primeiroIdAlternativa + i);
         }
-        questao.setStatus(StatusQuestao.APROVADA);
+        ReflectionTestUtils.setField(questao, "status", StatusQuestao.APROVADA);
         return questao;
+    }
+
+    @Test
+    void marcarGuardaAEscolhaSemCriarRespostaNemMexerNoDesempenho() {
+        Alternativa primeira = questao1.getAlternativas().get(0);
+        Alternativa segunda = questao1.getAlternativas().get(3);
+        when(atividadeAlunoQuestaoRepository.findById(70L)).thenReturn(Optional.of(entregue1));
+        when(respostaRepository.existsByAtividadeAlunoQuestaoId(70L)).thenReturn(false);
+        when(alternativaRepository.findById(100L)).thenReturn(Optional.of(primeira));
+        when(alternativaRepository.findById(103L)).thenReturn(Optional.of(segunda));
+
+        service.marcar(ALUNO_ID, ATIVIDADE_ALUNO_ID, 70L, 100L);
+        // o aluno muda de ideia: a marcação é trocada, sem gastar a resposta (RN04)
+        service.marcar(ALUNO_ID, ATIVIDADE_ALUNO_ID, 70L, 103L);
+
+        assertSame(segunda, entregue1.getAlternativaMarcada());
+        assertNotNull(entregue1.getMarcadaEm());
+        verify(respostaRepository, never()).save(any());
+        verifyNoInteractions(desempenhoService, usuarioRepository);
+    }
+
+    @Test
+    void naoMarcaQuestaoJaRespondida() {
+        when(atividadeAlunoQuestaoRepository.findById(70L)).thenReturn(Optional.of(entregue1));
+        when(respostaRepository.existsByAtividadeAlunoQuestaoId(70L)).thenReturn(true);
+
+        NegocioException ex = assertThrows(NegocioException.class,
+                () -> service.marcar(ALUNO_ID, ATIVIDADE_ALUNO_ID, 70L, 101L));
+
+        assertTrue(ex.getMessage().contains("já foi respondida"));
+        assertNull(entregue1.getAlternativaMarcada());
+    }
+
+    @Test
+    void naoMarcaAlternativaDeOutraQuestao() {
+        Alternativa deOutraQuestao = questao2.getAlternativas().get(1);
+        when(atividadeAlunoQuestaoRepository.findById(70L)).thenReturn(Optional.of(entregue1));
+        when(respostaRepository.existsByAtividadeAlunoQuestaoId(70L)).thenReturn(false);
+        when(alternativaRepository.findById(201L)).thenReturn(Optional.of(deOutraQuestao));
+
+        NegocioException ex = assertThrows(NegocioException.class,
+                () -> service.marcar(ALUNO_ID, ATIVIDADE_ALUNO_ID, 70L, 201L));
+
+        assertEquals("A alternativa escolhida não pertence a esta questão", ex.getMessage());
+        assertNull(entregue1.getAlternativaMarcada());
+    }
+
+    @Test
+    void outroAlunoNaoMarcaNaFolhaAlheia() {
+        when(atividadeAlunoQuestaoRepository.findById(70L)).thenReturn(Optional.of(entregue1));
+
+        assertThrows(RecursoNaoEncontradoException.class, () -> service.marcar(99L, ATIVIDADE_ALUNO_ID, 70L, 101L));
+
+        verifyNoInteractions(alternativaRepository);
     }
 }

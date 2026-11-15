@@ -31,9 +31,29 @@ public class QuestaoController {
             @AuthenticationPrincipal UsuarioAutenticado professor,
             @Valid @RequestBody CriarQuestaoRequest request) {
         Questao questao = questaoService.criar(
-                professor.id(), request.enunciado(), request.topicoId(), request.nivelDificuldade(),
+                professor, request.enunciado(), request.topicoId(), request.nivelDificuldade(),
                 request.anoEscolar(), request.alternativas(), request.indiceCorreta());
         return QuestaoResponse.from(questao);
+    }
+
+    /** Edição do rascunho pelo autor (mesmos campos do cadastro). */
+    @PutMapping("/{questaoId}")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public QuestaoResponse editar(
+            @AuthenticationPrincipal UsuarioAutenticado professor,
+            @PathVariable Long questaoId,
+            @Valid @RequestBody CriarQuestaoRequest request) {
+        Questao questao = questaoService.editar(
+                professor, questaoId, request.enunciado(), request.topicoId(), request.nivelDificuldade(),
+                request.anoEscolar(), request.alternativas(), request.indiceCorreta());
+        return QuestaoResponse.from(questao);
+    }
+
+    @DeleteMapping("/{questaoId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public void excluir(@AuthenticationPrincipal UsuarioAutenticado professor, @PathVariable Long questaoId) {
+        questaoService.excluir(professor, questaoId);
     }
 
     @PostMapping("/{questaoId}/enviar-para-validacao")
@@ -41,18 +61,15 @@ public class QuestaoController {
     public QuestaoResponse enviarParaValidacao(
             @AuthenticationPrincipal UsuarioAutenticado professor,
             @PathVariable Long questaoId) {
-        Questao questao = questaoService.enviarParaValidacao(questaoId, professor.id());
+        Questao questao = questaoService.enviarParaValidacao(professor, questaoId);
         return QuestaoResponse.from(questao);
     }
 
+    /** Questões do professor com o placar da validação e os motivos das rejeições. */
     @GetMapping("/minhas")
     @PreAuthorize("hasRole('PROFESSOR')")
     public List<QuestaoResponse> minhas(@AuthenticationPrincipal UsuarioAutenticado professor) {
-        List<QuestaoResponse> respostas = new ArrayList<>();
-        for (Questao questao : questaoService.listarMinhas(professor.id())) {
-            respostas.add(QuestaoResponse.from(questao));
-        }
-        return respostas;
+        return questaoService.listarMinhas(professor);
     }
 
     /** Banco compartilhado (RF15): questões aprovadas de qualquer instituição, com filtros opcionais. */
@@ -72,10 +89,6 @@ public class QuestaoController {
     @GetMapping("/pendentes")
     @PreAuthorize("hasRole('PROFESSOR')")
     public List<QuestaoResponse> pendentes(@AuthenticationPrincipal UsuarioAutenticado professor) {
-        List<QuestaoResponse> respostas = new ArrayList<>();
-        for (Questao questao : questaoService.listarPendentesParaAvaliar(professor.id())) {
-            respostas.add(QuestaoResponse.from(questao));
-        }
-        return respostas;
+        return questaoService.listarPendentesComPlacar(professor);
     }
 }

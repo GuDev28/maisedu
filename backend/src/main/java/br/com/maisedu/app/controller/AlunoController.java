@@ -14,13 +14,16 @@ import br.com.maisedu.app.service.PraticaAdaptativaService;
 import br.com.maisedu.app.service.RespostaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -67,6 +70,17 @@ public class AlunoController {
             @Valid @RequestBody ResponderQuestaoRequest request) {
         return respostaService.responder(aluno.id(), atividadeAlunoId, atividadeAlunoQuestaoId,
                 request.alternativaId());
+    }
+
+    /** Marca uma alternativa sem confirmar: não é resposta, pode ser trocada até o aluno confirmar. */
+    @PutMapping("/folhas/{atividadeAlunoId}/questoes/{atividadeAlunoQuestaoId}/marcacao")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void marcar(
+            @AuthenticationPrincipal UsuarioAutenticado aluno,
+            @PathVariable Long atividadeAlunoId,
+            @PathVariable Long atividadeAlunoQuestaoId,
+            @Valid @RequestBody ResponderQuestaoRequest request) {
+        respostaService.marcar(aluno.id(), atividadeAlunoId, atividadeAlunoQuestaoId, request.alternativaId());
     }
 
     @PostMapping("/praticas-adaptativas")

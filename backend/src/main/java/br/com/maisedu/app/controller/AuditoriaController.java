@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auditoria")
@@ -38,5 +40,16 @@ public class AuditoriaController {
             @PageableDefault(size = 20, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable) {
         return auditoriaService.consultar(admin.instituicaoId(), usuarioId, acao, de, ate, pageable)
                 .map(LogAuditoriaResponse::from);
+    }
+
+    /** Ações que existem no back-end, para o filtro da tela não ficar desatualizado quando surgir uma nova. */
+    @GetMapping("/acoes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<String> acoes() {
+        List<String> nomes = new ArrayList<>();
+        for (AcaoAuditoria acao : AcaoAuditoria.values()) {
+            nomes.add(acao.name());
+        }
+        return nomes;
     }
 }

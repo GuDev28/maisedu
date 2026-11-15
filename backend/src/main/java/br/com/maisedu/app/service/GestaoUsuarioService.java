@@ -81,7 +81,7 @@ public class GestaoUsuarioService {
     public SenhaRedefinidaResponse redefinirSenha(UsuarioAutenticado ator, Long usuarioId) {
         Usuario alvo = buscarNaInstituicao(ator, usuarioId);
         if (alvo.getId().equals(ator.id())) {
-            throw new NegocioException("Para mudar a sua própria senha, use a opção de troca de senha.");
+            throw new NegocioException("Para mudar a sua própria senha, use Minha conta → Alterar senha.");
         }
         exigirNaoAnonimizado(alvo);
 
@@ -103,11 +103,41 @@ public class GestaoUsuarioService {
             emailService.enviarNovaSenhaProvisoria(alvo.getId(), alvo.getNome(), alvo.getEmail(), senhaProvisoria);
             return new SenhaRedefinidaResponse(alvo.getId(), alvo.getNome(), alvo.identificadorDeAcesso(), null, true);
         }
+        if (alvo.getEmailResponsavel() != null) {
+            // aluno: a senha vai para o responsável; o professor/admin não vê a senha
+            emailService.enviarNovaSenhaAoResponsavel(alvo.getId(), alvo.getNome(), alvo.getLogin(),
+                    alvo.getInstituicao().getNome(), alvo.getEmailResponsavel(), senhaProvisoria);
+            return new SenhaRedefinidaResponse(alvo.getId(), alvo.getNome(), alvo.identificadorDeAcesso(), null, true);
+        }
+        // aluno cadastrado antes do e-mail do responsável existir: a senha volta para quem pediu
         return new SenhaRedefinidaResponse(alvo.getId(), alvo.getNome(), alvo.identificadorDeAcesso(),
                 senhaProvisoria, false);
     }
 
     /** Correção de dados (art. 18, III): o nome é o único dado cadastral editável. */
+    /**
+     * Corrige o e-mail do responsável de um aluno (ex.: digitado errado no cadastro). Pode o admin da
+     * escola ou o professor de uma turma do aluno, que é quem cadastra e acompanha. A auditoria
+     * registra a correção sem copiar os endereços.
+     */
+    @Transactional
+    public Usuario corrigirEmailResponsavel(UsuarioAutenticado ator, Long alunoId, String emailInformado) {
+        Usuario alvo = buscarNaInstituicao(ator, alunoId);
+        exigirNaoAnonimizado(alvo);
+        if (!alvo.possuiRole(RoleNome.ALUNO)) {
+            throw new NegocioException("Só alunos têm e-mail do responsável.");
+        }
+        if (!ator.possuiRole(RoleNome.ADMIN)
+                && !alunoTurmaRepository.alunoEstaEmTurmaDoProfessor(alvo.getId(), ator.id())) {
+            throw new AccessDeniedException("O professor só altera dados de alunos das turmas em que leciona.");
+        }
+        alvo.corrigirEmailResponsavel(Identificadores.normalizar(emailInformado));
+        usuarioRepository.save(alvo);
+        auditoriaService.registrar(ator, AcaoAuditoria.CORRECAO_DADOS_USUARIO, "Usuario", alvo.getId(), true,
+                "e-mail do responsável alterado");
+        return alvo;
+    }
+
     @Transactional
     public Usuario corrigirNome(UsuarioAutenticado admin, Long usuarioId, String novoNome) {
         exigirAdmin(admin);
@@ -159,13 +189,33 @@ public class GestaoUsuarioService {
     public DadosPessoaisResponse exportarDados(UsuarioAutenticado admin, Long usuarioId) {
         exigirAdmin(admin);
         Usuario alvo = buscarNaInstituicao(admin, usuarioId);
+        DadosPessoaisResponse dados = montarExportacao(alvo);
+        auditoriaService.registrar(admin, AcaoAuditoria.EXPORTACAO_DADOS_USUARIO, "Usuario", alvo.getId(), true, null);
+        return dados;
+    }
+
+    /**
+     * O próprio titular baixa os seus dados em "Minha conta" (art. 18, II e V), sem depender de
+     * pedir ao administrador. É o mesmo conteúdo da exportação feita pela instituição.
+     */
+    @Transactional(readOnly = true)
+    public DadosPessoaisResponse exportarMeusDados(UsuarioAutenticado titular) {
+        Usuario alvo = usuarioRepository.findById(titular.id())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
+        DadosPessoaisResponse dados = montarExportacao(alvo);
+        auditoriaService.registrar(titular, AcaoAuditoria.EXPORTACAO_DADOS_USUARIO, "Usuario", alvo.getId(), true,
+                "pelo próprio titular");
+        return dados;
+    }
+
+    private DadosPessoaisResponse montarExportacao(Usuario alvo) {
 
         List<String> papeis = new ArrayList<>();
         for (Role role : alvo.getRoles()) {
             papeis.add(role.getNome().name());
         }
         var cadastro = new DadosPessoaisResponse.Cadastro(
-                alvo.getId(), alvo.getNome(), alvo.getEmail(), alvo.getLogin(), papeis,
+                alvo.getId(), alvo.getNome(), alvo.getEmail(), alvo.getLogin(), alvo.getEmailResponsavel(), papeis,
                 alvo.getInstituicao().getNome(), alvo.isAtivo(), alvo.getCriadoEm(),
                 alvo.getTermosAceitosEm(), alvo.getTermosVersao());
 
@@ -208,7 +258,6 @@ public class GestaoUsuarioService {
                     log.isSucesso(), log.getIp(), log.getUserAgent(), log.getDetalhes()));
         }
 
-        auditoriaService.registrar(admin, AcaoAuditoria.EXPORTACAO_DADOS_USUARIO, "Usuario", alvo.getId(), true, null);
         return new DadosPessoaisResponse(LocalDateTime.now(), cadastro, turmas, questoes, respostas, desempenho,
                 registros);
     }

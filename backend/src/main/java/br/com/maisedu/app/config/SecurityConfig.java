@@ -1,6 +1,7 @@
 package br.com.maisedu.app.config;
 
 import br.com.maisedu.app.security.JwtAuthenticationFilter;
+import br.com.maisedu.app.security.RespostaErroJson;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,18 +40,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((request, response, ex) ->
-                                responderErro(response, 401, "É preciso estar autenticado."))
+                                RespostaErroJson.escrever(response, 401, "É preciso estar autenticado."))
                         .accessDeniedHandler((request, response, ex) ->
-                                responderErro(response, 403, "Sem permissão para esta operação.")))
+                                RespostaErroJson.escrever(response, 403, "Sem permissão para esta operação.")))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    private void responderErro(jakarta.servlet.http.HttpServletResponse response, int status, String mensagem)
-            throws java.io.IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"mensagem\":\"" + mensagem.replace("\"", "\\\"") + "\"}");
-    }
 }

@@ -30,6 +30,13 @@ public class Usuario {
     @Column(unique = true, length = 50)
     private String login;
 
+    /**
+     * Só para alunos: e-mail do responsável legal, que recebe o login e a senha provisória. O aluno
+     * não tem e-mail próprio no sistema. Não é único (irmãos podem ter o mesmo responsável).
+     */
+    @Column(name = "email_responsavel")
+    private String emailResponsavel;
+
     @Column(nullable = false)
     @Setter
     private String senha;
@@ -85,10 +92,17 @@ public class Usuario {
         this.instituicao = instituicao;
     }
 
-    public static Usuario novoAluno(String nome, String login, String senha, Instituicao instituicao) {
+    public static Usuario novoAluno(String nome, String login, String senha, Instituicao instituicao,
+                                    String emailResponsavel) {
         Usuario aluno = new Usuario(nome, null, senha, instituicao);
         aluno.login = login;
+        aluno.emailResponsavel = emailResponsavel;
         return aluno;
+    }
+
+    /** Aluno sem e-mail do responsável (contas anteriores à V10; usado nos testes de unidade). */
+    public static Usuario novoAluno(String nome, String login, String senha, Instituicao instituicao) {
+        return novoAluno(nome, login, senha, instituicao, null);
     }
 
     public void adicionarRole(Role role) {
@@ -160,6 +174,10 @@ public class Usuario {
         this.nome = novoNome;
     }
 
+    public void corrigirEmailResponsavel(String novoEmail) {
+        this.emailResponsavel = novoEmail;
+    }
+
     public void desativar() {
         this.ativo = false;
         encerrarSessoes();
@@ -176,13 +194,14 @@ public class Usuario {
     }
 
     /**
-     * Eliminação a pedido do titular (LGPD, art. 18, VI): remove nome, e-mail e login, troca a senha
-     * por um valor aleatório e desativa a conta. O id continua existindo para não quebrar as
+     * Eliminação a pedido do titular (LGPD, art. 18, VI): remove nome, e-mail, e-mail do responsável e
+     * login, troca a senha por um valor aleatório e desativa a conta. O id continua existindo para não quebrar as
      * referências (questões de autoria, respostas e registros de auditoria), que passam a ser anônimas.
      */
     public void anonimizar(String hashAleatorio) {
         this.nome = "Usuário anonimizado #" + id;
         this.email = null;
+        this.emailResponsavel = null;
         this.login = PREFIXO_LOGIN_ANONIMIZADO + id;
         this.senha = hashAleatorio;
         this.ativo = false;

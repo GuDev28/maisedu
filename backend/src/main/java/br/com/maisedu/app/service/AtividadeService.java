@@ -23,9 +23,9 @@ import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.AtividadeAlunoRepository;
 import br.com.maisedu.app.repository.AtividadeRepository;
+import br.com.maisedu.app.repository.PlacarAtividade;
 import br.com.maisedu.app.repository.QuestaoRepository;
 import br.com.maisedu.app.repository.RespostaRepository;
-import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 /** RF15 (atividade regular), início da atividade pelo aluno com snapshot (RN03) e consulta das folhas. */
 @Service
@@ -45,7 +47,6 @@ public class AtividadeService {
 
     private final AtividadeRepository atividadeRepository;
     private final AtividadeAlunoRepository atividadeAlunoRepository;
-    private final TurmaRepository turmaRepository;
     private final QuestaoRepository questaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AlunoTurmaRepository alunoTurmaRepository;
@@ -61,13 +62,8 @@ public class AtividadeService {
      */
     @Transactional
     public Atividade criar(UsuarioAutenticado ator, Long turmaId, String titulo, List<Long> questaoIds) {
-        Turma turma = turmaRepository.findById(turmaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Turma não encontrada."));
-        if (!turma.getInstituicao().getId().equals(ator.instituicaoId())
-                || !ator.possuiRole(RoleNome.PROFESSOR)
-                || !acessoTurma.lecionaNaTurma(ator, turmaId)) {
-            throw new AccessDeniedException("Só o professor que leciona na turma pode criar atividades para ela.");
-        }
+        Turma turma = acessoTurma.buscarComoProfessorDaTurma(ator, turmaId,
+                "Só o professor que leciona na turma pode criar atividades para ela.");
         if (!turma.isAtivo()) {
             throw new NegocioException("Turma inativa não recebe novas atividades.");
         }
@@ -102,19 +98,30 @@ public class AtividadeService {
     @Transactional(readOnly = true)
     public List<AtividadeResumoResponse> listarDaTurma(UsuarioAutenticado ator, Long turmaId) {
         Turma turma = acessoTurma.buscarComAcesso(ator, turmaId);
-        List<AtividadeResumoResponse> resumo = new ArrayList<>();
-        for (Atividade atividade : atividadeRepository.findByTurmaId(turmaId)) {
-            int iniciaram = 0;
-            int concluiram = 0;
-            for (AtividadeAluno atividadeAluno : atividadeAlunoRepository.findByAtividadeId(atividade.getId())) {
-                iniciaram++;
+        List<Atividade> atividades = atividadeRepository.findByTurmaId(turmaId);
+        List<Long> ids = new ArrayList<>();
+        for (Atividade atividade : atividades) {
+            ids.add(atividade.getId());
+        }
+
+        // [iniciaram, concluíram] por atividade, com uma única consulta para todas as folhas
+        Map<Long, int[]> contagem = new HashMap<>();
+        if (!ids.isEmpty()) {
+            for (AtividadeAluno atividadeAluno : atividadeAlunoRepository.findByAtividadeIdIn(ids)) {
+                int[] numeros = contagem.computeIfAbsent(atividadeAluno.getAtividade().getId(), id -> new int[2]);
+                numeros[0]++;
                 if (atividadeAluno.isConcluida()) {
-                    concluiram++;
+                    numeros[1]++;
                 }
             }
+        }
+
+        List<AtividadeResumoResponse> resumo = new ArrayList<>();
+        for (Atividade atividade : atividades) {
+            int[] numeros = contagem.getOrDefault(atividade.getId(), new int[2]);
             resumo.add(new AtividadeResumoResponse(atividade.getId(), atividade.getTitulo(), turma.getId(),
                     turma.getNome(), atividade.getProfessor().getNome(), atividade.getQuestoes().size(),
-                    iniciaram, concluiram, atividade.getCriadoEm()));
+                    numeros[0], numeros[1], atividade.getCriadoEm()));
         }
         return resumo;
     }
@@ -127,9 +134,12 @@ public class AtividadeService {
         acessoTurma.autorizar(ator, atividade.getTurma());
 
         Map<Long, AtividadeAluno> porAluno = new HashMap<>();
+        Set<Long> folhas = new HashSet<>();
         for (AtividadeAluno atividadeAluno : atividadeAlunoRepository.findByAtividadeId(atividadeId)) {
             porAluno.put(atividadeAluno.getAluno().getId(), atividadeAluno);
+            folhas.add(atividadeAluno.getId());
         }
+        Map<Long, Placar> placares = placares(folhas);
 
         int totalQuestoes = atividade.getQuestoes().size();
         List<ResultadoAtividadeResponse.ResultadoAluno> alunos = new ArrayList<>();
@@ -141,9 +151,10 @@ public class AtividadeService {
                         AtividadeAlunoResumoResponse.NAO_INICIADA, 0, 0, totalQuestoes));
                 continue;
             }
-            int[] placar = placar(respostaRepository.findByAtividadeAluno(atividadeAluno.getId()));
+            Placar placar = placares.getOrDefault(atividadeAluno.getId(), Placar.VAZIO);
             alunos.add(new ResultadoAtividadeResponse.ResultadoAluno(aluno.getId(), aluno.getNome(),
-                    situacao(atividadeAluno), placar[0], placar[1], atividadeAluno.getQuestoes().size()));
+                    situacao(atividadeAluno), placar.respondidas(), placar.acertos(),
+                    atividadeAluno.getQuestoes().size()));
         }
 
         List<QuestaoResponse> questoes = new ArrayList<>();
@@ -159,20 +170,33 @@ public class AtividadeService {
     /** Atividades das turmas do aluno (com a situação de cada uma) e as práticas adaptativas dele. */
     @Transactional(readOnly = true)
     public List<AtividadeAlunoResumoResponse> listarDoAluno(Long alunoId) {
+        // Todas as folhas do aluno e os placares delas em duas consultas, em vez de duas por atividade.
+        Map<Long, AtividadeAluno> regularesPorAtividade = new HashMap<>();
+        List<AtividadeAluno> praticas = new ArrayList<>();
+        Set<Long> folhas = new HashSet<>();
+        for (AtividadeAluno atividadeAluno : atividadeAlunoRepository.findByAlunoIdComAtividade(alunoId)) {
+            folhas.add(atividadeAluno.getId());
+            if (atividadeAluno.getTipo() == TipoAtividade.ADAPTATIVA) {
+                praticas.add(atividadeAluno);
+            } else {
+                regularesPorAtividade.put(atividadeAluno.getAtividade().getId(), atividadeAluno);
+            }
+        }
+        Map<Long, Placar> placares = placares(folhas);
+
         List<AtividadeAlunoResumoResponse> lista = new ArrayList<>();
         for (Atividade atividade : atividadeRepository.findDisponiveisParaAluno(alunoId)) {
-            AtividadeAluno atividadeAluno = atividadeAlunoRepository
-                    .findByAlunoIdAndAtividadeId(alunoId, atividade.getId()).orElse(null);
+            AtividadeAluno atividadeAluno = regularesPorAtividade.get(atividade.getId());
             if (atividadeAluno == null) {
                 lista.add(new AtividadeAlunoResumoResponse(atividade.getId(), null, atividade.getTitulo(),
                         TipoAtividade.REGULAR.name(), atividade.getTurma().getNome(),
                         AtividadeAlunoResumoResponse.NAO_INICIADA, atividade.getQuestoes().size(), 0, 0, null, null));
             } else {
-                lista.add(resumir(atividadeAluno));
+                lista.add(resumir(atividadeAluno, placares.getOrDefault(atividadeAluno.getId(), Placar.VAZIO)));
             }
         }
-        for (AtividadeAluno pratica : atividadeAlunoRepository.findByAlunoIdAndTipo(alunoId, TipoAtividade.ADAPTATIVA)) {
-            lista.add(resumir(pratica));
+        for (AtividadeAluno pratica : praticas) {
+            lista.add(resumir(pratica, placares.getOrDefault(pratica.getId(), Placar.VAZIO)));
         }
         return lista;
     }
@@ -202,7 +226,7 @@ public class AtividadeService {
         }
 
         AtividadeAluno nova = atividadeAlunoRepository.save(AtividadeAluno.regular(aluno, atividade));
-        auditoriaService.registrar(aluno.getId(), aluno.getNome(), AcaoAuditoria.INICIO_ATIVIDADE, "AtividadeAluno",
+        auditoriaService.registrar(aluno.getId(), aluno.getNome(), null, AcaoAuditoria.INICIO_ATIVIDADE, "AtividadeAluno",
                 nova.getId(), true, "atividade " + atividadeId);
         return nova;
     }
@@ -251,9 +275,12 @@ public class AtividadeService {
                     acertos++;
                 }
             }
+            Long marcada = resposta == null && entregue.getAlternativaMarcada() != null
+                    ? entregue.getAlternativaMarcada().getId()
+                    : null;
             questoes.add(new FolhaAtividadeResponse.QuestaoEntregue(entregue.getId(), entregue.getOrdem(),
                     questao.getEnunciado(), questao.getTopico().getNome(), questao.getNivelDificuldade().name(),
-                    alternativas, respostaDada));
+                    alternativas, marcada, respostaDada));
         }
 
         return new FolhaAtividadeResponse(atividadeAluno.getId(), titulo(atividadeAluno),
@@ -261,8 +288,7 @@ public class AtividadeService {
                 questoes.size(), respostas.size(), acertos, questoes);
     }
 
-    private AtividadeAlunoResumoResponse resumir(AtividadeAluno atividadeAluno) {
-        int[] placar = placar(respostaRepository.findByAtividadeAluno(atividadeAluno.getId()));
+    private AtividadeAlunoResumoResponse resumir(AtividadeAluno atividadeAluno, Placar placar) {
         Atividade origem = atividadeAluno.getAtividade();
         return new AtividadeAlunoResumoResponse(
                 origem == null ? null : origem.getId(),
@@ -272,8 +298,8 @@ public class AtividadeService {
                 origem == null ? null : origem.getTurma().getNome(),
                 situacao(atividadeAluno),
                 atividadeAluno.getQuestoes().size(),
-                placar[0],
-                placar[1],
+                placar.respondidas(),
+                placar.acertos(),
                 atividadeAluno.getIniciadaEm(),
                 atividadeAluno.getConcluidaEm());
     }
@@ -288,14 +314,16 @@ public class AtividadeService {
                 : AtividadeAlunoResumoResponse.EM_ANDAMENTO;
     }
 
-    /** [respondidas, acertos] */
-    private static int[] placar(List<Resposta> respostas) {
-        int acertos = 0;
-        for (Resposta resposta : respostas) {
-            if (resposta.acertou()) {
-                acertos++;
-            }
+    /** Placar de cada folha informada, contado no banco numa única consulta. */
+    private Map<Long, Placar> placares(Set<Long> atividadeAlunoIds) {
+        Map<Long, Placar> placares = new HashMap<>();
+        if (atividadeAlunoIds.isEmpty()) {
+            return placares;
         }
-        return new int[]{respostas.size(), acertos};
+        for (PlacarAtividade placar : respostaRepository.contarPorAtividadeAluno(atividadeAlunoIds)) {
+            placares.put(placar.atividadeAlunoId(),
+                    new Placar(placar.respondidas().intValue(), placar.acertos().intValue()));
+        }
+        return placares;
     }
 }

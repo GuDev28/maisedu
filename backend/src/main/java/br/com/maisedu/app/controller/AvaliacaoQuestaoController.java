@@ -25,6 +25,6 @@ public class AvaliacaoQuestaoController {
             @PathVariable Long questaoId,
             @Valid @RequestBody AvaliacaoQuestaoRequest request) {
         return ResponseEntity.ok(
-                avaliacaoQuestaoService.avaliar(questaoId, professor.id(), request.voto()));
+                avaliacaoQuestaoService.avaliar(professor, questaoId, request.voto(), request.comentario()));
     }
 }

@@ -64,11 +64,6 @@ public class DesempenhoTopico {
         atualizadoEm = LocalDateTime.now();
     }
 
-    /** RN06: um nível é dominado com um mínimo de respostas e percentual acumulado igual ou acima do limite. */
-    public boolean dominado(int minimoRespostas, BigDecimal percentualMinimo) {
-        return totalRespostas >= minimoRespostas && percentualAcerto.compareTo(percentualMinimo) >= 0;
-    }
-
     /** Percentual de acerto = acertos ÷ respostas × 100, com duas casas decimais. */
     public static BigDecimal percentual(long acertos, long respostas) {
         if (respostas == 0) {

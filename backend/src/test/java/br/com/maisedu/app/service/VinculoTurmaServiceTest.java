@@ -1,6 +1,7 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.exception.NegocioException;
+import br.com.maisedu.app.exception.RecursoNaoEncontradoException;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.AnoEscolar;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
@@ -59,7 +59,7 @@ class VinculoTurmaServiceTest {
     @Mock AlunoTurmaRepository alunoTurmaRepository;
     @Mock ProfessorTurmaRepository professorTurmaRepository;
     @Mock AuditoriaService auditoriaService;
-    @InjectMocks VinculoTurmaService service;
+    VinculoTurmaService service;
 
     private Instituicao escola;
     private Turma turma;
@@ -70,6 +70,11 @@ class VinculoTurmaServiceTest {
 
     @BeforeEach
     void setUp() {
+        // AcessoTurma é a regra real de acesso (só lê os mesmos repositórios mockados)
+        AcessoTurma acessoTurma = new AcessoTurma(turmaRepository, professorTurmaRepository);
+        service = new VinculoTurmaService(usuarioRepository, turmaRepository, alunoTurmaRepository,
+                professorTurmaRepository, auditoriaService, acessoTurma);
+
         escola = instituicao(INSTITUICAO_ID);
 
         turma = new Turma("7º ano A", escola, AnoEscolar.SETIMO_ANO);
@@ -220,5 +225,95 @@ class VinculoTurmaServiceTest {
         // Assert
         assertTrue(turmas.isEmpty());
         verify(turmaRepository, never()).findByInstituicaoIdAndAtivoTrueOrderByNomeAsc(any());
+    }
+
+    @Test
+    void deveDesvincularAlunoDaTurmaERegistrarNaAuditoria() {
+        // Arrange
+        AlunoTurma vinculo = new AlunoTurma(aluno, turma);
+        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
+        when(professorTurmaRepository.existsByProfessorIdAndTurmaId(PROFESSOR_ID, TURMA_ID)).thenReturn(true);
+        when(alunoTurmaRepository.findByAlunoIdAndTurmaId(ALUNO_ID, TURMA_ID)).thenReturn(Optional.of(vinculo));
+
+        // Act
+        service.desvincularAluno(ALUNO_ID, TURMA_ID, atorProfessor);
+
+        // Assert
+        verify(alunoTurmaRepository).delete(vinculo);
+        verify(auditoriaService).registrar(atorProfessor, AcaoAuditoria.DESVINCULO_ALUNO_TURMA,
+                "Turma", TURMA_ID, true, "aluno " + ALUNO_ID);
+    }
+
+    @Test
+    void deveResponderNaoEncontradoAoDesvincularAlunoQueNaoEstaNaTurma() {
+        // Arrange
+        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
+        when(alunoTurmaRepository.findByAlunoIdAndTurmaId(ALUNO_ID, TURMA_ID)).thenReturn(Optional.empty());
+
+        // Act
+        RecursoNaoEncontradoException ex = assertThrows(RecursoNaoEncontradoException.class,
+                () -> service.desvincularAluno(ALUNO_ID, TURMA_ID, atorAdmin));
+
+        // Assert
+        assertEquals("Este aluno não está vinculado a esta turma.", ex.getMessage());
+        verify(alunoTurmaRepository, never()).delete(any());
+        verifyNoInteractions(auditoriaService);
+    }
+
+    @Test
+    void deveNegarQueProfessorDesvinculeProfessor() {
+        // Act
+        AccessDeniedException ex = assertThrows(AccessDeniedException.class,
+                () -> service.desvincularProfessor(PROFESSOR_ID, TURMA_ID, atorProfessor));
+
+        // Assert
+        assertEquals("Só o admin vincula professores a turmas.", ex.getMessage());
+        verifyNoInteractions(turmaRepository, professorTurmaRepository, auditoriaService);
+    }
+
+    @Test
+    void deveDesvincularProfessorQuandoAdmin() {
+        // Arrange
+        ProfessorTurma vinculo = new ProfessorTurma(professor, turma);
+        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
+        when(professorTurmaRepository.findByProfessorIdAndTurmaId(PROFESSOR_ID, TURMA_ID))
+                .thenReturn(Optional.of(vinculo));
+
+        // Act
+        service.desvincularProfessor(PROFESSOR_ID, TURMA_ID, atorAdmin);
+
+        // Assert
+        verify(professorTurmaRepository).delete(vinculo);
+        verify(auditoriaService).registrar(atorAdmin, AcaoAuditoria.DESVINCULO_PROFESSOR_TURMA,
+                "Turma", TURMA_ID, true, "professor " + PROFESSOR_ID);
+    }
+
+    @Test
+    void deveListarProfessoresEAlunosDaTurma() {
+        // Arrange
+        when(turmaRepository.findById(TURMA_ID)).thenReturn(Optional.of(turma));
+        when(professorTurmaRepository.findByTurmaIdComProfessor(TURMA_ID))
+                .thenReturn(List.of(new ProfessorTurma(professor, turma)));
+        when(alunoTurmaRepository.findByTurmaIdComAluno(TURMA_ID)).thenReturn(List.of(new AlunoTurma(aluno, turma)));
+
+        // Act
+        VinculoTurmaService.MembrosTurma membros = service.listarMembros(TURMA_ID, atorAdmin);
+
+        // Assert
+        assertSame(turma, membros.turma());
+        assertEquals(List.of(professor), membros.professores());
+        assertEquals(List.of(aluno), membros.alunos());
+    }
+
+    @Test
+    void deveNegarListaDeMembrosDeTurmaDeOutraInstituicao() {
+        // Arrange
+        Turma deOutraEscola = new Turma("8º ano B", instituicao(OUTRA_INSTITUICAO_ID), AnoEscolar.OITAVO_ANO);
+        ReflectionTestUtils.setField(deOutraEscola, "id", 11L);
+        when(turmaRepository.findById(11L)).thenReturn(Optional.of(deOutraEscola));
+
+        // Act + Assert
+        assertThrows(AccessDeniedException.class, () -> service.listarMembros(11L, atorAdmin));
+        verifyNoInteractions(alunoTurmaRepository);
     }
 }

@@ -2,6 +2,7 @@ package br.com.maisedu.app.controller;
 
 import br.com.maisedu.app.dto.CorrecaoNomeRequest;
 import br.com.maisedu.app.dto.DadosPessoaisResponse;
+import br.com.maisedu.app.dto.EmailResponsavelRequest;
 import br.com.maisedu.app.dto.SenhaRedefinidaResponse;
 import br.com.maisedu.app.dto.UsuarioGestaoResponse;
 import br.com.maisedu.app.model.RoleNome;
@@ -11,6 +12,7 @@ import br.com.maisedu.app.service.GestaoUsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -54,6 +58,16 @@ public class GestaoUsuarioController {
     public SenhaRedefinidaResponse redefinirSenha(
             @AuthenticationPrincipal UsuarioAutenticado ator, @PathVariable Long usuarioId) {
         return gestaoUsuarioService.redefinirSenha(ator, usuarioId);
+    }
+
+    /** Correção do e-mail do responsável de um aluno: admin ou professor de uma turma do aluno. */
+    @PutMapping("/{usuarioId}/email-responsavel")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
+    public void corrigirEmailResponsavel(
+            @AuthenticationPrincipal UsuarioAutenticado ator, @PathVariable Long usuarioId,
+            @Valid @RequestBody EmailResponsavelRequest request) {
+        gestaoUsuarioService.corrigirEmailResponsavel(ator, usuarioId, request.emailResponsavel());
     }
 
     @PatchMapping("/{usuarioId}")

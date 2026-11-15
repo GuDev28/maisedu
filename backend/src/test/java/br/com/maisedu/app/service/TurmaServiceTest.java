@@ -7,12 +7,12 @@ import br.com.maisedu.app.model.Instituicao;
 import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.Turma;
 import br.com.maisedu.app.repository.InstituicaoRepository;
+import br.com.maisedu.app.repository.ProfessorTurmaRepository;
 import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
@@ -41,7 +41,8 @@ class TurmaServiceTest {
     @Mock TurmaRepository turmaRepository;
     @Mock InstituicaoRepository instituicaoRepository;
     @Mock AuditoriaService auditoriaService;
-    @InjectMocks TurmaService service;
+    @Mock ProfessorTurmaRepository professorTurmaRepository;
+    TurmaService service;
 
     private Instituicao escola;
     private UsuarioAutenticado admin;
@@ -49,6 +50,8 @@ class TurmaServiceTest {
 
     @BeforeEach
     void setUp() {
+        service = new TurmaService(turmaRepository, instituicaoRepository, auditoriaService,
+                new AcessoTurma(turmaRepository, professorTurmaRepository));
         escola = new Instituicao("Escola", "00.000.000/0001-00", "Rua 1");
         ReflectionTestUtils.setField(escola, "id", INSTITUICAO_ID);
         admin = new UsuarioAutenticado(1L, "Admin", INSTITUICAO_ID, EnumSet.of(RoleNome.ADMIN, RoleNome.PROFESSOR), false);

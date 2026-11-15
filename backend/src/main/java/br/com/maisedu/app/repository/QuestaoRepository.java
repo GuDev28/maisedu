@@ -22,10 +22,21 @@ public interface QuestaoRepository extends JpaRepository<Questao, Long> {
 
     List<Questao> findByAutorIdOrderByCriadoEmDesc(Long autorId);
 
-    List<Questao> findByStatusAndAutorIdNotOrderByCriadoEmAsc(StatusQuestao status, Long autorId);
+    /**
+     * Fila de avaliação do professor (RN02): questões pendentes de outros autores em que ele ainda
+     * não votou, numa única consulta.
+     */
+    @Query("select q from Questao q join fetch q.topico join fetch q.autor " +
+            "where q.status = :status and q.autor.id <> :professorId " +
+            "and not exists (select a.id from AvaliacaoQuestao a where a.questao = q and a.professor.id = :professorId) " +
+            "order by q.criadoEm asc")
+    List<Questao> findPendentesParaAvaliar(@Param("status") StatusQuestao status,
+                                           @Param("professorId") Long professorId);
+
+    long countByStatus(StatusQuestao status);
 
     /** Banco compartilhado (RF15): questões no status informado, de qualquer autor e instituição, com filtros opcionais. */
-    @Query("select q from Questao q join fetch q.topico t join fetch q.autor " +
+    @Query("select q from Questao q join fetch q.topico t join fetch q.autor a join fetch a.instituicao " +
             "where q.status = :status " +
             "and (:topicoId is null or t.id = :topicoId) " +
             "and (:nivel is null or q.nivelDificuldade = :nivel) " +

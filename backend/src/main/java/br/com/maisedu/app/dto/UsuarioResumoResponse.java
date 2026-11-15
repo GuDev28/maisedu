@@ -2,18 +2,19 @@ package br.com.maisedu.app.dto;
 
 import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.Usuario;
-import br.com.maisedu.app.security.UsuarioAutenticado;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Dados da sessão para o front-end. {@code termosPendentes} indica que há uma versão nova dos
- * Termos/Política ainda não aceita (o usuário precisa aceitá-la antes de continuar).
+ * Dados da sessão para o front-end (o cabeçalho mostra o nome, a escola e o papel). {@code termosPendentes}
+ * indica que há uma versão nova dos Termos/Política ainda não aceita (o usuário precisa aceitá-la antes
+ * de continuar).
  */
 public record UsuarioResumoResponse(
         Long id,
         String nome,
+        String instituicao,
         Set<RoleNome> roles,
         boolean senhaTemporaria,
         boolean termosPendentes) {
@@ -27,13 +28,9 @@ public record UsuarioResumoResponse(
         return new UsuarioResumoResponse(
                 usuario.getId(),
                 usuario.getNome(),
+                usuario.getInstituicao().getNome(),
                 roles,
                 usuario.isSenhaTemporaria(),
                 !usuario.isSenhaTemporaria() && usuario.termosPendentes(versaoTermosAtual));
-    }
-
-    public static UsuarioResumoResponse from(UsuarioAutenticado usuario) {
-        return new UsuarioResumoResponse(usuario.id(), usuario.nome(), usuario.roles(), usuario.senhaTemporaria(),
-                usuario.termosPendentes());
     }
 }

@@ -3,6 +3,7 @@ package br.com.maisedu.app.service;
 import br.com.maisedu.app.dto.PraticaAdaptativaResponse;
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
+import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.AnoEscolar;
 import br.com.maisedu.app.model.AtividadeAluno;
 import br.com.maisedu.app.model.DesempenhoTopico;
@@ -14,7 +15,9 @@ import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.StatusQuestao;
 import br.com.maisedu.app.model.TipoAtividade;
 import br.com.maisedu.app.model.Topico;
+import br.com.maisedu.app.model.Turma;
 import br.com.maisedu.app.model.Usuario;
+import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.AtividadeAlunoRepository;
 import br.com.maisedu.app.repository.DesempenhoTopicoRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
@@ -37,11 +40,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -60,6 +66,7 @@ class PraticaAdaptativaServiceTest {
     @Mock QuestaoRepository questaoRepository;
     @Mock RespostaRepository respostaRepository;
     @Mock AtividadeAlunoRepository atividadeAlunoRepository;
+    @Mock AlunoTurmaRepository alunoTurmaRepository;
     @Mock AuditoriaService auditoriaService;
 
     private PraticaAdaptativaService service;
@@ -69,8 +76,9 @@ class PraticaAdaptativaServiceTest {
 
     @BeforeEach
     void setUp() {
+        MotorAdaptativo motor = new MotorAdaptativo(new MotorAdaptativo.Parametros(3, 10, 5, BigDecimal.valueOf(70)));
         service = new PraticaAdaptativaService(usuarioRepository, desempenhoTopicoRepository, questaoRepository,
-                respostaRepository, atividadeAlunoRepository, auditoriaService, 3, 10, 5, BigDecimal.valueOf(70));
+                respostaRepository, atividadeAlunoRepository, alunoTurmaRepository, auditoriaService, motor);
 
         Instituicao escola = new Instituicao("Escola", "00.000.000/0001-00", "Rua 1");
         ReflectionTestUtils.setField(escola, "id", 1L);
@@ -104,6 +112,7 @@ class PraticaAdaptativaServiceTest {
         PraticaAdaptativaResponse resposta = service.gerarOuRetomar(ALUNO_ID);
 
         assertTrue(resposta.nova());
+        assertFalse(resposta.diagnostica());
         assertEquals(77L, resposta.atividadeAlunoId());
         assertEquals(5, resposta.totalQuestoes());
 
@@ -117,8 +126,8 @@ class PraticaAdaptativaServiceTest {
         for (var entregue : pratica.getQuestoes()) {
             assertEquals(StatusQuestao.APROVADA, entregue.getQuestao().getStatus());
         }
-        verify(auditoriaService).registrar(eq(ALUNO_ID), eq("Ana Aluna"), eq(AcaoAuditoria.GERACAO_PRATICA_ADAPTATIVA),
-                eq("AtividadeAluno"), eq(77L), eq(true), anyString());
+        verify(auditoriaService).registrar(eq(ALUNO_ID), eq("Ana Aluna"), isNull(),
+                eq(AcaoAuditoria.GERACAO_PRATICA_ADAPTATIVA), eq("AtividadeAluno"), eq(77L), eq(true), anyString());
     }
 
     @Test
@@ -137,15 +146,72 @@ class PraticaAdaptativaServiceTest {
     }
 
     @Test
-    void semDesempenhoRegistradoAPraticaNaoEGerada() {
+    void semDesempenhoGeraPraticaDiagnosticaComQuestoesFaceisDeVariosTopicosDoAnoDaTurma() {
+        Turma turma = new Turma("7º ano A", aluno.getInstituicao(), AnoEscolar.SETIMO_ANO);
         when(usuarioRepository.findByIdParaAtualizacao(ALUNO_ID)).thenReturn(Optional.of(aluno));
         when(atividadeAlunoRepository.findByAlunoIdAndTipo(ALUNO_ID, TipoAtividade.ADAPTATIVA)).thenReturn(List.of());
         when(desempenhoTopicoRepository.findByAlunoId(ALUNO_ID)).thenReturn(List.of());
+        when(alunoTurmaRepository.findByAlunoIdComTurma(ALUNO_ID)).thenReturn(List.of(new AlunoTurma(aluno, turma)));
+        when(questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, null, null, AnoEscolar.SETIMO_ANO)).thenReturn(List.of(
+                questao(11L, fracoes, NivelDificuldade.FACIL), questao(12L, fracoes, NivelDificuldade.FACIL),
+                questao(13L, fracoes, NivelDificuldade.MEDIO), questao(14L, fracoes, NivelDificuldade.DIFICIL),
+                questao(21L, porcentagem, NivelDificuldade.FACIL)));
+        when(respostaRepository.findQuestoesRespondidasPeloAluno(ALUNO_ID)).thenReturn(List.of());
+        when(atividadeAlunoRepository.save(any(AtividadeAluno.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        PraticaAdaptativaResponse resposta = service.gerarOuRetomar(ALUNO_ID);
+
+        assertTrue(resposta.nova());
+        assertTrue(resposta.diagnostica());
+        // 3 fáceis + a média como reserva; a difícil fica de fora da diagnóstica
+        assertEquals(4, resposta.totalQuestoes());
+        ArgumentCaptor<AtividadeAluno> salva = ArgumentCaptor.forClass(AtividadeAluno.class);
+        verify(atividadeAlunoRepository).save(salva.capture());
+        List<Long> ids = new ArrayList<>();
+        for (var entregue : salva.getValue().getQuestoes()) {
+            ids.add(entregue.getQuestao().getId());
+        }
+        assertFalse(ids.contains(14L));
+        assertEquals(13L, ids.get(ids.size() - 1));
+        // as duas primeiras vagas são de tópicos diferentes (intercalação)
+        assertNotEquals(salva.getValue().getQuestoes().get(0).getQuestao().getTopico(),
+                salva.getValue().getQuestoes().get(1).getQuestao().getTopico());
+        verify(auditoriaService).registrar(eq(ALUNO_ID), eq("Ana Aluna"), isNull(),
+                eq(AcaoAuditoria.GERACAO_PRATICA_ADAPTATIVA), eq("AtividadeAluno"), any(), eq(true),
+                startsWith("diagnóstica"));
+        verify(questaoRepository, never()).findByStatusAndTopicoId(any(), any());
+    }
+
+    @Test
+    void diagnosticaDeAlunoSemTurmaUsaQuestoesDeTodosOsAnos() {
+        when(usuarioRepository.findByIdParaAtualizacao(ALUNO_ID)).thenReturn(Optional.of(aluno));
+        when(atividadeAlunoRepository.findByAlunoIdAndTipo(ALUNO_ID, TipoAtividade.ADAPTATIVA)).thenReturn(List.of());
+        when(desempenhoTopicoRepository.findByAlunoId(ALUNO_ID)).thenReturn(List.of());
+        when(alunoTurmaRepository.findByAlunoIdComTurma(ALUNO_ID)).thenReturn(List.of());
+        when(questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, null, null, null))
+                .thenReturn(List.of(questao(21L, porcentagem, NivelDificuldade.FACIL)));
+        when(respostaRepository.findQuestoesRespondidasPeloAluno(ALUNO_ID)).thenReturn(List.of());
+        when(atividadeAlunoRepository.save(any(AtividadeAluno.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        PraticaAdaptativaResponse resposta = service.gerarOuRetomar(ALUNO_ID);
+
+        assertTrue(resposta.diagnostica());
+        assertEquals(1, resposta.totalQuestoes());
+    }
+
+    @Test
+    void diagnosticaSemQuestoesAprovadasNoAnoAvisaOAluno() {
+        when(usuarioRepository.findByIdParaAtualizacao(ALUNO_ID)).thenReturn(Optional.of(aluno));
+        when(atividadeAlunoRepository.findByAlunoIdAndTipo(ALUNO_ID, TipoAtividade.ADAPTATIVA)).thenReturn(List.of());
+        when(desempenhoTopicoRepository.findByAlunoId(ALUNO_ID)).thenReturn(List.of());
+        when(alunoTurmaRepository.findByAlunoIdComTurma(ALUNO_ID)).thenReturn(List.of());
+        when(questaoRepository.buscarNoBanco(StatusQuestao.APROVADA, null, null, null)).thenReturn(List.of());
+        when(respostaRepository.findQuestoesRespondidasPeloAluno(ALUNO_ID)).thenReturn(List.of());
 
         NegocioException ex = assertThrows(NegocioException.class, () -> service.gerarOuRetomar(ALUNO_ID));
 
-        assertTrue(ex.getMessage().contains("ainda não tem desempenho"));
-        verifyNoInteractions(questaoRepository);
+        assertTrue(ex.getMessage().contains("para o seu ano escolar"));
+        verify(atividadeAlunoRepository, never()).save(any());
     }
 
     @Test
@@ -194,7 +260,7 @@ class PraticaAdaptativaServiceTest {
     private static Questao questao(Long id, Topico topico, NivelDificuldade nivel) {
         Questao questao = new Questao("Questão " + id, null, topico, nivel, AnoEscolar.SETIMO_ANO);
         ReflectionTestUtils.setField(questao, "id", id);
-        questao.setStatus(StatusQuestao.APROVADA);
+        ReflectionTestUtils.setField(questao, "status", StatusQuestao.APROVADA);
         return questao;
     }
 }

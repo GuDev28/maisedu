@@ -1,5 +1,7 @@
 package br.com.maisedu.app.service;
 
+import br.com.maisedu.app.dto.ContaResponse;
+import br.com.maisedu.app.dto.UsuarioResumoResponse;
 import br.com.maisedu.app.exception.AutenticacaoException;
 import br.com.maisedu.app.exception.NegocioException;
 import br.com.maisedu.app.model.AcaoAuditoria;
@@ -91,13 +93,23 @@ public class AutenticacaoService {
         return new Sessao(jwtService.gerarToken(usuario), usuario);
     }
 
+    /**
+     * Troca de senha pelo próprio usuário. No primeiro acesso (senha provisória) ou quando há versão
+     * nova dos Termos/Política, o aceite é obrigatório e fica registrado junto; na troca voluntária
+     * (tela "Minha conta") nenhum aceite novo é gravado. Em todos os casos as sessões abertas caem.
+     */
     @Transactional
-    public void trocarSenha(Long usuarioId, String senhaAtual, String novaSenha) {
+    public void trocarSenha(Long usuarioId, String senhaAtual, String novaSenha, boolean aceiteTermos) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new AutenticacaoException("Usuário não encontrado."));
 
+        boolean exigeAceite = usuario.isSenhaTemporaria() || usuario.termosPendentes(versaoTermosAtual);
+        if (exigeAceite && !aceiteTermos) {
+            throw new NegocioException("É preciso aceitar os Termos de Uso e a Política de Privacidade para continuar");
+        }
+
         if (!passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
-            auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.TROCA_SENHA,
+            auditoriaService.registrar(usuario.getId(), usuario.getNome(), null, AcaoAuditoria.TROCA_SENHA,
                     "Usuario", usuario.getId(), false, "Senha atual incorreta");
             throw new AutenticacaoException("Senha atual incorreta.");
         }
@@ -106,12 +118,32 @@ public class AutenticacaoService {
         }
 
         usuario.trocarSenha(passwordEncoder.encode(novaSenha));
-        usuario.aceitarTermos(versaoTermosAtual);
+        if (exigeAceite) {
+            usuario.aceitarTermos(versaoTermosAtual);
+        }
         usuarioRepository.save(usuario);
-        auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.TROCA_SENHA,
+        auditoriaService.registrar(usuario.getId(), usuario.getNome(), null, AcaoAuditoria.TROCA_SENHA,
                 "Usuario", usuario.getId(), true, null);
-        auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.ACEITE_TERMOS,
-                "Usuario", usuario.getId(), true, "versão " + versaoTermosAtual);
+        if (exigeAceite) {
+            auditoriaService.registrar(usuario.getId(), usuario.getNome(), null, AcaoAuditoria.ACEITE_TERMOS,
+                    "Usuario", usuario.getId(), true, "versão " + versaoTermosAtual);
+        }
+    }
+
+    /** Dados da sessão (GET /auth/me), com o nome da escola para o cabeçalho. */
+    @Transactional(readOnly = true)
+    public UsuarioResumoResponse resumoDaSessao(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new AutenticacaoException("Usuário não encontrado."));
+        return UsuarioResumoResponse.from(usuario, versaoTermosAtual);
+    }
+
+    /** Dados da tela "Minha conta" do próprio usuário. */
+    @Transactional(readOnly = true)
+    public ContaResponse conta(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new AutenticacaoException("Usuário não encontrado."));
+        return ContaResponse.from(usuario, versaoTermosAtual);
     }
 
     /** Novo aceite exigido quando a versão dos Termos/Política muda (maisedu.termos.versao-atual). */
@@ -121,7 +153,7 @@ public class AutenticacaoService {
                 .orElseThrow(() -> new AutenticacaoException("Usuário não encontrado."));
         usuario.aceitarTermos(versaoTermosAtual);
         usuarioRepository.save(usuario);
-        auditoriaService.registrar(usuario.getId(), usuario.getNome(), AcaoAuditoria.ACEITE_TERMOS,
+        auditoriaService.registrar(usuario.getId(), usuario.getNome(), null, AcaoAuditoria.ACEITE_TERMOS,
                 "Usuario", usuario.getId(), true, "versão " + versaoTermosAtual);
     }
 
