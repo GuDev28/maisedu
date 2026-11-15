@@ -32,6 +32,13 @@ public class Resposta {
     @Column(name = "respondida_em", nullable = false, updatable = false)
     private final LocalDateTime respondidaEm = LocalDateTime.now();
 
+    /**
+     * Quando a resposta entrou no desempenho acumulado (RN05): no envio da prática adaptativa ou no
+     * fechamento do prazo da atividade regular. Nula até lá; cada resposta é contabilizada uma única vez.
+     */
+    @Column(name = "contabilizada_em")
+    private LocalDateTime contabilizadaEm;
+
     public Resposta(AtividadeAlunoQuestao atividadeAlunoQuestao, Alternativa alternativa) {
         Long questaoEntregue = atividadeAlunoQuestao.getQuestao().getId();
         if (!alternativa.getQuestao().getId().equals(questaoEntregue)) {
@@ -43,5 +50,16 @@ public class Resposta {
 
     public boolean acertou() {
         return alternativa.isCorreta();
+    }
+
+    public boolean isContabilizada() {
+        return contabilizadaEm != null;
+    }
+
+    public void marcarContabilizada(LocalDateTime quando) {
+        if (contabilizadaEm != null) {
+            throw new NegocioException("Esta resposta já foi contabilizada no desempenho");
+        }
+        this.contabilizadaEm = quando;
     }
 }
