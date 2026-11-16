@@ -14,6 +14,7 @@ import br.com.maisedu.app.model.Atividade;
 import br.com.maisedu.app.model.AtividadeAluno;
 import br.com.maisedu.app.model.AtividadeAlunoQuestao;
 import br.com.maisedu.app.model.AtividadeQuestao;
+import br.com.maisedu.app.model.DesempenhoTopico;
 import br.com.maisedu.app.model.Questao;
 import br.com.maisedu.app.model.Resposta;
 import br.com.maisedu.app.model.RoleNome;
@@ -24,6 +25,7 @@ import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.AtividadeAlunoRepository;
 import br.com.maisedu.app.repository.AtividadeRepository;
 import br.com.maisedu.app.repository.PlacarAtividade;
+import br.com.maisedu.app.repository.Projecoes;
 import br.com.maisedu.app.repository.QuestaoRepository;
 import br.com.maisedu.app.repository.RespostaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
@@ -33,17 +35,25 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
-/** RF15 (atividade regular), início da atividade pelo aluno com snapshot (RN03) e consulta das folhas. */
+/**
+ * RF15 (atividade regular com prazo), início da atividade pelo aluno com snapshot (RN03), consulta
+ * das folhas e resultados. Até o prazo o aluno não vê a correção; o professor vê os resultados de
+ * quem já entregou e a análise por questão.
+ */
 @Service
 @RequiredArgsConstructor
 public class AtividadeService {
+
+    private static final DateTimeFormatter FORMATO_PRAZO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final AtividadeRepository atividadeRepository;
     private final AtividadeAlunoRepository atividadeAlunoRepository;
@@ -58,10 +68,11 @@ public class AtividadeService {
 
     /**
      * RF15: só o professor que leciona na turma cria atividades para ela (RN01), com questões
-     * APROVADAS do banco compartilhado, na ordem informada, sem repetição.
+     * APROVADAS do banco compartilhado, na ordem informada, sem repetição, e com prazo de entrega.
      */
     @Transactional
-    public Atividade criar(UsuarioAutenticado ator, Long turmaId, String titulo, List<Long> questaoIds) {
+    public Atividade criar(UsuarioAutenticado ator, Long turmaId, String titulo, LocalDateTime prazo,
+                           List<Long> questaoIds) {
         Turma turma = acessoTurma.buscarComoProfessorDaTurma(ator, turmaId,
                 "Só o professor que leciona na turma pode criar atividades para ela.");
         if (!turma.isAtivo()) {
@@ -86,13 +97,27 @@ public class AtividadeService {
 
         Usuario professor = usuarioRepository.findById(ator.id())
                 .orElseThrow(() -> new NegocioException("Professor não encontrado"));
-        Atividade atividade = new Atividade(titulo, turma, professor);
+        Atividade atividade = new Atividade(titulo, turma, professor, prazo);
         atividade.definirQuestoes(emOrdem);
         Atividade salva = atividadeRepository.save(atividade);
 
         auditoriaService.registrar(ator, AcaoAuditoria.CRIACAO_ATIVIDADE, "Atividade", salva.getId(), true,
-                "turma " + turmaId + ", " + emOrdem.size() + " questão(ões)");
+                "turma " + turmaId + ", " + emOrdem.size() + " questão(ões), prazo " + salva.getPrazo().format(FORMATO_PRAZO));
         return salva;
+    }
+
+    /** Estende ou antecipa o prazo (só o professor da turma e só antes do prazo atual terminar). */
+    @Transactional
+    public Atividade alterarPrazo(UsuarioAutenticado ator, Long atividadeId, LocalDateTime novoPrazo) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada."));
+        acessoTurma.buscarComoProfessorDaTurma(ator, atividade.getTurma().getId(),
+                "Só o professor que leciona na turma pode alterar o prazo da atividade.");
+        LocalDateTime anterior = atividade.getPrazo();
+        atividade.alterarPrazo(novoPrazo, LocalDateTime.now());
+        auditoriaService.registrar(ator, AcaoAuditoria.ALTERACAO_PRAZO_ATIVIDADE, "Atividade", atividade.getId(), true,
+                "de " + anterior.format(FORMATO_PRAZO) + " para " + atividade.getPrazo().format(FORMATO_PRAZO));
+        return atividade;
     }
 
     @Transactional(readOnly = true)
@@ -103,8 +128,9 @@ public class AtividadeService {
         for (Atividade atividade : atividades) {
             ids.add(atividade.getId());
         }
+        int alunosDaTurma = (int) alunoTurmaRepository.countByTurmaId(turmaId);
 
-        // [iniciaram, concluíram] por atividade, com uma única consulta para todas as folhas
+        // [iniciaram, entregaram] por atividade, com uma única consulta para todas as folhas
         Map<Long, int[]> contagem = new HashMap<>();
         if (!ids.isEmpty()) {
             for (AtividadeAluno atividadeAluno : atividadeAlunoRepository.findByAtividadeIdIn(ids)) {
@@ -116,22 +142,43 @@ public class AtividadeService {
             }
         }
 
+        LocalDateTime agora = LocalDateTime.now();
         List<AtividadeResumoResponse> resumo = new ArrayList<>();
         for (Atividade atividade : atividades) {
             int[] numeros = contagem.getOrDefault(atividade.getId(), new int[2]);
-            resumo.add(new AtividadeResumoResponse(atividade.getId(), atividade.getTitulo(), turma.getId(),
-                    turma.getNome(), atividade.getProfessor().getNome(), atividade.getQuestoes().size(),
-                    numeros[0], numeros[1], atividade.getCriadoEm()));
+            resumo.add(resumir(atividade, turma, alunosDaTurma, numeros[0], numeros[1], agora));
         }
         return resumo;
     }
 
-    /** Resultado da atividade por aluno da turma: situação, respondidas e acertos. */
+    /** Resumo de uma atividade para o professor (também usado logo depois de criar). */
+    public AtividadeResumoResponse resumir(Atividade atividade, Turma turma, int alunosDaTurma, int iniciaram,
+                                           int entregaram, LocalDateTime agora) {
+        return new AtividadeResumoResponse(atividade.getId(), atividade.getTitulo(), turma.getId(), turma.getNome(),
+                atividade.getProfessor().getNome(), atividade.getQuestoes().size(), alunosDaTurma, iniciaram,
+                entregaram, atividade.getCriadoEm(), atividade.getPrazo(), atividade.prazoEncerrado(agora),
+                atividade.isFechada());
+    }
+
+    @Transactional(readOnly = true)
+    public Atividade buscarParaResumo(Long atividadeId) {
+        return atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada."));
+    }
+
+    @Transactional(readOnly = true)
+    public int contarAlunosDaTurma(Long turmaId) {
+        return (int) alunoTurmaRepository.countByTurmaId(turmaId);
+    }
+
+    /** Resultado da atividade por aluno da turma (situação, escolhidas, acertos) e análise por questão. */
     @Transactional(readOnly = true)
     public ResultadoAtividadeResponse resultados(UsuarioAutenticado ator, Long atividadeId) {
         Atividade atividade = atividadeRepository.findById(atividadeId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada."));
         acessoTurma.autorizar(ator, atividade.getTurma());
+        LocalDateTime agora = LocalDateTime.now();
+        boolean encerrado = atividade.prazoEncerrado(agora);
 
         Map<Long, AtividadeAluno> porAluno = new HashMap<>();
         Set<Long> folhas = new HashSet<>();
@@ -148,13 +195,14 @@ public class AtividadeService {
             AtividadeAluno atividadeAluno = porAluno.get(aluno.getId());
             if (atividadeAluno == null) {
                 alunos.add(new ResultadoAtividadeResponse.ResultadoAluno(aluno.getId(), aluno.getNome(),
-                        AtividadeAlunoResumoResponse.NAO_INICIADA, 0, 0, totalQuestoes));
+                        encerrado ? AtividadeAlunoResumoResponse.NAO_ENTREGUE : AtividadeAlunoResumoResponse.NAO_INICIADA,
+                        0, 0, totalQuestoes));
                 continue;
             }
             Placar placar = placares.getOrDefault(atividadeAluno.getId(), Placar.VAZIO);
+            int escolhidas = atividadeAluno.isConcluida() ? placar.respondidas() : escolhidas(atividadeAluno, placar);
             alunos.add(new ResultadoAtividadeResponse.ResultadoAluno(aluno.getId(), aluno.getNome(),
-                    situacao(atividadeAluno), placar.respondidas(), placar.acertos(),
-                    atividadeAluno.getQuestoes().size()));
+                    situacao(atividadeAluno, agora), escolhidas, placar.acertos(), atividadeAluno.getQuestoes().size()));
         }
 
         List<QuestaoResponse> questoes = new ArrayList<>();
@@ -162,7 +210,51 @@ public class AtividadeService {
             questoes.add(QuestaoResponse.from(atividadeQuestao.getQuestao()));
         }
         return new ResultadoAtividadeResponse(atividade.getId(), atividade.getTitulo(), atividade.getTurma().getNome(),
-                questoes, alunos);
+                atividade.getPrazo(), encerrado, questoes, alunos, analisar(atividade));
+    }
+
+    /**
+     * Análise por questão: respostas, acertos e a alternativa errada mais escolhida, contadas no banco
+     * numa única consulta agrupada por questão e alternativa.
+     */
+    private List<ResultadoAtividadeResponse.AnaliseQuestao> analisar(Atividade atividade) {
+        Map<Long, Map<Long, Long>> vezesPorQuestao = new HashMap<>();
+        for (Projecoes.ContagemAlternativa contagem : respostaRepository.contarAlternativasDaAtividade(atividade.getId())) {
+            vezesPorQuestao.computeIfAbsent(contagem.questaoId(), id -> new HashMap<>())
+                    .put(contagem.alternativaId(), contagem.total());
+        }
+
+        List<ResultadoAtividadeResponse.AnaliseQuestao> analise = new ArrayList<>();
+        for (AtividadeQuestao atividadeQuestao : atividade.getQuestoes()) {
+            Questao questao = atividadeQuestao.getQuestao();
+            Map<Long, Long> vezes = vezesPorQuestao.getOrDefault(questao.getId(), Map.of());
+            Alternativa correta = questao.alternativaCorreta();
+            int respostas = 0;
+            int acertos = 0;
+            Alternativa maisEscolhidaErrada = null;
+            long vezesMaisEscolhida = 0;
+            for (Alternativa alternativa : questao.getAlternativas()) {
+                long quantas = vezes.getOrDefault(alternativa.getId(), 0L);
+                respostas += (int) quantas;
+                if (alternativa.isCorreta()) {
+                    acertos += (int) quantas;
+                } else if (quantas > vezesMaisEscolhida) {
+                    maisEscolhidaErrada = alternativa;
+                    vezesMaisEscolhida = quantas;
+                }
+            }
+            ResultadoAtividadeResponse.ErroComum erro = null;
+            int erros = respostas - acertos;
+            if (maisEscolhidaErrada != null && erros > 0) {
+                erro = new ResultadoAtividadeResponse.ErroComum(maisEscolhidaErrada.letra(),
+                        maisEscolhidaErrada.getTexto(), (int) vezesMaisEscolhida,
+                        DesempenhoTopico.percentual(vezesMaisEscolhida, erros));
+            }
+            analise.add(new ResultadoAtividadeResponse.AnaliseQuestao(questao.getId(), atividadeQuestao.getOrdem(),
+                    questao.getEnunciado(), questao.getTopico().getNome(), questao.getNivelDificuldade().name(),
+                    correta.letra(), respostas, acertos, DesempenhoTopico.percentual(acertos, respostas), erro));
+        }
+        return analise;
     }
 
     // ---------- Aluno ----------
@@ -184,26 +276,30 @@ public class AtividadeService {
         }
         Map<Long, Placar> placares = placares(folhas);
 
+        LocalDateTime agora = LocalDateTime.now();
         List<AtividadeAlunoResumoResponse> lista = new ArrayList<>();
         for (Atividade atividade : atividadeRepository.findDisponiveisParaAluno(alunoId)) {
             AtividadeAluno atividadeAluno = regularesPorAtividade.get(atividade.getId());
             if (atividadeAluno == null) {
+                boolean encerrado = atividade.prazoEncerrado(agora);
                 lista.add(new AtividadeAlunoResumoResponse(atividade.getId(), null, atividade.getTitulo(),
-                        TipoAtividade.REGULAR.name(), atividade.getTurma().getNome(),
-                        AtividadeAlunoResumoResponse.NAO_INICIADA, atividade.getQuestoes().size(), 0, 0, null, null));
+                        TipoAtividade.REGULAR.name(), atividade.getTurma().getNome(), null,
+                        encerrado ? AtividadeAlunoResumoResponse.NAO_ENTREGUE : AtividadeAlunoResumoResponse.NAO_INICIADA,
+                        atividade.getQuestoes().size(), 0, null, atividade.getPrazo(), encerrado, null, null));
             } else {
-                lista.add(resumir(atividadeAluno, placares.getOrDefault(atividadeAluno.getId(), Placar.VAZIO)));
+                lista.add(resumir(atividadeAluno, placares.getOrDefault(atividadeAluno.getId(), Placar.VAZIO), agora));
             }
         }
         for (AtividadeAluno pratica : praticas) {
-            lista.add(resumir(pratica, placares.getOrDefault(pratica.getId(), Placar.VAZIO)));
+            lista.add(resumir(pratica, placares.getOrDefault(pratica.getId(), Placar.VAZIO), agora));
         }
         return lista;
     }
 
     /**
      * RF16, passo 1 e 2: inicia a atividade e fixa as questões entregues (RN03). Se o aluno já a
-     * iniciou, devolve a mesma folha, com as mesmas questões e a mesma ordem (CA03).
+     * iniciou, devolve a mesma folha, com as mesmas questões e a mesma ordem (CA03). Depois do prazo,
+     * só reabre a folha de quem já tinha começado (para ver a correção); não inicia folha nova.
      */
     @Transactional
     public AtividadeAluno iniciar(Long alunoId, Long atividadeId) {
@@ -223,6 +319,10 @@ public class AtividadeService {
         }
         if (!atividade.getTurma().isAtivo()) {
             throw new NegocioException("A turma desta atividade foi desativada.");
+        }
+        if (atividade.prazoEncerrado(LocalDateTime.now())) {
+            throw new NegocioException("O prazo desta atividade terminou em " + atividade.getPrazo().format(FORMATO_PRAZO)
+                    + ". Ela não pode mais ser iniciada.");
         }
 
         AtividadeAluno nova = atividadeAlunoRepository.save(AtividadeAluno.regular(aluno, atividade));
@@ -248,8 +348,15 @@ public class AtividadeService {
         return atividadeAluno;
     }
 
+    /**
+     * Monta a folha como o aluno a vê agora: as alternativas escolhidas (marcadas ou enviadas) e, só
+     * quando a correção foi liberada, o gabarito e os acertos.
+     */
     @Transactional(readOnly = true)
     public FolhaAtividadeResponse montarFolha(AtividadeAluno atividadeAluno) {
+        LocalDateTime agora = LocalDateTime.now();
+        boolean liberada = atividadeAluno.correcaoLiberada(agora);
+
         Map<Long, Resposta> respostas = new HashMap<>();
         for (Resposta resposta : respostaRepository.findByAtividadeAluno(atividadeAluno.getId())) {
             respostas.put(resposta.getAtividadeAlunoQuestao().getId(), resposta);
@@ -257,6 +364,7 @@ public class AtividadeService {
 
         List<FolhaAtividadeResponse.QuestaoEntregue> questoes = new ArrayList<>();
         int acertos = 0;
+        int escolhidas = 0;
         for (AtividadeAlunoQuestao entregue : atividadeAluno.getQuestoes()) {
             Questao questao = entregue.getQuestao();
             List<FolhaAtividadeResponse.AlternativaAluno> alternativas = new ArrayList<>();
@@ -265,53 +373,91 @@ public class AtividadeService {
                         alternativa.getTexto()));
             }
 
-            FolhaAtividadeResponse.RespostaDada respostaDada = null;
             Resposta resposta = respostas.get(entregue.getId());
+            Long escolhida = null;
             if (resposta != null) {
+                escolhida = resposta.getAlternativa().getId();
+            } else if (entregue.getAlternativaMarcada() != null && !atividadeAluno.isConcluida()) {
+                escolhida = entregue.getAlternativaMarcada().getId();
+            }
+            if (escolhida != null) {
+                escolhidas++;
+            }
+
+            FolhaAtividadeResponse.Correcao correcao = null;
+            if (liberada) {
                 Alternativa correta = questao.alternativaCorreta();
-                respostaDada = new FolhaAtividadeResponse.RespostaDada(resposta.getAlternativa().getId(),
-                        resposta.getAlternativa().letra(), resposta.acertou(), correta.getId(), correta.letra());
-                if (resposta.acertou()) {
+                boolean acertou = resposta != null && resposta.acertou();
+                if (acertou) {
                     acertos++;
                 }
+                correcao = new FolhaAtividadeResponse.Correcao(resposta != null, acertou, correta.getId(),
+                        correta.letra());
             }
-            Long marcada = resposta == null && entregue.getAlternativaMarcada() != null
-                    ? entregue.getAlternativaMarcada().getId()
-                    : null;
             questoes.add(new FolhaAtividadeResponse.QuestaoEntregue(entregue.getId(), entregue.getOrdem(),
                     questao.getEnunciado(), questao.getTopico().getNome(), questao.getNivelDificuldade().name(),
-                    alternativas, marcada, respostaDada));
+                    alternativas, escolhida, correcao));
         }
 
+        LocalDateTime prazo = atividadeAluno.prazo();
         return new FolhaAtividadeResponse(atividadeAluno.getId(), titulo(atividadeAluno),
-                atividadeAluno.getTipo().name(), atividadeAluno.getIniciadaEm(), atividadeAluno.getConcluidaEm(),
-                questoes.size(), respostas.size(), acertos, questoes);
+                atividadeAluno.getTipo().name(), nomeDoTopico(atividadeAluno), atividadeAluno.getIniciadaEm(),
+                atividadeAluno.getConcluidaEm(), prazo, prazo != null && !agora.isBefore(prazo),
+                atividadeAluno.aceitaRespostas(agora), liberada, questoes.size(), escolhidas,
+                liberada ? acertos : null, questoes);
     }
 
-    private AtividadeAlunoResumoResponse resumir(AtividadeAluno atividadeAluno, Placar placar) {
+    private AtividadeAlunoResumoResponse resumir(AtividadeAluno atividadeAluno, Placar placar, LocalDateTime agora) {
         Atividade origem = atividadeAluno.getAtividade();
+        boolean liberada = atividadeAluno.correcaoLiberada(agora);
         return new AtividadeAlunoResumoResponse(
                 origem == null ? null : origem.getId(),
                 atividadeAluno.getId(),
                 titulo(atividadeAluno),
                 atividadeAluno.getTipo().name(),
                 origem == null ? null : origem.getTurma().getNome(),
-                situacao(atividadeAluno),
+                nomeDoTopico(atividadeAluno),
+                situacao(atividadeAluno, agora),
                 atividadeAluno.getQuestoes().size(),
-                placar.respondidas(),
-                placar.acertos(),
+                atividadeAluno.isConcluida() ? placar.respondidas() : escolhidas(atividadeAluno, placar),
+                liberada ? placar.acertos() : null,
+                atividadeAluno.prazo(),
+                liberada,
                 atividadeAluno.getIniciadaEm(),
                 atividadeAluno.getConcluidaEm());
     }
 
-    private static String titulo(AtividadeAluno atividadeAluno) {
-        return atividadeAluno.getAtividade() != null ? atividadeAluno.getAtividade().getTitulo() : "Prática adaptativa";
+    /** Questões com alternativa escolhida numa folha em andamento: respondidas (fluxo antigo) + marcadas. */
+    private static int escolhidas(AtividadeAluno atividadeAluno, Placar placar) {
+        int marcadas = 0;
+        for (AtividadeAlunoQuestao entregue : atividadeAluno.getQuestoes()) {
+            if (entregue.getAlternativaMarcada() != null) {
+                marcadas++;
+            }
+        }
+        return placar.respondidas() + marcadas;
     }
 
-    private static String situacao(AtividadeAluno atividadeAluno) {
-        return atividadeAluno.isConcluida()
-                ? AtividadeAlunoResumoResponse.CONCLUIDA
-                : AtividadeAlunoResumoResponse.EM_ANDAMENTO;
+    private static String titulo(AtividadeAluno atividadeAluno) {
+        if (atividadeAluno.getAtividade() != null) {
+            return atividadeAluno.getAtividade().getTitulo();
+        }
+        return atividadeAluno.getTopico() != null
+                ? "Prática: " + atividadeAluno.getTopico().getNome()
+                : "Prática adaptativa";
+    }
+
+    private static String nomeDoTopico(AtividadeAluno atividadeAluno) {
+        return atividadeAluno.getTopico() == null ? null : atividadeAluno.getTopico().getNome();
+    }
+
+    private static String situacao(AtividadeAluno atividadeAluno, LocalDateTime agora) {
+        if (atividadeAluno.isConcluida()) {
+            return AtividadeAlunoResumoResponse.ENTREGUE;
+        }
+        return atividadeAluno.aceitaRespostas(agora)
+                ? AtividadeAlunoResumoResponse.EM_ANDAMENTO
+                : AtividadeAlunoResumoResponse.NAO_ENTREGUE;
     }
 
     /** Placar de cada folha informada, contado no banco numa única consulta. */
