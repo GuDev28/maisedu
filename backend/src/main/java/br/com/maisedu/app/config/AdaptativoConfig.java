@@ -19,8 +19,9 @@ public class AdaptativoConfig {
             @Value("${maisedu.adaptativo.maximo-topicos:3}") int maximoTopicos,
             @Value("${maisedu.adaptativo.questoes-por-pratica:10}") int questoesPorPratica,
             @Value("${maisedu.adaptativo.minimo-respostas-dominio:5}") int minimoRespostasDominio,
-            @Value("${maisedu.adaptativo.percentual-dominio:70}") BigDecimal percentualDominio) {
+            @Value("${maisedu.adaptativo.percentual-dominio:70}") BigDecimal percentualDominio,
+            @Value("${maisedu.adaptativo.questoes-por-pratica-topico:5}") int questoesPorPraticaTopico) {
         return new MotorAdaptativo(new MotorAdaptativo.Parametros(
-                maximoTopicos, questoesPorPratica, minimoRespostasDominio, percentualDominio));
+                maximoTopicos, questoesPorPratica, minimoRespostasDominio, percentualDominio, questoesPorPraticaTopico));
     }
 }
