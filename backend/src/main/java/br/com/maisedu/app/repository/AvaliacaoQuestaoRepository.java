@@ -20,4 +20,8 @@ public interface AvaliacaoQuestaoRepository extends JpaRepository<AvaliacaoQuest
     /** Votos das questões informadas (placar e motivos de rejeição em "Minhas questões"), numa consulta. */
     @Query("select a from AvaliacaoQuestao a where a.questao.id in :questaoIds order by a.avaliadoEm")
     List<AvaliacaoQuestao> findByQuestaoIdIn(@Param("questaoIds") Collection<Long> questaoIds);
+
+    /** Votos dados por professores da escola na validação colaborativa (painel da escola). */
+    @Query("select count(a) from AvaliacaoQuestao a where a.professor.instituicao.id = :instituicaoId")
+    long contarVotosDaInstituicao(@Param("instituicaoId") Long instituicaoId);
 }

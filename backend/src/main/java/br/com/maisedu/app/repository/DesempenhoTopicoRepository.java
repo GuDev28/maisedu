@@ -22,4 +22,23 @@ public interface DesempenhoTopicoRepository extends JpaRepository<DesempenhoTopi
 
     @Query("select d from DesempenhoTopico d join fetch d.topico where d.aluno.id in :alunoIds")
     List<DesempenhoTopico> findByAlunoIdIn(@Param("alunoIds") Collection<Long> alunoIds);
+
+    /**
+     * Painel da escola (minimização): desempenho somado por ano escolar das turmas ativas e tópico,
+     * sem identificar alunos.
+     */
+    @Query("select new br.com.maisedu.app.repository.Projecoes$DesempenhoAnoTopico(t.anoEscolar, tp.id, tp.nome, " +
+            "sum(d.totalRespostas), sum(d.totalAcertos), count(distinct d.aluno.id)) " +
+            "from DesempenhoTopico d join d.topico tp join AlunoTurma at on at.aluno.id = d.aluno.id join at.turma t " +
+            "where t.instituicao.id = :instituicaoId and t.ativo = true " +
+            "group by t.anoEscolar, tp.id, tp.nome")
+    List<Projecoes.DesempenhoAnoTopico> somarPorAnoETopico(@Param("instituicaoId") Long instituicaoId);
+
+    /** Painel da escola: desempenho somado dos alunos de cada turma ativa (somas nulas se ninguém respondeu). */
+    @Query("select new br.com.maisedu.app.repository.Projecoes$DesempenhoDaTurma(t.id, t.nome, t.anoEscolar, " +
+            "count(distinct at.aluno.id), count(distinct d.aluno.id), sum(d.totalRespostas), sum(d.totalAcertos)) " +
+            "from AlunoTurma at join at.turma t left join DesempenhoTopico d on d.aluno.id = at.aluno.id " +
+            "where t.instituicao.id = :instituicaoId and t.ativo = true " +
+            "group by t.id, t.nome, t.anoEscolar order by t.nome")
+    List<Projecoes.DesempenhoDaTurma> somarPorTurma(@Param("instituicaoId") Long instituicaoId);
 }

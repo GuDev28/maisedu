@@ -2,6 +2,7 @@ package br.com.maisedu.app.dto;
 
 import br.com.maisedu.app.model.Role;
 import br.com.maisedu.app.model.RoleNome;
+import br.com.maisedu.app.model.StatusEmailAcesso;
 import br.com.maisedu.app.model.Usuario;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,9 @@ public record UsuarioGestaoResponse(
         boolean bloqueado,
         boolean senhaTemporaria,
         boolean anonimizado,
-        LocalDateTime criadoEm) {
+        LocalDateTime criadoEm,
+        StatusEmailAcesso statusEmailAcesso,
+        LocalDateTime emailAcessoEm) {
 
     public static UsuarioGestaoResponse from(Usuario usuario) {
         Set<RoleNome> roles = EnumSet.noneOf(RoleNome.class);
@@ -28,6 +31,6 @@ public record UsuarioGestaoResponse(
         return new UsuarioGestaoResponse(usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(),
                 usuario.getEmailResponsavel(), roles,
                 usuario.isAtivo(), usuario.estaBloqueado(), usuario.isSenhaTemporaria(), usuario.isAnonimizado(),
-                usuario.getCriadoEm());
+                usuario.getCriadoEm(), usuario.getEmailAcessoStatus(), usuario.getEmailAcessoEm());
     }
 }
