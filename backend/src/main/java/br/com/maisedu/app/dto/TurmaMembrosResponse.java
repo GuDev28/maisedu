@@ -1,10 +1,12 @@
 package br.com.maisedu.app.dto;
 
+import br.com.maisedu.app.model.StatusEmailAcesso;
 import br.com.maisedu.app.model.Turma;
 import br.com.maisedu.app.model.Usuario;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 /** Tela da turma: quem leciona e quem estuda nela (RN01). */
 public record TurmaMembrosResponse(
@@ -15,14 +17,18 @@ public record TurmaMembrosResponse(
         List<Membro> professores,
         List<Membro> alunos) {
 
-    /** {@code emailResponsavel} só para alunos (quem vê a turma é o admin ou o professor dela). */
+    /**
+     * {@code emailResponsavel} só para alunos (quem vê a turma é o admin ou o professor dela).
+     * {@code statusEmailAcesso}: situação do último e-mail com login e senha provisória (ENVIADO,
+     * FALHOU ou NAO_CONFIGURADO), para a tela avisar quando o acesso não chegou.
+     */
     public record Membro(Long id, String nome, String identificadorDeAcesso, String emailResponsavel, boolean ativo,
-                         boolean senhaTemporaria) {
+                         boolean senhaTemporaria, StatusEmailAcesso statusEmailAcesso, LocalDateTime emailAcessoEm) {
 
         public static Membro from(Usuario usuario) {
             return new Membro(usuario.getId(), usuario.getNome(), usuario.identificadorDeAcesso(),
                     usuario.getEmailResponsavel(), usuario.isAtivo(),
-                    usuario.isSenhaTemporaria());
+                    usuario.isSenhaTemporaria(), usuario.getEmailAcessoStatus(), usuario.getEmailAcessoEm());
         }
     }
 

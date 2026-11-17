@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.com.maisedu.app.security.GeradorLogin;
 
 
 @Service
@@ -26,6 +27,7 @@ public class UsuarioService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SenhaGeradora senhaGeradora;
+    private final GeradorLogin geradorLogin;
     private final AuditoriaService auditoriaService;
     private final ResendEmailService emailService;
     private final VinculoTurmaService vinculoTurmaService;
@@ -64,19 +66,17 @@ public class UsuarioService {
     }
 
     /**
-     * Cadastra o aluno na instituição de quem cadastra. O aluno não tem e-mail próprio: o login e a
-     * senha provisória vão para o e-mail do responsável (depois do commit), e quem cadastra não vê a
-     * senha. Com a turma informada, já faz o vínculo no mesmo passo (RN01).
+     * Cadastra o aluno na instituição de quem cadastra. O login é gerado pelo sistema (único em
+     * todas as escolas) e o aluno não tem e-mail próprio: o login e a senha provisória vão para o
+     * e-mail do responsável (depois do commit). Quem cadastra vê o login, mas não a senha. Com a
+     * turma informada, já faz o vínculo no mesmo passo (RN01).
      */
     @Transactional
-    public NovoUsuario cadastrarAluno(UsuarioAutenticado professor, String nomeInformado, String loginInformado,
+    public NovoUsuario cadastrarAluno(UsuarioAutenticado professor, String nomeInformado,
                                       String emailResponsavelInformado, Long turmaId) {
         String nome = nomeInformado.strip();
-        String login = Identificadores.normalizar(loginInformado);
         String emailResponsavel = Identificadores.normalizar(emailResponsavelInformado);
-        if (usuarioRepository.existsByLogin(login)) {
-            throw new NegocioException("Já existe um usuário com este login.");
-        }
+        String login = geradorLogin.gerar(usuarioRepository::existsByLogin);
 
         Instituicao instituicao = instituicaoRepository.findById(professor.instituicaoId())
                 .orElseThrow(() -> new NegocioException("Instituição não encontrada."));
