@@ -1,5 +1,6 @@
 package br.com.maisedu.app.config;
 
+import br.com.maisedu.app.dto.EnvioFolhaRequest;
 import br.com.maisedu.app.model.Alternativa;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.AnoEscolar;
@@ -29,6 +30,7 @@ import br.com.maisedu.app.repository.TurmaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.AtividadeService;
+import br.com.maisedu.app.service.FechamentoAtividadesService;
 import br.com.maisedu.app.service.PraticaAdaptativaService;
 import br.com.maisedu.app.service.RespostaService;
 import jakarta.persistence.EntityManager;
@@ -37,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -48,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.time.LocalDateTime;
 
 /**
  * Cenário de demonstração (perfil "dev"), criado só quando o banco está vazio. Todos os dados são
@@ -57,12 +61,15 @@ import java.util.Random;
  * - administradores, professores (6 contas com papel PROFESSOR, o bastante para o quórum de 3 votos),
  *   turmas e alunos já vinculados;
  * - 96 questões aprovadas (8 tópicos x 3 níveis x 4), algumas pendentes, uma rejeitada e um rascunho;
- * - atividades com respostas simuladas em semanas diferentes, para o painel de desempenho e a evolução;
+ * - atividades com prazo e respostas simuladas em semanas diferentes (já fechadas, com o desempenho
+ *   contabilizado), uma prática adaptativa entre elas (efeito da prática no painel do professor) e uma
+ *   atividade ainda dentro do prazo, com alunos que já entregaram, um com marcações e outros sem começar;
  * - um professor e um aluno ainda com senha provisória, para demonstrar o primeiro acesso.
  */
 @Slf4j
 @Component
 @Profile("dev")
+@Order(1)
 public class SeedDemonstracao implements CommandLineRunner {
 
     public static final String SENHA_DEMO = "MaisEdu@2026";
@@ -81,6 +88,7 @@ public class SeedDemonstracao implements CommandLineRunner {
     private final AtividadeService atividadeService;
     private final RespostaService respostaService;
     private final PraticaAdaptativaService praticaAdaptativaService;
+    private final FechamentoAtividadesService fechamentoAtividadesService;
     private final PasswordEncoder passwordEncoder;
     private final TransactionTemplate transacao;
     private final int versaoTermos;
@@ -98,6 +106,7 @@ public class SeedDemonstracao implements CommandLineRunner {
                             AvaliacaoQuestaoRepository avaliacaoQuestaoRepository,
                             AtividadeAlunoRepository atividadeAlunoRepository, AtividadeService atividadeService,
                             RespostaService respostaService, PraticaAdaptativaService praticaAdaptativaService,
+                            FechamentoAtividadesService fechamentoAtividadesService,
                             PasswordEncoder passwordEncoder, PlatformTransactionManager transactionManager,
                             @Value("${maisedu.termos.versao-atual:1}") int versaoTermos) {
         this.instituicaoRepository = instituicaoRepository;
@@ -113,6 +122,7 @@ public class SeedDemonstracao implements CommandLineRunner {
         this.atividadeService = atividadeService;
         this.respostaService = respostaService;
         this.praticaAdaptativaService = praticaAdaptativaService;
+        this.fechamentoAtividadesService = fechamentoAtividadesService;
         this.passwordEncoder = passwordEncoder;
         this.transacao = new TransactionTemplate(transactionManager);
         this.versaoTermos = versaoTermos;
@@ -340,23 +350,29 @@ public class SeedDemonstracao implements CommandLineRunner {
     // ------------------------------------------------------------------ atividades e respostas
 
     /**
-     * Cria atividades pelos serviços reais (as mesmas regras da API) e simula respostas com um
-     * "perfil" de acerto por aluno e tópico. Depois recua as datas para que a evolução semanal do
-     * painel de desempenho tenha mais de um ponto.
+     * Cria atividades pelos serviços reais (as mesmas regras da API) e simula a entrega das respostas
+     * com um "perfil" de acerto por aluno e tópico. Depois recua as datas (para a evolução semanal ter
+     * vários pontos) e roda o fechamento das atividades vencidas, que contabiliza o desempenho.
+     *
+     * Linha do tempo: revisão do 7º A há 3 semanas; equações, frações (6º B) e Pitágoras (8º C) há 2
+     * semanas; práticas adaptativas de a7002 e a7003 há 1 semana; "Revisão da semana" do 7º A fechada
+     * há 2 dias (mostra o efeito da prática); e uma atividade do 7º A ainda dentro do prazo.
      */
     private void simularAtividades(Cenario cenario) {
         UsuarioAutenticado ana = ator(cenario, "ana@maisedu.dev");
         UsuarioAutenticado bruno = ator(cenario, "bruno@maisedu.dev");
         UsuarioAutenticado carla = ator(cenario, "carla@maisedu.dev");
+        LocalDateTime prazoTemporario = LocalDateTime.now().plusDays(2);
 
         Long revisao7A = atividadeService.criar(ana, cenario.turmas.get("7A"),
-                "Revisão: inteiros, frações e porcentagem",
+                "Revisão: inteiros, frações e porcentagem", prazoTemporario,
                 selecionar(cenario, new String[]{"Números inteiros", "Frações", "Porcentagem"}, 2, 1, 0)).getId();
         Long equacoes7A = atividadeService.criar(ana, cenario.turmas.get("7A"), "Equações do 1º grau",
-                selecionar(cenario, new String[]{"Equações do 1º grau"}, 2, 2, 1)).getId();
+                prazoTemporario, selecionar(cenario, new String[]{"Equações do 1º grau"}, 2, 2, 1)).getId();
         Long fracoes6B = atividadeService.criar(bruno, cenario.turmas.get("6B"), "Frações e perímetro",
-                selecionar(cenario, new String[]{"Frações", "Perímetro e área"}, 2, 2, 0)).getId();
+                prazoTemporario, selecionar(cenario, new String[]{"Frações", "Perímetro e área"}, 2, 2, 0)).getId();
         Long pitagoras8C = atividadeService.criar(carla, cenario.turmas.get("8C"), "Pitágoras e potências",
+                prazoTemporario,
                 selecionar(cenario, new String[]{"Teorema de Pitágoras", "Potenciação e radiciação"}, 2, 1, 1)).getId();
 
         // Perfil de acerto (0 a 1) de cada aluno por tópico: cria alunos com dificuldades diferentes.
@@ -366,14 +382,14 @@ public class SeedDemonstracao implements CommandLineRunner {
         perfil7A.put("a7003", new double[]{0.4, 0.6, 0.2, 0.4});
         perfil7A.put("a7004", new double[]{0.8, 0.5, 0.7, 0.3});
         perfil7A.put("a7005", new double[]{0.6, 0.4, 0.5, 0.6});
-        // a7006 não iniciou nenhuma atividade (aparece como "não iniciada" para a professora)
+        // a7006 não iniciou nenhuma atividade (aparece como "não entregue" para a professora)
         String[] topicos7A = {"Números inteiros", "Frações", "Porcentagem", "Equações do 1º grau"};
 
         for (Map.Entry<String, double[]> aluno : perfil7A.entrySet()) {
             Long alunoId = cenario.usuarios.get(aluno.getKey());
             responder(alunoId, revisao7A, topicos7A, aluno.getValue(), 1.0);
         }
-        // Equações: dois alunos concluem, um para no meio
+        // Equações: dois alunos entregam; um marcou metade e não enviou até o prazo ("não entregue")
         responder(cenario.usuarios.get("a7001"), equacoes7A, topicos7A, perfil7A.get("a7001"), 1.0);
         responder(cenario.usuarios.get("a7002"), equacoes7A, topicos7A, perfil7A.get("a7002"), 1.0);
         responder(cenario.usuarios.get("a7004"), equacoes7A, topicos7A, perfil7A.get("a7004"), 0.5);
@@ -390,20 +406,45 @@ public class SeedDemonstracao implements CommandLineRunner {
             responder(cenario.usuarios.get("b800" + (i + 1)), pitagoras8C, topicos8C, perfis8C[i], 1.0);
         }
 
-        // Datas: a revisão do 7º A foi há 3 semanas, as demais atividades há 2 semanas
+        // Datas: a revisão do 7º A foi há 3 semanas, as demais atividades há 2 semanas; os prazos já
+        // passaram, então o fechamento contabiliza o desempenho das respostas entregues.
         recuarDatas(revisao7A, 21);
         recuarDatas(equacoes7A, 14);
         recuarDatas(fracoes6B, 14);
         recuarDatas(pitagoras8C, 14);
+        fechamentoAtividadesService.fecharVencidas();
 
-        // Duas práticas adaptativas já feitas na semana passada (evolução com 3 pontos);
-        // os demais alunos podem gerar a deles ao vivo na demonstração.
+        // Duas práticas adaptativas feitas na semana passada; os demais alunos podem gerar a deles ao vivo.
         for (String login : List.of("a7002", "a7003")) {
             Long alunoId = cenario.usuarios.get(login);
             Long praticaId = praticaAdaptativaService.gerarOuRetomar(alunoId).atividadeAlunoId();
             responderFolha(alunoId, praticaId, topicos7A, perfil7A.get(login), 1.0);
             recuarDatasDaFolha(praticaId, 7);
         }
+
+        // "Revisão da semana", fechada há 2 dias: a7002 e a7003 melhoram nos tópicos que praticaram
+        // (o painel do professor compara o acerto antes e depois da prática).
+        Long revisaoSemana = atividadeService.criar(ana, cenario.turmas.get("7A"), "Revisão da semana",
+                prazoTemporario,
+                selecionar(cenario, new String[]{"Números inteiros", "Frações", "Porcentagem", "Equações do 1º grau"},
+                        1, 1, 0)).getId();
+        Map<String, double[]> depoisDaPratica = new LinkedHashMap<>(perfil7A);
+        depoisDaPratica.put("a7002", new double[]{0.8, 0.6, 0.75, 0.7});
+        depoisDaPratica.put("a7003", new double[]{0.6, 0.75, 0.5, 0.6});
+        for (Map.Entry<String, double[]> aluno : depoisDaPratica.entrySet()) {
+            responder(cenario.usuarios.get(aluno.getKey()), revisaoSemana, topicos7A, aluno.getValue(), 1.0);
+        }
+        recuarDatas(revisaoSemana, 4);
+        fechamentoAtividadesService.fecharVencidas();
+
+        // Atividade ainda dentro do prazo: dois alunos já entregaram (correção só depois do prazo), um
+        // marcou parte das questões e os demais ainda não começaram.
+        Long emAndamento = atividadeService.criar(ana, cenario.turmas.get("7A"), "Porcentagem e média",
+                LocalDateTime.now().plusDays(3),
+                selecionar(cenario, new String[]{"Porcentagem", "Média, moda e mediana"}, 2, 1, 0)).getId();
+        responder(cenario.usuarios.get("a7001"), emAndamento, topicos7A, perfil7A.get("a7001"), 1.0);
+        responder(cenario.usuarios.get("a7005"), emAndamento, topicos7A, perfil7A.get("a7005"), 1.0);
+        responder(cenario.usuarios.get("a7002"), emAndamento, topicos7A, perfil7A.get("a7002"), 0.5);
     }
 
     private UsuarioAutenticado ator(Cenario cenario, String email) {
@@ -432,7 +473,10 @@ public class SeedDemonstracao implements CommandLineRunner {
         responderFolha(alunoId, atividadeAluno.getId(), topicos, perfil, fracaoRespondida);
     }
 
-    /** Responde as questões da folha: acerta com a probabilidade do perfil do aluno no tópico da questão. */
+    /**
+     * Escolhe as alternativas da folha (acerta com a probabilidade do perfil do aluno no tópico da
+     * questão) e envia. Com {@code fracaoRespondida} menor que 1, só marca parte das questões e não envia.
+     */
     private void responderFolha(Long alunoId, Long atividadeAlunoId, String[] topicos, double[] perfil,
                                 double fracaoRespondida) {
         record Escolha(Long questaoEntregueId, Long correta, List<Long> erradas, String topico) {
@@ -456,6 +500,7 @@ public class SeedDemonstracao implements CommandLineRunner {
         });
 
         int limite = (int) Math.round(escolhas.size() * fracaoRespondida);
+        List<EnvioFolhaRequest.Escolha> envio = new ArrayList<>();
         for (int i = 0; i < limite; i++) {
             Escolha escolha = escolhas.get(i);
             double chance = 0.5;
@@ -467,14 +512,25 @@ public class SeedDemonstracao implements CommandLineRunner {
             Long alternativa = random.nextDouble() < chance
                     ? escolha.correta()
                     : escolha.erradas().get(random.nextInt(escolha.erradas().size()));
-            respostaService.responder(alunoId, atividadeAlunoId, escolha.questaoEntregueId(), alternativa);
+            if (limite < escolhas.size()) {
+                respostaService.marcar(alunoId, atividadeAlunoId, escolha.questaoEntregueId(), alternativa);
+            } else {
+                envio.add(new EnvioFolhaRequest.Escolha(escolha.questaoEntregueId(), alternativa));
+            }
+        }
+        if (!envio.isEmpty()) {
+            respostaService.enviar(alunoId, atividadeAlunoId, envio);
         }
     }
 
-    /** Recuo das datas (só para a demonstração), mantendo a ordem entre início, respostas e conclusão. */
+    /**
+     * Recuo das datas (só para a demonstração), mantendo a ordem entre criação, início, respostas,
+     * envio e prazo. O prazo recua um dia a mais que a criação; como foi criado 2 dias à frente, fica
+     * depois das respostas e, para recuos de 2 dias ou mais, já vencido.
+     */
     private void recuarDatas(Long atividadeId, int dias) {
-        executarSql("UPDATE atividade SET criado_em = criado_em - make_interval(days => :dias) WHERE id = :id",
-                dias + 1, atividadeId);
+        executarSql("UPDATE atividade SET criado_em = criado_em - make_interval(days => :dias), "
+                + "prazo = prazo - make_interval(days => :dias) WHERE id = :id", dias + 1, atividadeId);
         executarSql("UPDATE atividade_aluno SET iniciada_em = iniciada_em - make_interval(days => :dias), "
                 + "concluida_em = concluida_em - make_interval(days => :dias) WHERE atividade_id = :id", dias, atividadeId);
         executarSql("UPDATE resposta r SET respondida_em = r.respondida_em - make_interval(days => :dias) "
@@ -485,7 +541,8 @@ public class SeedDemonstracao implements CommandLineRunner {
     private void recuarDatasDaFolha(Long atividadeAlunoId, int dias) {
         executarSql("UPDATE atividade_aluno SET iniciada_em = iniciada_em - make_interval(days => :dias), "
                 + "concluida_em = concluida_em - make_interval(days => :dias) WHERE id = :id", dias, atividadeAlunoId);
-        executarSql("UPDATE resposta r SET respondida_em = r.respondida_em - make_interval(days => :dias) "
+        executarSql("UPDATE resposta r SET respondida_em = r.respondida_em - make_interval(days => :dias), "
+                + "contabilizada_em = r.contabilizada_em - make_interval(days => :dias) "
                 + "FROM atividade_aluno_questao aaq WHERE r.atividade_aluno_questao_id = aaq.id "
                 + "AND aaq.atividade_aluno_id = :id", dias, atividadeAlunoId);
     }
