@@ -169,18 +169,20 @@ abstract class IntegracaoTestBase {
     protected NovoCadastro cadastrarAlunoSemAtivar(Conta professor) {
         long ts = System.nanoTime();
         String nome = "Aluno " + ts;
-        String loginAluno = "aluno." + ts;
         String emailResponsavel = "responsavel." + ts + "@familia.test";
 
         ResponseEntity<UsuarioCadastradoResponse> response = client.post().uri("/alunos")
                 .header(HttpHeaders.COOKIE, cookie(professor))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new CadastroAlunoRequest(nome, loginAluno, emailResponsavel))
+                .body(new CadastroAlunoRequest(nome, emailResponsavel))
                 .retrieve()
                 .toEntity(UsuarioCadastradoResponse.class);
         assertThat(response.getStatusCode()).as("cadastro do aluno (arrange)").isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().senhaProvisoria()).as("a senha nao volta para o professor").isNull();
         Long id = response.getBody().id();
+        // o login e gerado pelo sistema (letra "a" + digitos) e volta para o professor
+        String loginAluno = response.getBody().identificadorDeAcesso();
+        assertThat(loginAluno).as("login gerado").startsWith("a");
 
         return new NovoCadastro(id, nome, loginAluno, senhaEnviadaAoResponsavel(id, emailResponsavel));
     }

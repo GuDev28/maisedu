@@ -9,11 +9,13 @@ import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.InstituicaoRepository;
 import br.com.maisedu.app.repository.RoleRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
+import br.com.maisedu.app.security.GeradorLogin;
 import br.com.maisedu.app.security.SenhaGeradora;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -53,6 +56,7 @@ class UsuarioServiceTest {
     @Mock AuditoriaService auditoriaService;
     @Mock ResendEmailService emailService;
     @Mock VinculoTurmaService vinculoTurmaService;
+    @Mock GeradorLogin geradorLogin;
     @InjectMocks UsuarioService service;
 
     private static final long TURMA_ID = 70L;
@@ -139,9 +143,9 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void deveCadastrarAlunoSemEmailProprioEMandarOAcessoParaOResponsavel() {
+    void deveCadastrarAlunoComLoginGeradoSemEmailProprioEMandarOAcessoParaOResponsavel() {
         // Arrange
-        when(usuarioRepository.existsByLogin("2026001")).thenReturn(false);
+        when(geradorLogin.gerar(any())).thenReturn("a482913");
         when(instituicaoRepository.findById(INSTITUICAO_ID)).thenReturn(Optional.of(escola));
         when(senhaGeradora.gerar()).thenReturn("Aluno12345");
         when(passwordEncoder.encode("Aluno12345")).thenReturn("hash-do-aluno");
@@ -149,19 +153,19 @@ class UsuarioServiceTest {
         dadoQueOBancoGeraOId(500L);
 
         // Act
-        UsuarioService.NovoUsuario novo = service.cadastrarAluno(atorProfessor, "Ana Aluna", "2026001",
+        UsuarioService.NovoUsuario novo = service.cadastrarAluno(atorProfessor, "Ana Aluna",
                 "  Mae.Da.Ana@Familia.test ", null);
 
         // Assert
         Usuario aluno = novo.usuario();
-        assertEquals("2026001", aluno.getLogin());
+        assertEquals("a482913", aluno.getLogin());
         assertNull(aluno.getEmail());
         assertEquals("mae.da.ana@familia.test", aluno.getEmailResponsavel());
         assertEquals("hash-do-aluno", aluno.getSenha());
         assertTrue(aluno.possuiRole(RoleNome.ALUNO));
         assertSame(escola, aluno.getInstituicao());
         verify(auditoriaService).registrar(atorProfessor, AcaoAuditoria.CADASTRO_ALUNO, "Usuario", 500L, true, null);
-        verify(emailService).enviarAcessoAoResponsavel(500L, "Ana Aluna", "2026001", escola.getNome(),
+        verify(emailService).enviarAcessoAoResponsavel(500L, "Ana Aluna", "a482913", escola.getNome(),
                 "mae.da.ana@familia.test", "Aluno12345");
         verify(emailService, never()).enviarSenhaProvisoria(any(), any(), any(), any());
         verifyNoInteractions(vinculoTurmaService);
@@ -170,7 +174,7 @@ class UsuarioServiceTest {
     @Test
     void deveCadastrarAlunoEJaVincularNaTurmaInformada() {
         // Arrange
-        when(usuarioRepository.existsByLogin("2026002")).thenReturn(false);
+        when(geradorLogin.gerar(any())).thenReturn("a482914");
         when(instituicaoRepository.findById(INSTITUICAO_ID)).thenReturn(Optional.of(escola));
         when(senhaGeradora.gerar()).thenReturn("Aluno12345");
         when(passwordEncoder.encode("Aluno12345")).thenReturn("hash-do-aluno");
@@ -178,25 +182,32 @@ class UsuarioServiceTest {
         dadoQueOBancoGeraOId(501L);
 
         // Act
-        service.cadastrarAluno(atorProfessor, "Beto Aluno", "2026002", "pai@familia.test", TURMA_ID);
+        service.cadastrarAluno(atorProfessor, "Beto Aluno", "pai@familia.test", TURMA_ID);
 
         // Assert
         verify(vinculoTurmaService).vincularAluno(501L, TURMA_ID, atorProfessor);
     }
 
     @Test
-    void deveLancarExcecaoQuandoLoginDoAlunoJaExiste() {
+    @SuppressWarnings("unchecked")
+    void oLoginGeradoEConferidoNoBancoParaNaoRepetirEmNenhumaEscola() {
         // Arrange
-        when(usuarioRepository.existsByLogin("2026001")).thenReturn(true);
+        when(geradorLogin.gerar(any())).thenReturn("a777777");
+        when(instituicaoRepository.findById(INSTITUICAO_ID)).thenReturn(Optional.of(escola));
+        when(senhaGeradora.gerar()).thenReturn("Aluno12345");
+        when(passwordEncoder.encode("Aluno12345")).thenReturn("hash-do-aluno");
+        when(roleRepository.findByNome(RoleNome.ALUNO)).thenReturn(Optional.of(new Role(RoleNome.ALUNO)));
+        when(usuarioRepository.existsByLogin("a123456")).thenReturn(true);
+        dadoQueOBancoGeraOId(502L);
 
         // Act
-        NegocioException ex = assertThrows(NegocioException.class,
-                () -> service.cadastrarAluno(atorProfessor, "Outra Ana", "2026001", "mae@familia.test", null));
+        service.cadastrarAluno(atorProfessor, "Caio Aluno", "mae@familia.test", null);
 
-        // Assert
-        assertEquals("Já existe um usuário com este login.", ex.getMessage());
-        verify(usuarioRepository, never()).save(any());
-        verifyNoInteractions(senhaGeradora, passwordEncoder, emailService);
+        // Assert: o gerador pergunta ao banco se o login sorteado já existe
+        ArgumentCaptor<Predicate<String>> jaExiste = ArgumentCaptor.forClass(Predicate.class);
+        verify(geradorLogin).gerar(jaExiste.capture());
+        assertTrue(jaExiste.getValue().test("a123456"));
+        verify(usuarioRepository).existsByLogin("a123456");
     }
 
     @Test

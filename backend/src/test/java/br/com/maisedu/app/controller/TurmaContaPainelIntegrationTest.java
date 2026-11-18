@@ -77,12 +77,12 @@ class TurmaContaPainelIntegrationTest extends IntegracaoTestBase {
         ResponseEntity<UsuarioCadastradoResponse> alunoCriado = client.post().uri("/alunos")
                 .header(HttpHeaders.COOKIE, cookie(professor))
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new CadastroAlunoRequest("Aluno " + ts, "aluno.turma." + ts, "mae." + ts + "@familia.test",
-                        turmaId))
+                .body(new CadastroAlunoRequest("Aluno " + ts, "mae." + ts + "@familia.test", turmaId))
                 .retrieve()
                 .toEntity(UsuarioCadastradoResponse.class);
         assertThat(alunoCriado.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(alunoCriado.getBody().senhaProvisoria()).as("a senha vai para o responsável").isNull();
+        assertThat(alunoCriado.getBody().identificadorDeAcesso()).as("login gerado pelo sistema").startsWith("a");
         Long alunoId = alunoCriado.getBody().id();
         assertThat(senhaEnviadaAoResponsavel(alunoId, "mae." + ts + "@familia.test")).isNotBlank();
 
