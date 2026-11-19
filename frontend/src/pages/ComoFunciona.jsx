@@ -12,8 +12,14 @@ const PASSOS = [
   {
     quem: "Professor",
     titulo: "Cadastra os alunos na turma",
-    texto: "Na tela da turma, o professor cadastra o aluno já vinculado, informando o e-mail do responsável: o login e a senha provisória vão para esse e-mail. O aluno não tem e-mail no sistema.",
+    texto: "Na tela da turma, o professor cadastra o aluno já vinculado, informando o nome e o e-mail do responsável. O MaisEdu gera o login (ex.: a482913) e envia o login e a senha provisória para esse e-mail; se o e-mail não chegar, a tela avisa. O aluno não tem e-mail no sistema.",
     link: { para: "/turmas", rotulo: "Turmas e alunos", roles: ["PROFESSOR"] },
+  },
+  {
+    quem: "Administrador",
+    titulo: "Acompanha a escola pelo painel",
+    texto: "Acerto por ano e tópico, comparativo entre turmas, engajamento semanal e uso do banco compartilhado. Só números agregados: grupos com menos de 3 alunos aparecem como “poucos dados”.",
+    link: { para: "/painel-escola", rotulo: "Painel da escola", roles: ["ADMIN"] },
   },
   {
     quem: "Professor",
@@ -30,20 +36,20 @@ const PASSOS = [
   {
     quem: "Professor",
     titulo: "Monta atividades com o banco",
-    texto: "Escolhe questões aprovadas de qualquer escola, define a ordem e publica para a turma. Acompanha quem começou e quem terminou.",
+    texto: "Escolhe questões aprovadas de qualquer escola, define a ordem e o prazo de entrega e publica para a turma. Acompanha quem entregou e, por questão, o erro mais comum da turma.",
     link: { para: "/atividades", rotulo: "Atividades", roles: ["PROFESSOR"] },
   },
   {
     quem: "Aluno",
-    titulo: "Responde e vê a correção na hora",
-    texto: "As questões ficam fixas quando ele começa, e cada questão aceita uma única resposta. O desempenho por tópico e nível é atualizado a cada resposta.",
+    titulo: "Responde, envia e vê a correção depois do prazo",
+    texto: "Até enviar, ele pode trocar as alternativas. O envio é um só, com todas as questões respondidas. A correção aparece quando o prazo termina, e é aí que as respostas contam no desempenho por tópico e nível.",
     link: { para: "/minhas-atividades", rotulo: "Minhas atividades", roles: ["ALUNO"] },
   },
   {
     quem: "Aluno",
     titulo: "Pratica no ritmo dele",
-    texto: "A prática adaptativa começa pelos tópicos com menor acerto, no nível que ele ainda não domina. Quem ainda não respondeu nada faz uma prática diagnóstica.",
-    link: { para: "/praticar", rotulo: "Praticar agora", roles: ["ALUNO"] },
+    texto: "Na tela Praticar, a prática recomendada começa pelos tópicos com menor acerto, no nível que ele ainda não domina (quem ainda não respondeu nada faz uma diagnóstica). Também dá para escolher o card de um tópico. Na prática, a correção vem logo depois do envio.",
+    link: { para: "/praticar", rotulo: "Praticar", roles: ["ALUNO"] },
   },
 ];
 
@@ -79,8 +85,9 @@ export default function ComoFunciona() {
       </ol>
       <div className="card bg-light border-0">
         <div className="card-body small text-secondary">
-          Segurança e LGPD: cada ação fica registrada na auditoria da escola; o aluno tem só login (sem e-mail); qualquer
-          pessoa baixa os próprios dados em Minha conta, e o administrador atende correção, bloqueio e anonimização.
+          Segurança e LGPD: cada ação fica registrada na auditoria da escola; o aluno tem só um login gerado (sem e-mail);
+          o painel do administrador mostra só números agregados; qualquer pessoa baixa os próprios dados em Minha conta,
+          e o administrador atende correção, bloqueio e anonimização.
         </div>
       </div>
     </div>
