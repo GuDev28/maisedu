@@ -12,7 +12,6 @@ const FILTROS_INICIAIS = { usuarioId: "", acao: "", de: "", ate: "" };
 export default function Auditoria() {
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   const [acoes, setAcoes] = useState(Object.keys(ACOES_AUDITORIA));
-  const [usuarios, setUsuarios] = useState([]);
   const [pagina, setPagina] = useState(0);
   const [resultado, setResultado] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -42,7 +41,6 @@ export default function Auditoria() {
     carregar(0, FILTROS_INICIAIS);
     // a lista de ações vem do back-end: uma ação nova aparece no filtro sem mudar o front
     listarAcoes().then(setAcoes).catch(() => {});
-    listarUsuarios().then(setUsuarios).catch(() => {});
     // só na abertura da tela
   }, []);
 
@@ -78,14 +76,11 @@ export default function Auditoria() {
               <label htmlFor="filtro-usuario" className="form-label small text-secondary mb-1">
                 Usuário
               </label>
-              <select id="filtro-usuario" className="form-select" value={filtros.usuarioId} onChange={(e) => alterar("usuarioId", e.target.value)}>
-                <option value="">Todos</option>
-                {usuarios.map((usuario) => (
-                  <option key={usuario.id} value={usuario.id}>
-                    {usuario.nome} ({usuario.identificadorDeAcesso})
-                  </option>
-                ))}
-              </select>
+              <BuscaUsuario
+                id="filtro-usuario"
+                usuarioId={filtros.usuarioId}
+                aoEscolher={(usuarioId) => alterar("usuarioId", usuarioId)}
+              />
             </div>
             <div className="col-md-3">
               <label htmlFor="filtro-acao" className="form-label small text-secondary mb-1">
@@ -191,5 +186,83 @@ export default function Auditoria() {
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Escolha do usuário do filtro: busca no back-end enquanto digita (a escola pode ter mil alunos, então
+ * não dá para pôr todos num select). Vazio = todos os usuários.
+ */
+function BuscaUsuario({ id, usuarioId, aoEscolher }) {
+  const [texto, setTexto] = useState("");
+  const [opcoes, setOpcoes] = useState([]);
+  const [aberto, setAberto] = useState(false);
+
+  // Filtro limpo por fora (botão Limpar): apaga o texto também.
+  useEffect(() => {
+    if (!usuarioId) {
+      setTexto("");
+    }
+  }, [usuarioId]);
+
+  useEffect(() => {
+    const termo = texto.trim();
+    if (!aberto || termo.length < 2) {
+      setOpcoes([]);
+      return undefined;
+    }
+    const espera = setTimeout(() => {
+      listarUsuarios({ busca: termo, tamanho: 8 })
+        .then((pagina) => setOpcoes(pagina.conteudo))
+        .catch(() => setOpcoes([]));
+    }, 250);
+    return () => clearTimeout(espera);
+  }, [texto, aberto]);
+
+  function escolher(usuario) {
+    setTexto(`${usuario.nome} (${usuario.identificadorDeAcesso})`);
+    setAberto(false);
+    aoEscolher(String(usuario.id));
+  }
+
+  return (
+    <div className="position-relative">
+      <input
+        id={id}
+        type="search"
+        className="form-control"
+        placeholder="Todos (digite para buscar)"
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={aberto && opcoes.length > 0}
+        aria-controls={`${id}-opcoes`}
+        value={texto}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          setAberto(true);
+          if (usuarioId) {
+            aoEscolher("");
+          }
+        }}
+        onFocus={() => setAberto(true)}
+        onBlur={() => setTimeout(() => setAberto(false), 150)}
+      />
+      {aberto && opcoes.length > 0 && (
+        <ul id={`${id}-opcoes`} className="list-group position-absolute w-100 shadow-sm me-busca-opcoes" role="listbox">
+          {opcoes.map((usuario) => (
+            <li key={usuario.id} role="option" aria-selected="false">
+              <button
+                type="button"
+                className="list-group-item list-group-item-action small"
+                onMouseDown={(evento) => evento.preventDefault()}
+                onClick={() => escolher(usuario)}
+              >
+                {usuario.nome} <span className="text-secondary">({usuario.identificadorDeAcesso})</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

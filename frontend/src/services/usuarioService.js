@@ -9,12 +9,13 @@ export function cadastrarProfessor(nome, email, turmaId) {
 }
 
 /**
- * O aluno não tem e-mail: o login e a senha provisória vão para o e-mail do responsável, e não voltam
- * para quem cadastrou.
+ * O aluno não tem e-mail: o login é gerado pelo MaisEdu e, com a senha provisória, vai para o e-mail
+ * do responsável. A resposta traz o login gerado e se o e-mail saiu (statusEmailAcesso); a senha não
+ * volta para quem cadastrou.
  */
-export function cadastrarAluno(nome, login, emailResponsavel, turmaId) {
+export function cadastrarAluno(nome, emailResponsavel, turmaId) {
   return chamarApi("/alunos", {
     method: "POST",
-    body: JSON.stringify({ nome, login, emailResponsavel, turmaId: turmaId || null }),
+    body: JSON.stringify({ nome, emailResponsavel, turmaId: turmaId || null }),
   });
 }

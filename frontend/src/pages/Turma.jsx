@@ -18,6 +18,7 @@ import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SenhaProvisoria } from "../components/SenhaProvisoria";
 import { EmailDoResponsavel } from "../components/EmailDoResponsavel";
+import { SeloEmailAcesso, resultadoDoEnvio } from "../components/SeloEmailAcesso";
 import { rotuloAno } from "../components/rotulos";
 import { AtividadesDaTurma } from "./Atividades";
 import { DesempenhoDaTurma } from "./Desempenho";
@@ -105,6 +106,7 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
   const [adicionando, setAdicionando] = useState(null);
   const [senhaGerada, setSenhaGerada] = useState(null);
   const [editandoEmail, setEditandoEmail] = useState(null);
+  const [cadastroConcluido, setCadastroConcluido] = useState(null);
   const [erro, setErro] = useState(null);
 
   async function remover(pessoa, tipo) {
@@ -150,7 +152,11 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
     try {
       const resultado = await redefinirSenha(aluno.id);
       if (resultado.enviadaPorEmail) {
-        avisar(`Senha nova de ${aluno.nome} enviada para o e-mail do responsável.`);
+        const envio = resultadoDoEnvio(resultado.statusEmailAcesso, "o responsável");
+        avisar(
+          envio.tipo === "success" ? `Senha nova de ${aluno.nome} enviada para o e-mail do responsável.` : envio.texto,
+          envio.tipo
+        );
       } else {
         setSenhaGerada(resultado);
       }
@@ -160,15 +166,20 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
     }
   }
 
-  async function aoAdicionar(mensagem) {
+  /** {@code cadastro}: pessoa nova (mostra o login e se o e-mail saiu); senão, só a mensagem. */
+  async function aoAdicionar(mensagem, cadastro = null) {
     setAdicionando(null);
-    avisar(mensagem);
+    if (cadastro) {
+      setCadastroConcluido(cadastro);
+    } else {
+      avisar(mensagem);
+    }
     await aoMudar();
   }
 
-  async function aoSalvarEmail(mensagem) {
+  async function aoSalvarEmail(mensagem, tipo = "success") {
     setEditandoEmail(null);
-    avisar(mensagem);
+    avisar(mensagem, tipo);
     await aoMudar();
   }
 
@@ -199,6 +210,7 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
                     <div className="small text-secondary">{professor.identificadorDeAcesso}</div>
                   </div>
                   {professor.senhaTemporaria && <span className="badge text-bg-light border">1º acesso pendente</span>}
+                  {professor.senhaTemporaria && <SeloEmailAcesso status={professor.statusEmailAcesso} quando={professor.emailAcessoEm} />}
                   {ehAdmin && (
                     <button type="button" className="btn btn-sm btn-link text-danger" onClick={() => remover(professor, "professor")}>
                       Tirar
@@ -237,6 +249,9 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
                   </div>
                   {!aluno.ativo && <span className="badge text-bg-secondary">desativada</span>}
                   {aluno.senhaTemporaria && aluno.ativo && <span className="badge text-bg-light border">1º acesso pendente</span>}
+                  {aluno.senhaTemporaria && aluno.ativo && (
+                    <SeloEmailAcesso status={aluno.statusEmailAcesso} quando={aluno.emailAcessoEm} />
+                  )}
                   {!aluno.emailResponsavel && aluno.ativo && (
                     <span className="badge text-bg-warning">sem e-mail do responsável</span>
                   )}
@@ -270,6 +285,7 @@ function AbaPessoas({ turma, ehAdmin, aoMudar }) {
         <EmailDoResponsavel aluno={editandoEmail} aoSalvar={aoSalvarEmail} aoFechar={() => setEditandoEmail(null)} />
       )}
       {senhaGerada && <SenhaProvisoria dados={senhaGerada} aoFechar={() => setSenhaGerada(null)} />}
+      {cadastroConcluido && <CadastroConcluido dados={cadastroConcluido} aoFechar={() => setCadastroConcluido(null)} />}
     </>
   );
 }
@@ -282,7 +298,7 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
   const ehAluno = tipo === "aluno";
   const [modo, setModo] = useState("novo");
   const [nome, setNome] = useState("");
-  const [identificador, setIdentificador] = useState("");
+  const [emailProfessor, setEmailProfessor] = useState("");
   const [emailResponsavel, setEmailResponsavel] = useState("");
   const [disponiveis, setDisponiveis] = useState(null);
   const [escolhido, setEscolhido] = useState("");
@@ -303,13 +319,11 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
     try {
       if (modo === "novo") {
         if (ehAluno) {
-          const cadastro = await cadastrarAluno(nome, identificador, emailResponsavel, turma.id);
-          await aoAdicionar(
-            `${cadastro.nome} cadastrado(a) e vinculado(a) à turma. O login e a senha provisória foram enviados para o e-mail do responsável.`
-          );
+          const cadastro = await cadastrarAluno(nome, emailResponsavel, turma.id);
+          await aoAdicionar(null, { ...cadastro, tipo: "aluno" });
         } else {
-          const cadastro = await cadastrarProfessor(nome, identificador, turma.id);
-          await aoAdicionar(`${cadastro.nome} cadastrado(a) na turma. A senha provisória foi enviada por e-mail.`);
+          const cadastro = await cadastrarProfessor(nome, emailProfessor, turma.id);
+          await aoAdicionar(null, { ...cadastro, tipo: "professor" });
         }
       } else {
         const pessoa = disponiveis.find((p) => String(p.id) === escolhido);
@@ -327,7 +341,7 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
   }
 
   const podeSalvar =
-    modo === "novo" ? nome.trim() && identificador.trim() && (!ehAluno || emailResponsavel.trim()) : escolhido;
+    modo === "novo" ? nome.trim() && (ehAluno ? emailResponsavel.trim() : emailProfessor.trim()) : escolhido;
 
   return (
     <Modal titulo={ehAluno ? `Adicionar aluno em ${turma.nome}` : `Adicionar professor em ${turma.nome}`} aoFechar={aoFechar}>
@@ -359,21 +373,23 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
               </label>
               <input id="nome-pessoa" className="form-control" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={255} autoFocus required />
             </div>
-            <div className="mb-3">
-              <label htmlFor="identificador-pessoa" className="form-label">
-                {ehAluno ? "Login" : "E-mail"}
-              </label>
-              <input
-                id="identificador-pessoa"
-                type={ehAluno ? "text" : "email"}
-                className="form-control"
-                value={identificador}
-                onChange={(e) => setIdentificador(e.target.value)}
-                placeholder={ehAluno ? "Ex.: a7101 ou a matrícula" : "nome@escola.edu.br"}
-                required
-              />
-              {!ehAluno && <div className="form-text">A senha provisória vai por e-mail para o professor.</div>}
-            </div>
+            {!ehAluno && (
+              <div className="mb-3">
+                <label htmlFor="email-professor" className="form-label">
+                  E-mail
+                </label>
+                <input
+                  id="email-professor"
+                  type="email"
+                  className="form-control"
+                  value={emailProfessor}
+                  onChange={(e) => setEmailProfessor(e.target.value)}
+                  placeholder="nome@escola.edu.br"
+                  required
+                />
+                <div className="form-text">O e-mail é o login do professor; a senha provisória vai para ele.</div>
+              </div>
+            )}
             {ehAluno && (
               <div className="mb-3">
                 <label htmlFor="email-responsavel-novo" className="form-label">
@@ -390,7 +406,8 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
                   required
                 />
                 <div className="form-text">
-                  O login e a senha provisória do aluno vão para este e-mail. O aluno não tem e-mail no MaisEdu.
+                  O MaisEdu gera o login do aluno (ex.: a482913) e envia o login e a senha provisória para este e-mail. O
+                  aluno não tem e-mail no MaisEdu.
                 </div>
               </div>
             )}
@@ -428,6 +445,38 @@ function AdicionarPessoa({ tipo, turma, aoAdicionar, aoFechar }) {
           </button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+/** Depois de cadastrar alguém novo: o login (gerado, no caso do aluno) e se o e-mail de acesso saiu. */
+function CadastroConcluido({ dados, aoFechar }) {
+  const ehAluno = dados.tipo === "aluno";
+  const envio = resultadoDoEnvio(dados.statusEmailAcesso, ehAluno ? "o e-mail do responsável" : "o e-mail do professor");
+  const classeAlerta = { success: "alert-success", warning: "alert-warning", danger: "alert-danger" }[envio.tipo];
+  return (
+    <Modal
+      titulo={ehAluno ? "Aluno cadastrado" : "Professor cadastrado"}
+      aoFechar={aoFechar}
+      rodape={
+        <button type="button" className="btn btn-primary" onClick={aoFechar}>
+          Fechar
+        </button>
+      }
+    >
+      <p className="mb-2">
+        <strong>{dados.nome}</strong> já está na turma e entra com o login:
+      </p>
+      <p className="fs-4 font-monospace text-center bg-light border rounded py-2 user-select-all">{dados.identificadorDeAcesso}</p>
+      <div className={`alert ${classeAlerta} py-2 mb-0`} role="status">
+        {envio.texto}
+      </div>
+      {ehAluno && (
+        <p className="small text-secondary mt-3 mb-0">
+          A senha provisória não aparece aqui: ela vai só para o responsável. No primeiro acesso, o aluno troca por uma senha
+          própria.
+        </p>
+      )}
     </Modal>
   );
 }

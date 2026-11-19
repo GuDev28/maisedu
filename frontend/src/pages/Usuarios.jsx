@@ -19,36 +19,58 @@ import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SenhaProvisoria } from "../components/SenhaProvisoria";
 import { EmailDoResponsavel } from "../components/EmailDoResponsavel";
+import { SeloEmailAcesso, resultadoDoEnvio } from "../components/SeloEmailAcesso";
 import { PAPEIS, rotuloAno } from "../components/rotulos";
+
+const POR_PAGINA = 20;
 
 /**
  * Admin: usuários da escola, cadastro de professor (já podendo escolher a turma) e os controles
- * da LGPD (art. 18): exportar, corrigir, desativar e anonimizar.
+ * da LGPD (art. 18): exportar, corrigir, desativar e anonimizar. A lista é paginada e a busca é
+ * feita no back-end (com mil alunos, trazer tudo para filtrar no navegador ficaria lento).
  */
 export default function Usuarios() {
   const { usuario: eu } = useAuth();
   const { avisar, confirmar } = useInterface();
-  const [usuarios, setUsuarios] = useState(null);
+  const [pagina, setPagina] = useState(null);
+  const [numeroPagina, setNumeroPagina] = useState(0);
   const [papel, setPapel] = useState("");
   const [busca, setBusca] = useState("");
+  const [buscaAplicada, setBuscaAplicada] = useState("");
   const [erro, setErro] = useState(null);
   const [senhaGerada, setSenhaGerada] = useState(null);
   const [editando, setEditando] = useState(null);
   const [editandoEmail, setEditandoEmail] = useState(null);
   const [cadastrando, setCadastrando] = useState(false);
 
-  async function carregar(papelFiltro = papel) {
+  async function carregar() {
     try {
-      setUsuarios(await listarUsuarios(papelFiltro));
+      setPagina(
+        await listarUsuarios({
+          papel: papel || undefined,
+          busca: buscaAplicada || undefined,
+          pagina: numeroPagina,
+          tamanho: POR_PAGINA,
+        })
+      );
     } catch (err) {
       setErro(err.message);
     }
   }
 
   useEffect(() => {
-    carregar(papel);
-    // recarrega quando o filtro de papel muda
-  }, [papel]);
+    carregar();
+    // recarrega quando o filtro, a busca ou a página mudam
+  }, [papel, buscaAplicada, numeroPagina]);
+
+  // Busca aplicada 300 ms depois da última tecla, voltando para a primeira página.
+  useEffect(() => {
+    const espera = setTimeout(() => {
+      setBuscaAplicada(busca.trim());
+      setNumeroPagina(0);
+    }, 300);
+    return () => clearTimeout(espera);
+  }, [busca]);
 
   async function executar(acao, mensagem) {
     setErro(null);
@@ -83,10 +105,12 @@ export default function Usuarios() {
     }
     const resultado = await executar(() => redefinirSenha(alvo.id));
     if (resultado) {
-      if (resultado.enviadaPorEmail && ehAluno) {
-        avisar(`Senha nova de ${alvo.nome} enviada para o e-mail do responsável.`);
-      } else if (resultado.enviadaPorEmail) {
-        avisar(`Senha provisória enviada por e-mail para ${resultado.identificadorDeAcesso}.`);
+      if (resultado.enviadaPorEmail) {
+        const envio = resultadoDoEnvio(
+          resultado.statusEmailAcesso,
+          ehAluno ? "o e-mail do responsável" : resultado.identificadorDeAcesso
+        );
+        avisar(envio.tipo === "success" ? `Senha nova de ${alvo.nome} enviada para ${ehAluno ? "o e-mail do responsável" : resultado.identificadorDeAcesso}.` : envio.texto, envio.tipo);
       } else {
         setSenhaGerada(resultado);
       }
@@ -133,10 +157,7 @@ export default function Usuarios() {
     }
   }
 
-  const termo = busca.trim().toLowerCase();
-  const filtrados = (usuarios ?? []).filter(
-    (u) => !termo || u.nome.toLowerCase().includes(termo) || (u.identificadorDeAcesso ?? "").toLowerCase().includes(termo)
-  );
+  const usuarios = pagina?.conteudo ?? [];
 
   return (
     <>
@@ -157,14 +178,22 @@ export default function Usuarios() {
           <input
             type="search"
             className="form-control"
-            placeholder="Buscar por nome ou login"
+            placeholder="Buscar por nome, login ou e-mail"
             aria-label="Buscar usuário"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
         <div className="col-sm-6 col-md-3">
-          <select className="form-select" aria-label="Filtrar por papel" value={papel} onChange={(e) => setPapel(e.target.value)}>
+          <select
+            className="form-select"
+            aria-label="Filtrar por papel"
+            value={papel}
+            onChange={(e) => {
+              setPapel(e.target.value);
+              setNumeroPagina(0);
+            }}
+          >
             <option value="">Todos os papéis</option>
             <option value="PROFESSOR">Professores</option>
             <option value="ALUNO">Alunos</option>
@@ -174,9 +203,9 @@ export default function Usuarios() {
       </div>
 
       <Mensagens erro={erro} />
-      {!usuarios && !erro && <Carregando />}
-      {usuarios && filtrados.length === 0 && <p className="text-secondary">Nenhum usuário encontrado.</p>}
-      {filtrados.length > 0 && (
+      {!pagina && !erro && <Carregando />}
+      {pagina && usuarios.length === 0 && <p className="text-secondary">Nenhum usuário encontrado.</p>}
+      {usuarios.length > 0 && (
         <div className="card">
           <div className="table-responsive me-tabela-com-menu">
             <table className="table align-middle mb-0">
@@ -190,7 +219,7 @@ export default function Usuarios() {
                 </tr>
               </thead>
               <tbody>
-                {filtrados.map((alvo) => (
+                {usuarios.map((alvo) => (
                   <tr key={alvo.id}>
                     <td>
                       {editando === alvo.id ? (
@@ -214,7 +243,10 @@ export default function Usuarios() {
                       )}
                       {alvo.bloqueado && <span className="badge text-bg-danger ms-1">bloqueada</span>}
                       {alvo.senhaTemporaria && !alvo.anonimizado && (
-                        <span className="badge text-bg-light border ms-1">1º acesso pendente</span>
+                        <>
+                          <span className="badge text-bg-light border ms-1">1º acesso pendente</span>{" "}
+                          <SeloEmailAcesso status={alvo.statusEmailAcesso} quando={alvo.emailAcessoEm} />
+                        </>
                       )}
                     </td>
                     <td className="text-end">
@@ -239,6 +271,7 @@ export default function Usuarios() {
               </tbody>
             </table>
           </div>
+          <Paginacao pagina={pagina} aoMudar={setNumeroPagina} />
         </div>
       )}
 
@@ -247,9 +280,9 @@ export default function Usuarios() {
         <EmailDoResponsavel
           aluno={editandoEmail}
           aoFechar={() => setEditandoEmail(null)}
-          aoSalvar={async (mensagem) => {
+          aoSalvar={async (mensagem, tipo = "success") => {
             setEditandoEmail(null);
-            avisar(mensagem);
+            avisar(mensagem, tipo);
             await carregar();
           }}
         />
@@ -259,12 +292,54 @@ export default function Usuarios() {
           aoFechar={() => setCadastrando(false)}
           aoCadastrar={async (professor) => {
             setCadastrando(false);
-            avisar(`${professor.nome} cadastrado(a). A senha provisória foi enviada para ${professor.identificadorDeAcesso}.`);
+            const envio = resultadoDoEnvio(professor.statusEmailAcesso, professor.identificadorDeAcesso);
+            avisar(
+              envio.tipo === "success"
+                ? `${professor.nome} cadastrado(a). A senha provisória foi enviada para ${professor.identificadorDeAcesso}.`
+                : `${professor.nome} cadastrado(a), mas a senha provisória não chegou. ${envio.texto}`,
+              envio.tipo
+            );
             await carregar();
           }}
         />
       )}
     </>
+  );
+}
+
+/** Rodapé da tabela: quantos usuários e navegação entre as páginas. */
+function Paginacao({ pagina, aoMudar }) {
+  const inicio = pagina.pagina * pagina.tamanho + 1;
+  const fim = Math.min(pagina.total, inicio + pagina.conteudo.length - 1);
+  return (
+    <div className="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span className="small text-secondary">
+        {inicio}–{fim} de {pagina.total} usuário(s)
+      </span>
+      {pagina.totalPaginas > 1 && (
+        <nav aria-label="Páginas de usuários" className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => aoMudar(pagina.pagina - 1)}
+            disabled={pagina.pagina === 0}
+          >
+            ← Anterior
+          </button>
+          <span className="small">
+            Página {pagina.pagina + 1} de {pagina.totalPaginas}
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => aoMudar(pagina.pagina + 1)}
+            disabled={pagina.pagina + 1 >= pagina.totalPaginas}
+          >
+            Próxima →
+          </button>
+        </nav>
+      )}
+    </div>
   );
 }
 
