@@ -9,6 +9,7 @@ const CAMINHOS = {
   auditoria: "M9 4h6l1 2h3v14H5V6h3zM9 11h6M9 15h4",
   atividades: "M8 4h8M6 7h12v13H6zM9 11h6M9 15h4",
   desempenho: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  painel: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z",
   banco: "M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3",
   questoes: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
   avaliar: "M9 12l2 2 4-4M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z",

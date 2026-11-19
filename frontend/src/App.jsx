@@ -11,6 +11,7 @@ import Turmas from "./pages/Turmas";
 import Turma from "./pages/Turma";
 import Usuarios from "./pages/Usuarios";
 import Auditoria from "./pages/Auditoria";
+import PainelEscola from "./pages/PainelEscola";
 import Atividades from "./pages/Atividades";
 import Desempenho from "./pages/Desempenho";
 import BancoQuestoes from "./pages/BancoQuestoes";
@@ -93,6 +94,7 @@ export default function App() {
         <Route path="/turmas/:turmaId/:aba?" element={<SoPara roles={gestaoDeTurmas}><Turma /></SoPara>} />
         <Route path="/usuarios" element={<SoPara roles={admin}><Usuarios /></SoPara>} />
         <Route path="/auditoria" element={<SoPara roles={admin}><Auditoria /></SoPara>} />
+        <Route path="/painel-escola" element={<SoPara roles={admin}><PainelEscola /></SoPara>} />
 
         <Route path="/atividades" element={<SoPara roles={professor}><Atividades /></SoPara>} />
         <Route path="/desempenho" element={<SoPara roles={professor}><Desempenho /></SoPara>} />

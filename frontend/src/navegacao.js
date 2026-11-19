@@ -9,6 +9,7 @@ export const MENU = [
   {
     secao: "Gestão",
     itens: [
+      { rota: "/painel-escola", label: "Painel da escola", icone: "painel", roles: ["ADMIN"] },
       { rota: "/turmas", label: "Turmas", icone: "turmas", roles: ["ADMIN"] },
       { rota: "/usuarios", label: "Usuários", icone: "usuarios", roles: ["ADMIN"] },
       { rota: "/auditoria", label: "Auditoria", icone: "auditoria", roles: ["ADMIN"] },
@@ -36,7 +37,7 @@ export const MENU = [
     secao: "Estudos",
     itens: [
       { rota: "/minhas-atividades", label: "Minhas atividades", icone: "atividades", roles: ["ALUNO"] },
-      { rota: "/praticar", label: "Praticar agora", icone: "praticar", roles: ["ALUNO"] },
+      { rota: "/praticar", label: "Praticar", icone: "praticar", roles: ["ALUNO"] },
       { rota: "/meu-desempenho", label: "Meu desempenho", icone: "desempenho", roles: ["ALUNO"] },
     ],
   },
