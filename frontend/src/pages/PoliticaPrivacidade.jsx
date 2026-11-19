@@ -3,16 +3,18 @@ export default function PoliticaPrivacidade() {
     <div className="texto-legal">
       <h1 className="me-titulo">Política de Privacidade do MaisEdu</h1>
       <p className="text-secondary">
-        Versão 2 — última atualização: 16 de novembro de 2026. Este documento descreve, de forma específica ao
+        Versão 3 — última atualização: 23 de novembro de 2026. Este documento descreve, de forma específica ao
         MaisEdu (plataforma de aprendizagem adaptativa de Matemática para o Ensino Fundamental II, desenvolvida
         como Projeto Final de Curso), quais dados pessoais o sistema coleta, para quê, com quem são
         compartilhados, por quanto tempo são guardados e como o titular exerce os seus direitos, nos termos da
         Lei nº 13.709/2018 (LGPD).
       </p>
       <div className="alert alert-info small">
-        <strong>O que mudou na versão 2:</strong> o login e as senhas provisórias do aluno passam a ser enviados
-        ao e-mail de um responsável, informado pelo professor no cadastro (seções 2, 3, 4, 6 e 7). O aluno
-        continua sem e-mail próprio no sistema.
+        <strong>O que mudou na versão 3:</strong> o login do aluno passa a ser gerado pelo sistema, sem nome nem
+        matrícula; as respostas de uma atividade são enviadas de uma vez e só são corrigidas e contadas no
+        desempenho depois do prazo; o aluno pode praticar um tópico escolhido; o administrador ganha um painel
+        da escola só com números agregados; e o sistema guarda se o e-mail de acesso foi entregue, para avisar
+        quando não chegou (seções 2, 3 e 7).
       </div>
 
       <div className="mb-4">
@@ -30,26 +32,32 @@ export default function PoliticaPrivacidade() {
         <p><strong>Professores e administradores:</strong> nome completo e e-mail (identificador de acesso),
         senha (nunca em texto puro — ver seção 5), papel de acesso (professor/admin), instituição vinculada e
         turmas em que leciona.</p>
-        <p><strong>Alunos:</strong> nome completo e um login definido pela própria escola (ex.: matrícula) —
+        <p><strong>Alunos:</strong> nome completo e um login gerado pelo próprio MaisEdu (ex.: a482913), que
+        não revela o nome nem a matrícula do aluno —
         <strong> o aluno não tem e-mail próprio cadastrado no sistema.</strong> Essa é uma decisão deliberada de
         minimização de dados: como o Ensino Fundamental II reúne majoritariamente crianças e
         adolescentes, não coletamos um canal de contato direto com o aluno.</p>
         <p><strong>Responsáveis:</strong> o e-mail de um responsável pelo aluno (mãe, pai ou responsável
         legal), informado pelo professor ao cadastrar o aluno. É o único dado do responsável no sistema e serve
         só para enviar a ele o login e as senhas provisórias do aluno — no cadastro e quando o professor gera
-        uma senha nova. Não é usado para propaganda, boletins nem qualquer outra comunicação.</p>
-        <p><strong>Dados acadêmicos:</strong> turmas do aluno; atividades iniciadas e as respostas dadas
-        (alternativa escolhida, se acertou e data/hora); a alternativa marcada e ainda não confirmada em cada
-        questão, que permite ao aluno sair e voltar sem perder a marcação; e o desempenho calculado a partir delas — total de
-        respostas, acertos e percentual de acerto por tópico de Matemática e nível de dificuldade. Para
+        uma senha nova. Não é usado para propaganda, boletins nem qualquer outra comunicação. O sistema guarda
+        apenas se o último envio foi entregue ou falhou (e quando), para que o professor e o administrador
+        saibam quando o acesso não chegou e possam corrigir o endereço.</p>
+        <p><strong>Dados acadêmicos:</strong> turmas do aluno; atividades iniciadas (com o prazo de entrega) e
+        as respostas enviadas (alternativa escolhida, se acertou, data/hora do envio e quando passou a contar no
+        desempenho); as alternativas marcadas e ainda não enviadas, que permitem ao aluno sair e voltar sem
+        perder o que já respondeu; o tópico escolhido para uma prática; e o desempenho calculado a partir das
+        respostas — total de respostas, acertos e percentual de acerto por tópico de Matemática e nível de
+        dificuldade. Para
         professores, as questões que criaram e os votos que deram na validação colaborativa, com o motivo
         escrito ao rejeitar uma questão (lido pelo autor da questão, sem identificar quem votou).</p>
         <p><strong>Dados de uso e segurança (todos os perfis):</strong> registros de acesso — login,
         logout, troca de senha, tentativas de autenticação malsucedidas — com data/hora, endereço IP e
         identificação do navegador (user-agent) de quem realizou a ação. Também registramos as ações
-        realizadas no sistema (cadastros, vínculos com turmas, criação e avaliação de questões, criação e
-        início de atividades, geração de práticas adaptativas, redefinição de senha, exportação e
-        anonimização de dados), sempre associadas a quem executou a ação.</p>
+        realizadas no sistema (cadastros, vínculos com turmas, criação e avaliação de questões, criação de
+        atividades e alteração de prazo, início e envio de atividades, geração de práticas adaptativas,
+        redefinição de senha, exportação e anonimização de dados), sempre associadas a quem executou a ação. O
+        fechamento automático de uma atividade no fim do prazo é registrado como ação do sistema.</p>
         <p>O MaisEdu não coleta CPF, endereço, telefone, data de nascimento, foto, geolocalização nem dados
         sensíveis (art. 5º, II, LGPD).</p>
       </div>
@@ -62,9 +70,15 @@ export default function PoliticaPrivacidade() {
             execução de contrato com a instituição de ensino (art. 7º, V).</li>
           <li><strong>Desempenho do aluno:</strong> usado para (a) montar a prática adaptativa, que prioriza os
             tópicos em que o aluno mais erra e ajusta o nível de dificuldade; e (b) permitir que o próprio aluno
-            e os professores das turmas dele acompanhem a evolução por tópico. O desempenho de um aluno nunca é
-            mostrado a outros alunos nem a professores de turmas em que ele não está. Não há decisão
+            e os professores das turmas dele acompanhem a evolução por tópico. Só entram respostas corrigidas:
+            numa atividade, as enviadas, depois do prazo; numa prática, as enviadas. O desempenho de um aluno
+            nunca é mostrado a outros alunos nem a professores de turmas em que ele não está. Não há decisão
             automatizada que afete o aluno além da escolha das questões de prática.</li>
+          <li><strong>Painel da escola (administrador):</strong> acompanhar a aprendizagem e o uso da plataforma
+            na escola com o mínimo de dados (art. 6º, III): só números agregados por ano escolar, turma e semana,
+            sem nomes. Grupos com menos de 3 alunos aparecem sem percentual (“poucos dados”), para que nenhum
+            resultado individual possa ser deduzido. O detalhe por aluno continua só com os professores das
+            turmas dele.</li>
           <li><strong>Segurança e auditoria</strong> (registro de acessos e ações, bloqueio após tentativas de
             login malsucedidas): legítimo interesse do controlador em proteger o sistema contra acesso indevido
             e fraude (art. 7º, IX), de forma proporcional — coletamos IP e user-agent, não geolocalização.</li>
@@ -144,8 +158,11 @@ export default function PoliticaPrivacidade() {
             instituição; ao fim do vínculo, a instituição pode desativar ou anonimizar a conta.</li>
           <li><strong>E-mail do responsável:</strong> enquanto existir a conta do aluno; é apagado na
             anonimização. O registro de auditoria anota que o e-mail foi enviado, mas não guarda o endereço.</li>
-          <li><strong>Alternativa marcada e não confirmada:</strong> apagada assim que o aluno confirma a
-            resposta.</li>
+          <li><strong>Alternativas marcadas e não enviadas:</strong> apagadas no envio. Se o prazo terminar sem
+            envio, ficam só como registro da atividade não entregue e não contam no desempenho; seguem o prazo
+            do cadastro.</li>
+          <li><strong>Situação do e-mail de acesso:</strong> substituída a cada novo envio e apagada na
+            anonimização.</li>
           <li><strong>Registros de auditoria:</strong> 365 dias. Uma rotina diária apaga automaticamente os
             registros mais antigos que esse prazo.</li>
         </ul>

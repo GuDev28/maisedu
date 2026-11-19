@@ -2,10 +2,11 @@ package br.com.maisedu.app.controller;
 
 import br.com.maisedu.app.dto.AtividadeAlunoResumoResponse;
 import br.com.maisedu.app.dto.DesempenhoAlunoResponse;
+import br.com.maisedu.app.dto.EnvioFolhaRequest;
 import br.com.maisedu.app.dto.FolhaAtividadeResponse;
+import br.com.maisedu.app.dto.PainelPraticaResponse;
 import br.com.maisedu.app.dto.PraticaAdaptativaResponse;
 import br.com.maisedu.app.dto.ResponderQuestaoRequest;
-import br.com.maisedu.app.dto.RespostaResultadoResponse;
 import br.com.maisedu.app.model.AtividadeAluno;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.AtividadeService;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -62,17 +64,21 @@ public class AlunoController {
         return atividadeService.obterFolha(aluno.id(), atividadeAlunoId);
     }
 
-    @PostMapping("/folhas/{atividadeAlunoId}/questoes/{atividadeAlunoQuestaoId}/resposta")
-    public RespostaResultadoResponse responder(
+    /**
+     * Entrega única: envia as alternativas escolhidas em todas as questões. Recusado com questão sem
+     * resposta, depois do prazo ou se a folha já foi enviada. Devolve a folha como fica depois do envio
+     * (com a correção só se ela já estiver liberada: na prática adaptativa, na hora).
+     */
+    @PostMapping("/folhas/{atividadeAlunoId}/envio")
+    public FolhaAtividadeResponse enviar(
             @AuthenticationPrincipal UsuarioAutenticado aluno,
             @PathVariable Long atividadeAlunoId,
-            @PathVariable Long atividadeAlunoQuestaoId,
-            @Valid @RequestBody ResponderQuestaoRequest request) {
-        return respostaService.responder(aluno.id(), atividadeAlunoId, atividadeAlunoQuestaoId,
-                request.alternativaId());
+            @Valid @RequestBody EnvioFolhaRequest request) {
+        respostaService.enviar(aluno.id(), atividadeAlunoId, request.respostas());
+        return atividadeService.obterFolha(aluno.id(), atividadeAlunoId);
     }
 
-    /** Marca uma alternativa sem confirmar: não é resposta, pode ser trocada até o aluno confirmar. */
+    /** Marca uma alternativa sem enviar: não é resposta, pode ser trocada até o envio (e dentro do prazo). */
     @PutMapping("/folhas/{atividadeAlunoId}/questoes/{atividadeAlunoQuestaoId}/marcacao")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void marcar(
@@ -83,9 +89,20 @@ public class AlunoController {
         respostaService.marcar(aluno.id(), atividadeAlunoId, atividadeAlunoQuestaoId, request.alternativaId());
     }
 
+    /** Tela "Praticar": a prática recomendada pelo motor e um card por tópico disponível ao aluno. */
+    @GetMapping("/praticas")
+    public PainelPraticaResponse painelDePratica(@AuthenticationPrincipal UsuarioAutenticado aluno) {
+        return praticaAdaptativaService.painel(aluno.id());
+    }
+
+    /**
+     * Gera (ou retoma, se houver uma em aberto) a prática recomendada pelo motor ou, com
+     * {@code topicoId}, a prática de um tópico escolhido pelo aluno.
+     */
     @PostMapping("/praticas-adaptativas")
-    public PraticaAdaptativaResponse gerarPratica(@AuthenticationPrincipal UsuarioAutenticado aluno) {
-        return praticaAdaptativaService.gerarOuRetomar(aluno.id());
+    public PraticaAdaptativaResponse gerarPratica(@AuthenticationPrincipal UsuarioAutenticado aluno,
+                                                  @RequestParam(required = false) Long topicoId) {
+        return praticaAdaptativaService.gerarOuRetomar(aluno.id(), topicoId);
     }
 
     @GetMapping("/desempenho")

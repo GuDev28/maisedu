@@ -13,6 +13,8 @@ public interface AlunoTurmaRepository extends JpaRepository<AlunoTurma, Long> {
 
     boolean existsByAlunoIdAndTurmaId(Long alunoId, Long turmaId);
 
+    long countByTurmaId(Long turmaId);
+
     Optional<AlunoTurma> findByAlunoIdAndTurmaId(Long alunoId, Long turmaId);
 
     @Query("select at from AlunoTurma at join fetch at.aluno a where at.turma.id = :turmaId order by a.nome")

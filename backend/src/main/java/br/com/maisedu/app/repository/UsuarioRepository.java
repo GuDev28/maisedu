@@ -1,18 +1,22 @@
 package br.com.maisedu.app.repository;
 
 import br.com.maisedu.app.model.RoleNome;
+import br.com.maisedu.app.model.StatusEmailAcesso;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.security.EstadoSessao;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
-public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+public interface UsuarioRepository extends JpaRepository<Usuario, Long>, JpaSpecificationExecutor<Usuario> {
 
     boolean existsByEmail(String email);
 
@@ -62,4 +66,17 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             "where at.turma.id in (select pt.turma.id from ProfessorTurma pt where pt.professor.id = :professorId) " +
             "order by u.nome")
     List<Usuario> findAlunosDasTurmasDoProfessor(@Param("professorId") Long professorId);
+
+    /**
+     * Grava a situação do último e-mail de acesso. Atualização direta (sem carregar a entidade), feita
+     * numa transação própria depois do envio, que acontece após o commit do cadastro.
+     */
+    @Modifying
+    @Query("update Usuario u set u.emailAcessoStatus = :status, u.emailAcessoEm = :quando where u.id = :id")
+    int registrarEnvioEmailAcesso(@Param("id") Long id, @Param("status") StatusEmailAcesso status,
+                                  @Param("quando") LocalDateTime quando);
+
+    /** Situação do último e-mail de acesso, lida direto do banco (não da entidade em memória). */
+    @Query("select u.emailAcessoStatus from Usuario u where u.id = :id")
+    Optional<StatusEmailAcesso> findStatusEmailAcesso(@Param("id") Long id);
 }

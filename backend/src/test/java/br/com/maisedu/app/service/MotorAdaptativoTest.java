@@ -236,6 +236,38 @@ class MotorAdaptativoTest {
         assertEquals(4, selecionadas.size());
     }
 
+    // ---------- prática de um tópico escolhido pelo aluno ----------
+
+    @Test
+    void topicoSemHistoricoComecaPeloFacil() {
+        TopicoPlanejado planejado = motor.planejarTopico(FRACOES, List.of());
+
+        assertEquals(NivelDificuldade.FACIL, planejado.nivelAlvo());
+        assertEquals(0, planejado.totalRespostas());
+    }
+
+    @Test
+    void topicoEscolhidoUsaONivelAlvoEOPercentualSoDesseTopico() {
+        TopicoPlanejado planejado = motor.planejarTopico(FRACOES, List.of(
+                new DesempenhoNivel(FRACOES, NivelDificuldade.FACIL, 6, 5),
+                new DesempenhoNivel(FRACOES, NivelDificuldade.MEDIO, 4, 1),
+                new DesempenhoNivel(PORCENTAGEM, NivelDificuldade.FACIL, 10, 1)));
+
+        assertEquals(NivelDificuldade.MEDIO, planejado.nivelAlvo());
+        assertEquals(10, planejado.totalRespostas());
+        assertEquals(0, new BigDecimal("60.00").compareTo(planejado.percentualTopico()));
+    }
+
+    @Test
+    void selecaoRespeitaOLimiteDaPraticaPorTopico() {
+        TopicoPlanejado planejado = motor.planejarTopico(FRACOES, List.of());
+        List<Long> selecionadas = motor.selecionarQuestoes(List.of(planejado),
+                candidatas(FRACOES, NivelDificuldade.FACIL, 100, 9), Set.of(), new Random(1),
+                motor.parametros().questoesPorPraticaTopico());
+
+        assertEquals(MotorAdaptativo.Parametros.QUESTOES_POR_PRATICA_TOPICO_PADRAO, selecionadas.size());
+    }
+
     // ---------- helpers ----------
 
     private static List<Candidata> candidatas(long topicoId, NivelDificuldade nivel, long primeiroId, int quantidade) {

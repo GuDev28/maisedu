@@ -48,6 +48,21 @@ export default function InicioAdmin() {
             </div>
           )}
 
+          <div className="card mb-4 border-primary">
+            <div className="card-body d-flex flex-wrap align-items-center gap-3">
+              <div className="me-auto">
+                <div className="fw-semibold">Painel da escola</div>
+                <div className="small text-secondary">
+                  Acerto por ano e tópico, comparativo entre turmas, engajamento semanal e uso do banco compartilhado. Só
+                  números agregados, sem identificar alunos.
+                </div>
+              </div>
+              <Link to="/painel-escola" className="btn btn-primary">
+                Abrir o painel
+              </Link>
+            </div>
+          </div>
+
           <div className="row g-3 mb-4">
             <div className="col-6 col-lg-3">
               <CartaoNumero

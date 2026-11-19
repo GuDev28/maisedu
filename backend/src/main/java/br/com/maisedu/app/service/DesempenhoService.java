@@ -8,10 +8,12 @@ import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.DesempenhoTopico;
 import br.com.maisedu.app.model.NivelDificuldade;
 import br.com.maisedu.app.model.Questao;
+import br.com.maisedu.app.model.TipoAtividade;
 import br.com.maisedu.app.model.Turma;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.DesempenhoTopicoRepository;
+import br.com.maisedu.app.repository.Projecoes;
 import br.com.maisedu.app.repository.RespostaRepository;
 import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
@@ -32,8 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.time.LocalDateTime;
+import java.util.TreeMap;
 
-/** RN05 (atualização do desempenho acumulado) e RF19 (acompanhamento pelo aluno e pelo professor). */
+/**
+ * RN05 (atualização do desempenho acumulado) e RF19 (acompanhamento pelo aluno e pelo professor).
+ * O desempenho só recebe respostas contabilizadas: as da prática adaptativa no envio e as das
+ * atividades regulares no fechamento do prazo.
+ */
 @Service
 public class DesempenhoService {
 
@@ -60,8 +68,8 @@ public class DesempenhoService {
 
     /**
      * RN05: localiza (ou cria) o registro do aluno no tópico e nível da questão e soma a resposta.
-     * Deve ser chamado na mesma transação que grava a resposta (RF17, CA03), com a linha do aluno
-     * travada, para que respostas simultâneas do mesmo aluno não percam incrementos.
+     * Deve ser chamado na mesma transação que marca a resposta como contabilizada (envio da prática ou
+     * fechamento da atividade), com a linha do aluno travada, para não perder incrementos.
      */
     @Transactional
     public DesempenhoTopico registrarResposta(Usuario aluno, Questao questao, boolean acertou) {
@@ -147,8 +155,119 @@ public class DesempenhoService {
         }
         topicosDaTurma.sort(Comparator.comparing(DesempenhoTurmaResponse.TopicoTurma::percentual));
 
+        // mapa de calor: o aluno em cada tópico, somando os níveis
+        List<DesempenhoTurmaResponse.Celula> celulas = new ArrayList<>();
+        for (Map.Entry<Long, List<DesempenhoTopico>> entrada : porAluno.entrySet()) {
+            Map<Long, int[]> porTopico = new LinkedHashMap<>();
+            for (DesempenhoTopico registro : entrada.getValue()) {
+                int[] soma = porTopico.computeIfAbsent(registro.getTopico().getId(), id -> new int[2]);
+                soma[0] += registro.getTotalRespostas();
+                soma[1] += registro.getTotalAcertos();
+            }
+            for (Map.Entry<Long, int[]> topico : porTopico.entrySet()) {
+                int[] soma = topico.getValue();
+                celulas.add(new DesempenhoTurmaResponse.Celula(entrada.getKey(), topico.getKey(), soma[0], soma[1],
+                        DesempenhoTopico.percentual(soma[1], soma[0])));
+            }
+        }
+
+        List<DesempenhoTurmaResponse.PontoEvolucaoTurma> evolucao = List.of();
+        List<DesempenhoTurmaResponse.EfeitoPratica> efeito = List.of();
+        if (!alunoIds.isEmpty()) {
+            evolucao = evolucaoSemanalDaTurma(respostaRepository.findHistoricoDosAlunos(alunoIds));
+            efeito = efeitoDaPratica(respostaRepository.findPorTopicoDosAlunos(alunoIds));
+        }
+
         return new DesempenhoTurmaResponse(turma.getId(), turma.getNome(), turma.getAnoEscolar().name(), alunos,
-                topicosDaTurma);
+                topicosDaTurma, celulas, evolucao, efeito);
+    }
+
+    /** Evolução semanal da turma: respostas, alunos que responderam e percentuais da semana e acumulado. */
+    static List<DesempenhoTurmaResponse.PontoEvolucaoTurma> evolucaoSemanalDaTurma(
+            List<Projecoes.RespostaDoAluno> historico) {
+        Map<LocalDate, int[]> porSemana = new TreeMap<>();
+        Map<LocalDate, Set<Long>> alunosPorSemana = new HashMap<>();
+        for (Projecoes.RespostaDoAluno resposta : historico) {
+            LocalDate semana = resposta.respondidaEm().toLocalDate()
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            int[] contagem = porSemana.computeIfAbsent(semana, s -> new int[2]);
+            contagem[0]++;
+            if (resposta.acertou()) {
+                contagem[1]++;
+            }
+            alunosPorSemana.computeIfAbsent(semana, s -> new HashSet<>()).add(resposta.alunoId());
+        }
+
+        List<DesempenhoTurmaResponse.PontoEvolucaoTurma> pontos = new ArrayList<>();
+        int respostasAcumuladas = 0;
+        int acertosAcumulados = 0;
+        for (Map.Entry<LocalDate, int[]> entrada : porSemana.entrySet()) {
+            int[] contagem = entrada.getValue();
+            respostasAcumuladas += contagem[0];
+            acertosAcumulados += contagem[1];
+            pontos.add(new DesempenhoTurmaResponse.PontoEvolucaoTurma(entrada.getKey(), contagem[0], contagem[1],
+                    alunosPorSemana.get(entrada.getKey()).size(),
+                    DesempenhoTopico.percentual(contagem[1], contagem[0]),
+                    DesempenhoTopico.percentual(acertosAcumulados, respostasAcumuladas)));
+        }
+        return pontos;
+    }
+
+    /**
+     * Efeito da prática adaptativa: para cada aluno e tópico com prática, o acerto nas atividades
+     * regulares do tópico antes e depois da primeira prática nele. As respostas da própria prática não
+     * entram (ela mira o nível em que o aluno está, então compararia coisas diferentes). Só conta quem
+     * tem respostas nos dois períodos. O histórico chega em ordem de data.
+     */
+    static List<DesempenhoTurmaResponse.EfeitoPratica> efeitoDaPratica(List<Projecoes.RespostaPorTopico> historico) {
+        // primeira prática de cada aluno em cada tópico
+        Map<String, LocalDateTime> primeiraPratica = new HashMap<>();
+        for (Projecoes.RespostaPorTopico resposta : historico) {
+            if (resposta.tipo() == TipoAtividade.ADAPTATIVA) {
+                primeiraPratica.merge(resposta.alunoId() + "|" + resposta.topicoId(), resposta.respondidaEm(),
+                        (atual, nova) -> nova.isBefore(atual) ? nova : atual);
+            }
+        }
+        // [respostasAntes, acertosAntes, respostasDepois, acertosDepois] por aluno e tópico
+        Map<String, int[]> porAlunoETopico = new HashMap<>();
+        Map<Long, String> nomes = new HashMap<>();
+        for (Projecoes.RespostaPorTopico resposta : historico) {
+            String chave = resposta.alunoId() + "|" + resposta.topicoId();
+            LocalDateTime marco = primeiraPratica.get(chave);
+            if (marco == null || resposta.tipo() != TipoAtividade.REGULAR) {
+                continue;
+            }
+            nomes.put(resposta.topicoId(), resposta.topico());
+            int[] numeros = porAlunoETopico.computeIfAbsent(chave, c -> new int[4]);
+            int deslocamento = resposta.respondidaEm().isBefore(marco) ? 0 : 2;
+            numeros[deslocamento]++;
+            if (resposta.acertou()) {
+                numeros[deslocamento + 1]++;
+            }
+        }
+        // soma por tópico só dos alunos com respostas antes e depois
+        Map<Long, int[]> porTopico = new TreeMap<>();
+        for (Map.Entry<String, int[]> entrada : porAlunoETopico.entrySet()) {
+            int[] numeros = entrada.getValue();
+            if (numeros[0] == 0 || numeros[2] == 0) {
+                continue;
+            }
+            Long topicoId = Long.valueOf(entrada.getKey().substring(entrada.getKey().indexOf('|') + 1));
+            int[] soma = porTopico.computeIfAbsent(topicoId, id -> new int[5]);
+            soma[0]++;
+            for (int i = 0; i < 4; i++) {
+                soma[i + 1] += numeros[i];
+            }
+        }
+        List<DesempenhoTurmaResponse.EfeitoPratica> efeito = new ArrayList<>();
+        for (Map.Entry<Long, int[]> entrada : porTopico.entrySet()) {
+            int[] soma = entrada.getValue();
+            efeito.add(new DesempenhoTurmaResponse.EfeitoPratica(entrada.getKey(), nomes.get(entrada.getKey()),
+                    soma[0], soma[1], DesempenhoTopico.percentual(soma[2], soma[1]), soma[3],
+                    DesempenhoTopico.percentual(soma[4], soma[3])));
+        }
+        efeito.sort(Comparator.comparing(DesempenhoTurmaResponse.EfeitoPratica::topico));
+        return efeito;
     }
 
     private DesempenhoAlunoResponse montarPainel(Usuario aluno) {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { corrigirEmailResponsavel, redefinirSenha } from "../services/gestaoUsuarioService";
 import { Mensagens } from "./Mensagens";
 import { Modal } from "./Modal";
+import { resultadoDoEnvio } from "./SeloEmailAcesso";
 
 /**
  * Corrige (ou cadastra, para aluno antigo) o e-mail do responsável. Se o e-mail estava errado, o
@@ -20,8 +21,14 @@ export function EmailDoResponsavel({ aluno, aoSalvar, aoFechar }) {
     try {
       await corrigirEmailResponsavel(aluno.id, email);
       if (enviarSenha) {
-        await redefinirSenha(aluno.id);
-        await aoSalvar(`E-mail do responsável salvo. Login e senha nova de ${aluno.nome} enviados para ${email.trim()}.`);
+        const resultado = await redefinirSenha(aluno.id);
+        const envio = resultadoDoEnvio(resultado.statusEmailAcesso, email.trim());
+        await aoSalvar(
+          envio.tipo === "success"
+            ? `E-mail do responsável salvo. Login e senha nova de ${aluno.nome} enviados para ${email.trim()}.`
+            : `E-mail do responsável salvo, mas a senha nova não chegou. ${envio.texto}`,
+          envio.tipo
+        );
       } else {
         await aoSalvar(`E-mail do responsável por ${aluno.nome} salvo.`);
       }

@@ -23,8 +23,12 @@ public record DadosPessoaisResponse(
     public record QuestaoAutoria(Long id, String enunciado, String topico, String status, LocalDateTime criadoEm) {
     }
 
+    /**
+     * {@code acertou} é nulo enquanto a correção não foi liberada (resposta de atividade antes do prazo),
+     * para a exportação não antecipar ao aluno o gabarito que a tela ainda esconde.
+     */
     public record RespostaExportada(LocalDateTime respondidaEm, String atividade, Long questaoId,
-                                    String alternativaEscolhida, boolean acertou) {
+                                    String alternativaEscolhida, Boolean acertou) {
     }
 
     public record DesempenhoExportado(String topico, String nivel, int totalRespostas, int totalAcertos,

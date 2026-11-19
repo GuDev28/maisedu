@@ -3,10 +3,12 @@ package br.com.maisedu.app.controller;
 import br.com.maisedu.app.dto.CorrecaoNomeRequest;
 import br.com.maisedu.app.dto.DadosPessoaisResponse;
 import br.com.maisedu.app.dto.EmailResponsavelRequest;
+import br.com.maisedu.app.dto.PaginaResponse;
 import br.com.maisedu.app.dto.SenhaRedefinidaResponse;
 import br.com.maisedu.app.dto.UsuarioGestaoResponse;
 import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.Usuario;
+import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import br.com.maisedu.app.service.GestaoUsuarioService;
 import jakarta.validation.Valid;
@@ -40,24 +42,31 @@ import java.util.List;
 public class GestaoUsuarioController {
 
     private final GestaoUsuarioService gestaoUsuarioService;
+    private final UsuarioRepository usuarioRepository;
 
+    /** Lista paginada (pagina começa em 0; no máximo 100 por página), com papel e busca opcionais. */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
-    public List<UsuarioGestaoResponse> listar(
+    public PaginaResponse<UsuarioGestaoResponse> listar(
             @AuthenticationPrincipal UsuarioAutenticado ator,
-            @RequestParam(required = false) RoleNome papel) {
-        List<UsuarioGestaoResponse> resposta = new ArrayList<>();
-        for (Usuario usuario : gestaoUsuarioService.listar(ator, papel)) {
-            resposta.add(UsuarioGestaoResponse.from(usuario));
-        }
-        return resposta;
+            @RequestParam(required = false) RoleNome papel,
+            @RequestParam(required = false) String busca,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamanho) {
+        return PaginaResponse.de(gestaoUsuarioService.listar(ator, papel, busca, pagina, tamanho),
+                UsuarioGestaoResponse::from);
     }
 
     @PostMapping("/{usuarioId}/redefinir-senha")
     @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
     public SenhaRedefinidaResponse redefinirSenha(
             @AuthenticationPrincipal UsuarioAutenticado ator, @PathVariable Long usuarioId) {
-        return gestaoUsuarioService.redefinirSenha(ator, usuarioId);
+        SenhaRedefinidaResponse resposta = gestaoUsuarioService.redefinirSenha(ator, usuarioId);
+        if (!resposta.enviadaPorEmail()) {
+            return resposta;
+        }
+        // o e-mail saiu depois do commit, ainda dentro da chamada acima: a situação gravada já é a deste envio
+        return resposta.comStatusDoEmail(usuarioRepository.findStatusEmailAcesso(usuarioId).orElse(null));
     }
 
     /** Correção do e-mail do responsável de um aluno: admin ou professor de uma turma do aluno. */

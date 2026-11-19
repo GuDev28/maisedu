@@ -39,9 +39,15 @@ public class AtividadeAluno {
     @Column(nullable = false, length = 20)
     private TipoAtividade tipo;
 
+    /** Só na prática adaptativa que o aluno pediu para um tópico; nula na prática recomendada pelo motor. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topico_id")
+    private Topico topico;
+
     @Column(name = "iniciada_em", nullable = false, updatable = false)
     private final LocalDateTime iniciadaEm = LocalDateTime.now();
 
+    /** Quando o aluno enviou as respostas (entrega única). Nula enquanto a folha está em andamento. */
     @Column(name = "concluida_em")
     private LocalDateTime concluidaEm;
 
@@ -68,7 +74,13 @@ public class AtividadeAluno {
 
     /** Prática adaptativa (RN06): sem atividade de origem, com as questões escolhidas pelo motor. */
     public static AtividadeAluno adaptativa(Usuario aluno, List<Questao> questoesSelecionadas) {
+        return adaptativa(aluno, null, questoesSelecionadas);
+    }
+
+    /** Prática adaptativa de um tópico escolhido pelo aluno ({@code topico} nulo: recomendada pelo motor). */
+    public static AtividadeAluno adaptativa(Usuario aluno, Topico topico, List<Questao> questoesSelecionadas) {
         AtividadeAluno pratica = new AtividadeAluno(aluno, null, TipoAtividade.ADAPTATIVA);
+        pratica.topico = topico;
         pratica.fixarQuestoes(questoesSelecionadas);
         return pratica;
     }
@@ -92,13 +104,42 @@ public class AtividadeAluno {
         return aluno.getId().equals(alunoId);
     }
 
+    /** Concluída = respostas enviadas pelo aluno (entrega única). */
     public boolean isConcluida() {
         return concluidaEm != null;
+    }
+
+    public boolean isAdaptativa() {
+        return tipo == TipoAtividade.ADAPTATIVA;
     }
 
     public void concluir() {
         if (concluidaEm == null) {
             concluidaEm = LocalDateTime.now();
         }
+    }
+
+    /** Prazo de entrega: o da atividade de origem; a prática adaptativa não tem prazo (nulo). */
+    public LocalDateTime prazo() {
+        return atividade == null ? null : atividade.getPrazo();
+    }
+
+    /**
+     * O aluno ainda pode marcar e enviar: a folha não foi enviada e, na atividade regular, o prazo
+     * não terminou.
+     */
+    public boolean aceitaRespostas(LocalDateTime agora) {
+        return !isConcluida() && (atividade == null || !atividade.prazoEncerrado(agora));
+    }
+
+    /**
+     * O gabarito e os acertos podem ser mostrados ao aluno: na prática adaptativa, depois do envio;
+     * na atividade regular, só depois do prazo (para quem já enviou não repassar o gabarito a quem não enviou).
+     */
+    public boolean correcaoLiberada(LocalDateTime agora) {
+        if (atividade == null) {
+            return isConcluida();
+        }
+        return atividade.prazoEncerrado(agora);
     }
 }

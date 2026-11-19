@@ -1,23 +1,32 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.model.AcaoAuditoria;
+import br.com.maisedu.app.model.StatusEmailAcesso;
+import br.com.maisedu.app.repository.UsuarioRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.HtmlUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 
 /**
  * E-mails transacionais via Resend: só senha provisória (cadastro e redefinição). Professores e
  * administradores recebem no próprio e-mail; o aluno não tem e-mail, e o acesso dele vai para o e-mail
  * do responsável, com o mínimo de dados do aluno (primeiro nome e login).
+ *
+ * Depois de cada tentativa, a situação do envio (enviado, falhou ou e-mail não configurado) fica
+ * gravada no usuário, para o professor e o admin perceberem quando o acesso não chegou.
  */
 @Service
 @Slf4j
@@ -25,6 +34,9 @@ public class ResendEmailService {
 
     private final RestClient restClient;
     private final AuditoriaService auditoriaService;
+    private final UsuarioRepository usuarioRepository;
+    /** O envio acontece depois do commit do cadastro: a situação é gravada numa transação própria. */
+    private final TransactionTemplate transacaoIndependente;
     private final String remetente;
     private final String enderecoSistema;
     private final boolean ativo;
@@ -35,12 +47,17 @@ public class ResendEmailService {
             @Value("${maisedu.resend.remetente}") String remetente,
             @Value("${maisedu.email.registrar-no-log-sem-resend:false}") boolean registrarNoLogSemResend,
             @Value("${maisedu.app-url:http://localhost:8081}") String enderecoSistema,
-            AuditoriaService auditoriaService) {
+            AuditoriaService auditoriaService,
+            UsuarioRepository usuarioRepository,
+            PlatformTransactionManager transactionManager) {
         this.remetente = remetente;
         this.enderecoSistema = enderecoSistema.endsWith("/")
                 ? enderecoSistema.substring(0, enderecoSistema.length() - 1)
                 : enderecoSistema;
         this.auditoriaService = auditoriaService;
+        this.usuarioRepository = usuarioRepository;
+        this.transacaoIndependente = new TransactionTemplate(transactionManager);
+        this.transacaoIndependente.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.ativo = apiKey != null && !apiKey.isBlank();
         this.registrarNoLogSemResend = registrarNoLogSemResend;
         this.restClient = RestClient.builder()
@@ -130,6 +147,7 @@ public class ResendEmailService {
             }
             auditoriaService.registrar(usuarioId, usuarioNome, null, AcaoAuditoria.ENVIO_EMAIL,
                     "Usuario", usuarioId, false, "RESEND_API_KEY não configurada");
+            registrarSituacao(usuarioId, StatusEmailAcesso.NAO_CONFIGURADO);
             return;
         }
 
@@ -146,10 +164,25 @@ public class ResendEmailService {
 
             auditoriaService.registrar(usuarioId, usuarioNome, null, AcaoAuditoria.ENVIO_EMAIL,
                     "Usuario", usuarioId, true, detalheSucesso);
+            registrarSituacao(usuarioId, StatusEmailAcesso.ENVIADO);
         } catch (Exception ex) {
             log.warn("Falha ao enviar e-mail via Resend para {}", destinatario, ex);
             auditoriaService.registrar(usuarioId, usuarioNome, null, AcaoAuditoria.ENVIO_EMAIL,
                     "Usuario", usuarioId, false, "Falha no envio: " + ex.getMessage());
+            registrarSituacao(usuarioId, StatusEmailAcesso.FALHOU);
+        }
+    }
+
+    /** Grava a situação do envio sem nunca interromper quem chamou (o cadastro já foi confirmado). */
+    private void registrarSituacao(Long usuarioId, StatusEmailAcesso situacao) {
+        if (usuarioId == null) {
+            return;
+        }
+        try {
+            transacaoIndependente.executeWithoutResult(status ->
+                    usuarioRepository.registrarEnvioEmailAcesso(usuarioId, situacao, LocalDateTime.now()));
+        } catch (Exception ex) {
+            log.warn("Não foi possível gravar a situação do e-mail de acesso (usuarioId={})", usuarioId, ex);
         }
     }
 

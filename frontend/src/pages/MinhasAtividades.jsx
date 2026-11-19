@@ -5,9 +5,12 @@ import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
 import { EstadoVazio } from "../components/EstadoVazio";
 import { Mensagens } from "../components/Mensagens";
-import { SITUACOES, formatarDataHora } from "../components/rotulos";
+import { SITUACOES, formatarDataHora, tempoAtePrazo } from "../components/rotulos";
 
-/** RF16 (aluno): atividades da turma e práticas adaptativas anteriores. */
+/**
+ * RF16 (aluno): atividades da turma, com prazo e situação de entrega, e as práticas adaptativas.
+ * Os acertos de uma atividade só aparecem depois do prazo (a correção é liberada para todos juntos).
+ */
 export default function MinhasAtividades() {
   const navigate = useNavigate();
   const [atividades, setAtividades] = useState(null);
@@ -50,7 +53,7 @@ export default function MinhasAtividades() {
           </Link>
         }
       >
-        Atividades que o professor passou para a sua turma.
+        Atividades que o professor passou para a sua turma. Responda tudo e envie até o prazo.
       </Cabecalho>
       <Mensagens erro={erro} />
       {!atividades && !erro && <Carregando />}
@@ -92,11 +95,38 @@ export default function MinhasAtividades() {
   );
 }
 
+/** O que mostrar abaixo do título: progresso, envio, acertos (só com a correção liberada) ou prazo perdido. */
+function detalhe(item) {
+  switch (item.situacao) {
+    case "NAO_INICIADA":
+      return `${item.totalQuestoes} questões`;
+    case "EM_ANDAMENTO":
+      return `${item.escolhidas} de ${item.totalQuestoes} respondidas · ainda não enviada`;
+    case "ENTREGUE":
+      return item.correcaoLiberada
+        ? `${item.acertos} de ${item.totalQuestoes} acertos`
+        : `enviada em ${formatarDataHora(item.enviadaEm)} · correção depois do prazo`;
+    case "NAO_ENTREGUE":
+      return "o prazo terminou sem o envio";
+    default:
+      return "";
+  }
+}
+
 function ItemAtividade({ item, abrindo, aoAbrir }) {
   const situacao = SITUACOES[item.situacao];
   const rotuloBotao =
-    item.situacao === "NAO_INICIADA" ? "Começar" : item.situacao === "CONCLUIDA" ? "Rever" : "Continuar";
-  const progresso = item.totalQuestoes > 0 ? Math.round((item.respondidas * 100) / item.totalQuestoes) : 0;
+    item.situacao === "NAO_INICIADA"
+      ? "Começar"
+      : item.situacao === "EM_ANDAMENTO"
+        ? "Continuar"
+        : item.correcaoLiberada
+          ? "Ver correção"
+          : "Ver respostas";
+  const progresso = item.totalQuestoes > 0 ? Math.round((item.escolhidas * 100) / item.totalQuestoes) : 0;
+  const prazoAberto = item.prazo && (item.situacao === "NAO_INICIADA" || item.situacao === "EM_ANDAMENTO");
+  // quem não começou e perdeu o prazo não tem folha para abrir
+  const semFolha = item.situacao === "NAO_ENTREGUE" && !item.atividadeAlunoId;
   return (
     <div className="list-group-item d-flex flex-wrap align-items-center gap-3 py-3">
       <div className="flex-grow-1">
@@ -106,10 +136,13 @@ function ItemAtividade({ item, abrindo, aoAbrir }) {
         </div>
         <div className="small text-secondary">
           <span className={`badge text-bg-${situacao?.cor ?? "secondary"} me-2`}>{situacao?.rotulo ?? item.situacao}</span>
-          {item.respondidas} de {item.totalQuestoes} respondidas
-          {item.respondidas > 0 && ` · ${item.acertos} acerto(s)`}
-          {item.concluidaEm && ` · concluída em ${formatarDataHora(item.concluidaEm)}`}
+          {detalhe(item)}
         </div>
+        {prazoAberto && (
+          <div className="small text-warning fw-semibold mt-1">
+            Prazo: {formatarDataHora(item.prazo)} ({tempoAtePrazo(item.prazo)})
+          </div>
+        )}
         {item.situacao === "EM_ANDAMENTO" && (
           <div
             className="progress mt-2"
@@ -123,14 +156,16 @@ function ItemAtividade({ item, abrindo, aoAbrir }) {
           </div>
         )}
       </div>
-      <button
-        type="button"
-        className={`btn btn-sm ${item.situacao === "CONCLUIDA" ? "btn-outline-secondary" : "btn-primary"}`}
-        disabled={abrindo === item.atividadeId && !item.atividadeAlunoId}
-        onClick={() => aoAbrir(item)}
-      >
-        {abrindo === item.atividadeId && !item.atividadeAlunoId ? "Abrindo..." : rotuloBotao}
-      </button>
+      {!semFolha && (
+        <button
+          type="button"
+          className={`btn btn-sm ${prazoAberto || item.tipo === "ADAPTATIVA" && item.situacao === "EM_ANDAMENTO" ? "btn-primary" : "btn-outline-secondary"}`}
+          disabled={abrindo === item.atividadeId && !item.atividadeAlunoId}
+          onClick={() => aoAbrir(item)}
+        >
+          {abrindo === item.atividadeId && !item.atividadeAlunoId ? "Abrindo..." : rotuloBotao}
+        </button>
+      )}
     </div>
   );
 }

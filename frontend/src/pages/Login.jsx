@@ -50,7 +50,9 @@ export default function Login() {
                   autoFocus
                   required
                 />
-                <div className="form-text">Professores entram com o e-mail; alunos, com o login que a escola passou.</div>
+                <div className="form-text">
+                  Professores entram com o e-mail; alunos, com o login que chegou no e-mail do responsável (ex.: a482913).
+                </div>
               </div>
               <div className="mb-3">
                 <label htmlFor="senha" className="form-label">

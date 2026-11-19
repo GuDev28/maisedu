@@ -3,6 +3,48 @@
 O arquivo .docx não foi alterado. Abaixo, por seção, o que mudar para o texto bater com o código.
 Trechos entre aspas podem ser colados (revisem o tom e a formatação ABNT).
 
+## Novidades de 23 de novembro de 2026 (aplicar junto com o restante)
+
+- **RN04 / RF16 (resolver atividade)**: trocar a "resposta única por questão, confirmada uma a uma"
+  por: "O aluno marca e pode trocar as alternativas enquanto a atividade estiver aberta; as respostas
+  são enviadas todas de uma vez, uma única vez, e só com todas as questões respondidas. Atividades da
+  turma têm prazo definido pelo professor (alterável antes de terminar); depois do prazo não é possível
+  iniciar nem enviar, e a correção (acertos e gabarito) é exibida ao aluno somente após o prazo." Nos
+  critérios de aceite: envio incompleto, repetido ou após o prazo é recusado; quem não enviou fica
+  "Não entregue".
+- **RN05 / RF17 (desempenho)**: "Cada resposta é somada ao desempenho uma única vez: na prática
+  adaptativa, no envio; na atividade, no fechamento automático ao fim do prazo, feito por uma tarefa
+  agendada que registra a data de contabilização de cada resposta." Isso também explica por que o
+  painel não mostra respostas de atividades ainda abertas.
+- **RF15 (atividades)**: acrescentar o prazo na criação, a alteração de prazo e a análise por
+  questão (percentual de acerto e alternativa errada mais escolhida).
+- **RF18 (prática adaptativa)**: além da prática recomendada, "o aluno pode escolher um tópico: o
+  sistema gera uma prática curta (5 questões) daquele tópico, no nível mais baixo ainda não dominado";
+  a recomendada usa questões do ano escolar do aluno, com o tópico inteiro como alternativa quando
+  falta questão do ano. O fluxo de resposta é o mesmo da atividade, mas sem prazo (correção logo após
+  o envio). Atualizar a Figura 8 (BPMN) com a escolha "recomendada ou tópico".
+- **RF19 (painéis)**: professor — mapa de calor aluno × tópico, evolução semanal da turma e "efeito
+  da prática" (antes × depois da primeira prática de cada tópico); administrador — painel da escola
+  com mapa ano × tópico, comparativo entre turmas, engajamento semanal e uso do banco compartilhado.
+  Em 1.6.4 (LGPD), citar a **minimização** (art. 6º, III): o painel do administrador só tem números
+  agregados, e grupos com menos de 3 alunos aparecem como "poucos dados", sem percentual.
+- **RF05 (cadastro do aluno)**: o login é **gerado pelo sistema** ("a" + 6 dígitos), sem nome nem
+  matrícula; o professor informa só o nome e o e-mail do responsável. O comentário da migration V3
+  ("aluno entra com login gerado") passa a descrever o comportamento real. Acrescentar que o sistema
+  registra se o e-mail de acesso foi entregue e avisa o professor quando falha.
+- **RF12 (auditoria)**: novas ações ENVIO_ATIVIDADE, ALTERACAO_PRAZO_ATIVIDADE e FECHAMENTO_ATIVIDADE
+  (esta registrada como ação do sistema, sem usuário).
+- **RNF07 (integridade)**: acrescentar as restrições da V11 (prazo posterior à criação, tópico só em
+  prática adaptativa, situação do e-mail limitada aos três valores).
+- **Diagrama de classes**: `Atividade` ganha `prazo`, `fechadaEm`, `alterarPrazo`, `prazoEncerrado`,
+  `fechar`; `AtividadeAluno` ganha `topico`, `aceitaRespostas`, `correcaoLiberada`; `Resposta` ganha
+  `contabilizadaEm`; novos `FechamentoAtividadesService`, `GeradorLogin` e `PainelService`.
+- **Resultados (simulação)**: o perfil `demo-volume` gera 1000 alunos simulados para demonstrar os
+  painéis. Se usarem esses números no texto, deixem claro que são **dados sintéticos**; o "efeito da
+  prática" é uma comparação antes/depois, descritiva, e não prova causalidade (pode haver outras
+  causas: aulas, revisão, dificuldade das questões).
+- **Identidade visual**: se houver capturas de tela no texto, refazê-las com a paleta nova.
+
 ## Resumo e Abstract
 
 - Trocar a última frase ("Até o presente momento, estão implementados... estão especificados para as

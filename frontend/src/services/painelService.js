@@ -4,3 +4,8 @@ import { chamarApi } from "./http";
 export function resumoDaInstituicao() {
   return chamarApi("/painel/instituicao");
 }
+
+/** Painel pedagógico da escola (admin): só dados agregados, sem identificar alunos. */
+export function painelDaEscola() {
+  return chamarApi("/painel/escola");
+}

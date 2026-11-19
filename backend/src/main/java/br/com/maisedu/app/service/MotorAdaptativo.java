@@ -29,14 +29,26 @@ import java.util.Set;
  *    nível-alvo e depois as dos níveis adjacentes; dentro de cada nível, as que o aluno ainda não
  *    respondeu vêm antes das já respondidas. Os tópicos são intercalados por prioridade (o mais fraco
  *    primeiro), e as vagas que um tópico não preencher ficam para os demais.
+ *
+ * Prática de um tópico escolhido pelo aluno: o mesmo nível-alvo do passo 2 ({@link #planejarTopico}) e
+ * a mesma seleção do passo 3, só com esse tópico e até {@code questoesPorPraticaTopico} questões.
  */
 public final class MotorAdaptativo {
 
     public record Parametros(int maximoTopicos, int questoesPorPratica, int minimoRespostasDominio,
-                             BigDecimal percentualDominio) {
+                             BigDecimal percentualDominio, int questoesPorPraticaTopico) {
+
+        /** Sem o tamanho da prática por tópico: usa {@value #QUESTOES_POR_PRATICA_TOPICO_PADRAO}. */
+        public Parametros(int maximoTopicos, int questoesPorPratica, int minimoRespostasDominio,
+                          BigDecimal percentualDominio) {
+            this(maximoTopicos, questoesPorPratica, minimoRespostasDominio, percentualDominio,
+                    QUESTOES_POR_PRATICA_TOPICO_PADRAO);
+        }
+
+        public static final int QUESTOES_POR_PRATICA_TOPICO_PADRAO = 5;
 
         public static Parametros padrao() {
-            return new Parametros(3, 10, 5, BigDecimal.valueOf(70));
+            return new Parametros(3, 10, 5, BigDecimal.valueOf(70), QUESTOES_POR_PRATICA_TOPICO_PADRAO);
         }
     }
 
@@ -110,6 +122,30 @@ public final class MotorAdaptativo {
         return topicos;
     }
 
+    /**
+     * Prática de um tópico escolhido pelo aluno: percentual do tópico (somando os níveis) e o mesmo
+     * nível-alvo do passo 2. Sem histórico no tópico, começa pelo FÁCIL.
+     */
+    public TopicoPlanejado planejarTopico(Long topicoId, List<DesempenhoNivel> desempenho) {
+        Map<NivelDificuldade, DesempenhoNivel> porNivel = new EnumMap<>(NivelDificuldade.class);
+        int respostas = 0;
+        int acertos = 0;
+        for (DesempenhoNivel registro : desempenho) {
+            if (!registro.topicoId().equals(topicoId) || registro.totalRespostas() <= 0) {
+                continue;
+            }
+            porNivel.put(registro.nivel(), registro);
+            respostas += registro.totalRespostas();
+            acertos += registro.totalAcertos();
+        }
+        return new TopicoPlanejado(topicoId, DesempenhoTopico.percentual(acertos, respostas), respostas,
+                nivelAlvo(porNivel));
+    }
+
+    public Parametros parametros() {
+        return parametros;
+    }
+
     /** O nível mais baixo ainda não dominado; DIFÍCIL se todos estiverem dominados. */
     public NivelDificuldade nivelAlvo(Map<NivelDificuldade, DesempenhoNivel> porNivel) {
         for (NivelDificuldade nivel : NivelDificuldade.values()) {
@@ -132,6 +168,12 @@ public final class MotorAdaptativo {
     /** Passo 3: ids das questões da prática, na ordem em que serão apresentadas. */
     public List<Long> selecionarQuestoes(List<TopicoPlanejado> plano, List<Candidata> candidatas,
                                          Set<Long> jaRespondidas, Random random) {
+        return selecionarQuestoes(plano, candidatas, jaRespondidas, random, parametros.questoesPorPratica());
+    }
+
+    /** Passo 3 com um limite próprio de questões (a prática por tópico é menor). */
+    public List<Long> selecionarQuestoes(List<TopicoPlanejado> plano, List<Candidata> candidatas,
+                                         Set<Long> jaRespondidas, Random random, int limite) {
         List<Deque<Long>> filas = new ArrayList<>();
         for (TopicoPlanejado topico : plano) {
             filas.add(montarFila(topico, candidatas, jaRespondidas, random));
@@ -139,10 +181,10 @@ public final class MotorAdaptativo {
 
         List<Long> selecionadas = new ArrayList<>();
         boolean algumaFilaTemQuestao = true;
-        while (selecionadas.size() < parametros.questoesPorPratica() && algumaFilaTemQuestao) {
+        while (selecionadas.size() < limite && algumaFilaTemQuestao) {
             algumaFilaTemQuestao = false;
             for (Deque<Long> fila : filas) {
-                if (selecionadas.size() >= parametros.questoesPorPratica()) {
+                if (selecionadas.size() >= limite) {
                     break;
                 }
                 Long proxima = fila.pollFirst();

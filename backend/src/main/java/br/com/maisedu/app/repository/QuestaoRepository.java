@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 public interface QuestaoRepository extends JpaRepository<Questao, Long> {
 
@@ -53,4 +54,26 @@ public interface QuestaoRepository extends JpaRepository<Questao, Long> {
 
     @Query("select q from Questao q where q.id in :ids")
     List<Questao> findAllByIdIn(@Param("ids") List<Long> ids);
+
+    /** Candidatas da prática adaptativa: questões no status informado de vários tópicos, com o tópico. */
+    @Query("select q from Questao q join fetch q.topico where q.status = :status and q.topico.id in :topicoIds")
+    List<Questao> findByStatusAndTopicoIdIn(@Param("status") StatusQuestao status,
+                                           @Param("topicoIds") Collection<Long> topicoIds);
+
+    /** Questões no status informado por tópico, só dos anos escolares informados (cards da prática por tópico). */
+    @Query("select new br.com.maisedu.app.repository.Projecoes$ContagemTopico(t.id, t.nome, count(q)) " +
+            "from Questao q join q.topico t where q.status = :status and q.anoEscolar in :anos " +
+            "group by t.id, t.nome order by t.nome")
+    List<Projecoes.ContagemTopico> contarPorTopicoNosAnos(@Param("status") StatusQuestao status,
+                                                         @Param("anos") Collection<AnoEscolar> anos);
+
+    /** Questões no status informado por tópico, de todos os anos. */
+    @Query("select new br.com.maisedu.app.repository.Projecoes$ContagemTopico(t.id, t.nome, count(q)) " +
+            "from Questao q join q.topico t where q.status = :status group by t.id, t.nome order by t.nome")
+    List<Projecoes.ContagemTopico> contarPorTopico(@Param("status") StatusQuestao status);
+
+    /** Questões de autores da escola, por status (painel: participação no banco compartilhado). */
+    @Query("select new br.com.maisedu.app.repository.Projecoes$ContagemStatusQuestao(q.status, count(q)) " +
+            "from Questao q where q.autor.instituicao.id = :instituicaoId group by q.status")
+    List<Projecoes.ContagemStatusQuestao> contarDaInstituicaoPorStatus(@Param("instituicaoId") Long instituicaoId);
 }

@@ -16,6 +16,7 @@ import br.com.maisedu.app.model.RoleNome;
 import br.com.maisedu.app.model.Usuario;
 import br.com.maisedu.app.repository.AlunoTurmaRepository;
 import br.com.maisedu.app.repository.DesempenhoTopicoRepository;
+import br.com.maisedu.app.repository.FiltroUsuarios;
 import br.com.maisedu.app.repository.LogAuditoriaRepository;
 import br.com.maisedu.app.repository.ProfessorTurmaRepository;
 import br.com.maisedu.app.repository.QuestaoRepository;
@@ -24,6 +25,9 @@ import br.com.maisedu.app.repository.UsuarioRepository;
 import br.com.maisedu.app.security.SenhaGeradora;
 import br.com.maisedu.app.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,7 @@ import java.util.UUID;
 public class GestaoUsuarioService {
 
     public static final int TAMANHO_MAXIMO_NOME = 255;
+    public static final int TAMANHO_MAXIMO_PAGINA = 100;
 
     private final UsuarioRepository usuarioRepository;
     private final AlunoTurmaRepository alunoTurmaRepository;
@@ -57,14 +62,21 @@ public class GestaoUsuarioService {
     private final ResendEmailService emailService;
     private final AuditoriaService auditoriaService;
 
-    /** Admin: usuários da instituição (filtro opcional por papel). Professor: alunos das turmas em que leciona. */
+    /**
+     * Lista paginada, em ordem alfabética. Admin: usuários da instituição (filtro opcional por papel).
+     * Professor: alunos das turmas em que leciona. Nos dois casos, busca opcional por parte do nome,
+     * do login ou do e-mail.
+     */
     @Transactional(readOnly = true)
-    public List<Usuario> listar(UsuarioAutenticado ator, RoleNome papel) {
+    public Page<Usuario> listar(UsuarioAutenticado ator, RoleNome papel, String busca, int pagina, int tamanho) {
+        PageRequest paginacao = PageRequest.of(Math.max(pagina, 0),
+                Math.min(Math.max(tamanho, 1), TAMANHO_MAXIMO_PAGINA), Sort.by("nome").and(Sort.by("id")));
         if (ator.possuiRole(RoleNome.ADMIN)) {
-            return usuarioRepository.findDaInstituicao(ator.instituicaoId(), papel);
+            return usuarioRepository.findAll(FiltroUsuarios.daInstituicao(ator.instituicaoId(), papel, busca),
+                    paginacao);
         }
         if (ator.possuiRole(RoleNome.PROFESSOR)) {
-            return usuarioRepository.findAlunosDasTurmasDoProfessor(ator.id());
+            return usuarioRepository.findAll(FiltroUsuarios.alunosDasTurmasDoProfessor(ator.id(), busca), paginacao);
         }
         throw new AccessDeniedException("Sem permissão para listar usuários.");
     }
@@ -242,7 +254,7 @@ public class GestaoUsuarioService {
                     : "Prática adaptativa";
             respostas.add(new DadosPessoaisResponse.RespostaExportada(resposta.getRespondidaEm(), origem,
                     entregue.getQuestao().getId(), String.valueOf(resposta.getAlternativa().letra()),
-                    resposta.acertou()));
+                    resposta.isContabilizada() ? resposta.acertou() : null));
         }
 
         List<DadosPessoaisResponse.DesempenhoExportado> desempenho = new ArrayList<>();

@@ -85,6 +85,17 @@ public class Usuario {
     @Column(name = "anonimizado_em")
     private LocalDateTime anonimizadoEm;
 
+    /**
+     * Situação do último e-mail com dados de acesso (gravada depois do envio, numa transação própria,
+     * por {@code UsuarioRepository.registrarEnvioEmailAcesso}). Não guarda o endereço.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "email_acesso_status", length = 20)
+    private StatusEmailAcesso emailAcessoStatus;
+
+    @Column(name = "email_acesso_em")
+    private LocalDateTime emailAcessoEm;
+
     public Usuario(String nome, String email, String senha, Instituicao instituicao) {
         this.nome = nome;
         this.email = email;
@@ -211,6 +222,8 @@ public class Usuario {
         this.tentativasFalhas = 0;
         this.bloqueadoAte = null;
         this.anonimizadoEm = LocalDateTime.now();
+        this.emailAcessoStatus = null;
+        this.emailAcessoEm = null;
         encerrarSessoes();
     }
 }

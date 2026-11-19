@@ -1,7 +1,11 @@
 import { chamarApi, query } from "./http";
 
-export function listarUsuarios(papel) {
-  return chamarApi(`/usuarios${query({ papel })}`);
+/**
+ * Lista paginada: {conteudo, pagina, tamanho, total, totalPaginas}. {@code pagina} começa em 0.
+ * Admin vê a escola (filtro opcional por papel); professor vê os alunos das suas turmas.
+ */
+export function listarUsuarios({ papel, busca, pagina = 0, tamanho = 20 } = {}) {
+  return chamarApi(`/usuarios${query({ papel, busca, pagina, tamanho })}`);
 }
 
 export function redefinirSenha(usuarioId) {

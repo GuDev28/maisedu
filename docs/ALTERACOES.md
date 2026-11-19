@@ -1,5 +1,99 @@
 # Alterações
 
+## Entrega com prazo, prática por tópico, painéis e nova paleta (23 de novembro de 2026)
+
+### Antes de rodar
+
+Nenhuma dependência nova (nem no Maven nem no npm). A migration `V11` roda sozinha. A versão dos
+termos subiu para **3**: no próximo login todos leem e aceitam os novos Termos e a nova Política.
+O compose passa a definir `TZ=America/Sao_Paulo` (os prazos e o fechamento das atividades usam o
+fuso do servidor). Para os painéis com volume, suba com `SPRING_PROFILES_ACTIVE=dev,demo-volume`
+num banco vazio (`docker compose down -v` antes).
+
+### Como o aluno responde agora
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Marcar e enviar tudo de uma vez | Clicar numa alternativa só a marca (pode trocar à vontade, a marcação fica no servidor). No fim da folha, "Enviar respostas" manda todas juntas, uma única vez, e só com todas as questões respondidas; o back-end recusa envio incompleto, repetido ou depois do prazo. Saiu o "Confirmar resposta" por questão | `RespostaService.enviar`, `POST /aluno/folhas/{id}/envio`, `pages/FolhaAtividade.jsx` |
+| Prazo da atividade | O professor define o prazo ao criar (padrão sugerido: 7 dias, 23h59) e pode alterá-lo enquanto não termina. Depois do prazo não dá para começar nem enviar; quem não enviou fica "Não entregue" e as marcações não contam | `Atividade.prazo`, `PUT /atividades/{id}/prazo`, `pages/Atividades.jsx` |
+| Correção só depois do prazo | Antes do prazo, o aluno vê o que enviou, sem acertos nem gabarito (nem na lista, nem na folha, nem no "baixar meus dados"). O professor já vê os acertos de quem entregou | `AtividadeAluno.correcaoLiberada`, `AtividadeService.montarFolha`, `GestaoUsuarioService` (exportação com `acertou` nulo) |
+| Desempenho contado uma vez | Na prática, no envio. Na atividade, quando o prazo termina: uma tarefa agendada (a cada minuto) fecha as atividades vencidas, soma as respostas enviadas ao desempenho e marca cada resposta como contabilizada (`resposta.contabilizada_em`), então nada é contado duas vezes nem antes da hora. O fechamento vai para a auditoria como ação do sistema | `FechamentoAtividadesService`, `Resposta.marcarContabilizada` |
+| Prática no mesmo fluxo | Marcar, enviar tudo e ver a correção logo depois do envio (sem prazo) | `RespostaService`, `pages/FolhaAtividade.jsx` |
+
+### Praticar (cards por tópico)
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Tela Praticar | No topo, a prática recomendada pelo motor (tópicos mais fracos e nível-alvo; diagnóstica para quem não respondeu nada). Abaixo, um card por tópico do ano do aluno, com acerto, níveis dominados e o nível atual; o clique gera uma prática curta (5 questões) daquele tópico, no nível que ele ainda não domina. Prática em andamento aparece como "Continuar" | `GET /aluno/praticas`, `POST /aluno/praticas-adaptativas?topicoId=`, `PraticaAdaptativaService`, `MotorAdaptativo.planejarTopico`, `pages/Praticar.jsx` |
+| Filtro de ano na prática | A prática recomendada usa questões do ano escolar do aluno; se um tópico não tiver questões do ano, usa as do tópico (para não travar a prática) | `PraticaAdaptativaService.gerarRecomendada` |
+
+### Painéis (com minimização)
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Desempenho da turma (professor) | Mapa de calor aluno × tópico (escala divergente centrada em 70%, número em cada célula, asterisco com menos de 3 respostas), evolução semanal da turma (com dica ao passar o mouse e tabela) e "efeito da prática": acerto nas atividades antes e depois da 1ª prática de cada tópico, com o aviso de que é uma comparação descritiva | `DesempenhoService.consultarTurma`, `pages/Desempenho.jsx`, `components/GraficoEvolucao.jsx`, `components/GraficoHaltere.jsx`, `components/MapaDeCalor.jsx` |
+| Painel da escola (admin) | Mapa ano escolar × tópico, comparativo entre turmas (acerto médio e alunos ativos em 14 dias), engajamento das últimas 8 semanas (uma medida por vez, mesmo eixo) e números do banco compartilhado. Só agregados, sem nomes; grupo com menos de 3 alunos aparece como "poucos dados", sem percentual | `PainelService.desempenhoDaEscola`, `GET /painel/escola`, `pages/PainelEscola.jsx`, menu Gestão e Início do admin |
+| Resultados da atividade | Situação de cada aluno (entregue, em andamento, não iniciada, não entregue) e análise por questão: % de acerto e a alternativa errada mais escolhida | `AtividadeService.resultados`, `pages/Atividades.jsx` |
+
+### Cadastro, e-mail e listas
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Login do aluno gerado | O professor informa só o nome e o e-mail do responsável; o sistema gera um login `a` + 6 dígitos (sem nome nem matrícula, para não identificar o aluno) e mostra ao professor depois do cadastro. Alunos do seed mantêm os logins fixos | `GeradorLogin`, `UsuarioService.cadastrarAluno`, `pages/Turma.jsx` |
+| Situação do e-mail de acesso | O resultado do envio (enviado, falhou, envio desativado) fica no usuário. O cadastro, a "Nova senha" e a correção do e-mail do responsável avisam quando o e-mail não saiu; nas listas, aparece um selo para quem ainda não fez o primeiro acesso e cujo e-mail falhou | `Usuario.emailAcessoStatus`, `ResendEmailService.registrarSituacao`, `components/SeloEmailAcesso.jsx` |
+| Usuários paginados | `GET /usuarios` agora é paginado e com busca no servidor (nome, login, e-mail); a tela tem paginação e a auditoria busca o usuário enquanto se digita, em vez de carregar a escola inteira num select | `GestaoUsuarioService.listar`, `FiltroUsuarios`, `pages/Usuarios.jsx`, `pages/Auditoria.jsx` |
+| Ordem dos anos | Painel da escola ordena por ano escolar (6º ao 9º), e não pelo nome do enum | `PainelService` |
+
+### Banco (`V11`)
+
+`atividade.prazo` (atividades existentes recebem criação + 7 dias) e `atividade.fechada_em`;
+`resposta.contabilizada_em` (respostas existentes já contadas recebem a data da resposta);
+`atividade_aluno.topico_id` (só em prática adaptativa, com CHECK); `usuario.email_acesso_status`
+(CHECK com os três valores) e `email_acesso_em`; índices parciais para as atividades a fechar e as
+práticas abertas.
+
+### Cenário de demonstração
+
+- Perfil `dev`: atividades com prazo já encerrado e corrigidas, uma atividade ainda no prazo
+  ("Porcentagem e média", com entregas, marcações não enviadas e alunos sem começar) e práticas
+  feitas antes de uma atividade posterior, para o "efeito da prática" aparecer.
+- Perfil novo `demo-volume`: escola fictícia com 30 turmas, 12 professores e 1000 alunos simulados,
+  com respostas em várias semanas, práticas e uma atividade aberta por turma (inserção em lote com
+  JDBC). Os dados são simulados: servem para mostrar os painéis, não como resultado pedagógico.
+
+### Visual
+
+Paleta nova: azul principal `#195ABE` (botões e destaques), azul escuro `#0F3E87` (menu lateral),
+azul claro `#3B82F6` (gráficos), azul suave `#BEDBFE` (fundos de destaque), fundo `#F8FAFC`, cards
+brancos com borda `#E2E8F0`, texto `#0F172A`/`#64748B` e cores de estado (sucesso, atenção, erro e
+informação) com um tom escuro para texto, para manter o contraste. Logo nova (PNG recolorido para o
+azul principal, 512 e 192 px) e favicon em SVG.
+
+### Textos
+
+Termos de Uso e Política de Privacidade na **versão 3** (entrega única e prazo, correção depois do
+prazo, login gerado, prática por tópico, painel agregado do admin, situação do e-mail de acesso),
+Como funciona, Login e Início de cada perfil.
+
+### Como foi verificado
+
+O ambiente continua sem acesso ao Maven Central e ao registro npm:
+
+- **Java**: `main` e `test` compilados com `javac` contra stubs das bibliotecas, sem nenhum erro de
+  tipo, de assinatura ou de nome.
+- **Testes executados aqui**: os testes de unidade puros (entidades, motor adaptativo, gerador de
+  login, efeito da prática e evolução da turma) rodaram num executor mínimo e passaram. Os testes com
+  Mockito e os de integração (H2) foram atualizados e revisados, mas não rodaram aqui.
+- **Banco**: V1 a V11 aplicadas num PostgreSQL 16 zerado; a carga do `demo-volume` rodou de ponta a
+  ponta nesse banco, respeitando todas as restrições e gatilhos.
+- **Front-end**: empacotado com esbuild, sem erro de importação; as telas novas (Praticar, Atividades
+  com prazo e resultados, Desempenho da turma e Painel da escola) foram abertas no Chromium com a API
+  simulada, conferindo layout, dicas ao passar o mouse e console sem erros.
+
+**Falta rodar com as bibliotecas reais**: `./mvnw test`, `npm install && npm run build`,
+`npm run lint` e `docker compose up --build`.
+
+
 ## Ajustes depois da revisão (16 de novembro de 2026)
 
 ### Antes de rodar
@@ -99,9 +193,9 @@ Depois: `cd backend && ./mvnw test` e `docker compose down -v && docker compose 
 
 - Termos de Uso e Política de Privacidade: professor pode tirar aluno da turma; rascunho editável;
   motivo da rejeição (lido pelo autor, sem identificar quem votou); "baixar meus dados" em Minha
-  conta. Continuam na versão 1 (ajustes de redação e de funcionalidades já previstas). Se o grupo
-  considerar a mudança relevante, troque `maisedu.termos.versao-atual` para 2 e todos aceitarão de
-  novo no próximo acesso.
+  conta. Nesta etapa ficaram na versão 1; depois subiram para a versão 2 (16/11, e-mail do
+  responsável) e para a versão 3 (23/11, entrega com prazo e login gerado), cada uma exigindo novo
+  aceite.
 - `docs/diagrams/er_diagram.png`: agora é o modelo de dados de verdade, gerado do banco criado pelas
   migrations V1 a V9 (fonte em `er_diagram.dot`).
 - `docs/diagrams/arquitetura.png`: inclui o nginx com proxy `/api`, os três contêineres e o Resend
