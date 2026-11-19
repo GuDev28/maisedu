@@ -4,12 +4,12 @@ import { useAuth } from "../../context/AuthContext";
 import { CartaoNumero } from "../../components/CartaoNumero";
 import { Carregando } from "../../components/Carregando";
 import { EstadoVazio } from "../../components/EstadoVazio";
-import { formatarPercentual, rotuloAno } from "../../components/rotulos";
+import { formatarPercentual, rotuloAno, tempoAtePrazo } from "../../components/rotulos";
 import { desempenhoDaTurma, listarAtividadesDaTurma } from "../../services/atividadeService";
 import { listarQuestoesPendentes } from "../../services/questaoService";
 import { listarMinhasTurmas } from "../../services/turmaService";
 
-/** Junta, para cada turma, o desempenho e as atividades em andamento. */
+/** Junta, para cada turma, o desempenho e as atividades ainda no prazo com entregas faltando. */
 async function carregarTurmas() {
   const turmas = await listarMinhasTurmas();
   return Promise.all(
@@ -27,11 +27,12 @@ async function carregarTurmas() {
       }
       const pendentes = [];
       for (const atividade of atividades) {
-        const faltam = totalAlunos - atividade.alunosQueIniciaram;
-        if (faltam > 0) {
+        const faltam = atividade.alunosDaTurma - atividade.alunosQueEntregaram;
+        if (!atividade.prazoEncerrado && faltam > 0) {
           pendentes.push({ ...atividade, faltam });
         }
       }
+      pendentes.sort((a, b) => new Date(a.prazo) - new Date(b.prazo));
       return { ...turma, totalAlunos, maisFraco, pendentes };
     })
   );
@@ -119,12 +120,13 @@ export default function InicioProfessor() {
                   )}
                 </div>
                 {turma.pendentes.length === 0 ? (
-                  <div className="small text-secondary">Nenhuma atividade com alunos por começar.</div>
+                  <div className="small text-secondary">Nenhuma atividade no prazo com entregas faltando.</div>
                 ) : (
                   <ul className="small mb-0 ps-3">
                     {turma.pendentes.slice(0, 3).map((atividade) => (
                       <li key={atividade.id}>
-                        <strong>{atividade.faltam}</strong> aluno(s) ainda não começaram “{atividade.titulo}”
+                        <strong>{atividade.faltam}</strong> aluno(s) ainda não entregaram “{atividade.titulo}”{" "}
+                        <span className="text-secondary">(prazo {tempoAtePrazo(atividade.prazo)})</span>
                       </li>
                     ))}
                   </ul>

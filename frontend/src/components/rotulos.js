@@ -38,7 +38,15 @@ export function rotuloStatus(valor) {
 export const SITUACOES = {
   NAO_INICIADA: { rotulo: "Não iniciada", cor: "secondary" },
   EM_ANDAMENTO: { rotulo: "Em andamento", cor: "warning" },
-  CONCLUIDA: { rotulo: "Concluída", cor: "success" },
+  ENTREGUE: { rotulo: "Entregue", cor: "success" },
+  NAO_ENTREGUE: { rotulo: "Não entregue", cor: "danger" },
+};
+
+/** Situação do último e-mail com login e senha provisória (statusEmailAcesso no back-end). */
+export const STATUS_EMAIL_ACESSO = {
+  ENVIADO: { rotulo: "E-mail de acesso enviado", cor: "success" },
+  FALHOU: { rotulo: "O e-mail de acesso não foi entregue", cor: "danger" },
+  NAO_CONFIGURADO: { rotulo: "Envio de e-mail desativado neste ambiente", cor: "warning" },
 };
 
 export function rotuloSituacao(valor) {
@@ -74,6 +82,9 @@ export const ACOES_AUDITORIA = {
   CRIACAO_ATIVIDADE: "Criação de atividade",
   INICIO_ATIVIDADE: "Atividade iniciada",
   GERACAO_PRATICA_ADAPTATIVA: "Prática adaptativa gerada",
+  ENVIO_ATIVIDADE: "Respostas enviadas",
+  ALTERACAO_PRAZO_ATIVIDADE: "Prazo de atividade alterado",
+  FECHAMENTO_ATIVIDADE: "Atividade fechada (prazo encerrado)",
   LIMPEZA_AUDITORIA: "Limpeza da auditoria",
 };
 
@@ -109,4 +120,30 @@ export function formatarData(valor) {
   }
   const [ano, mes, dia] = String(valor).slice(0, 10).split("-");
   return `${dia}/${mes}/${ano}`;
+}
+
+/** Valor para um input datetime-local (AAAA-MM-DDTHH:MM) a partir de uma data. */
+export function paraCampoDataHora(data) {
+  const d = new Date(data);
+  const doisDigitos = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}T${doisDigitos(d.getHours())}:${doisDigitos(d.getMinutes())}`;
+}
+
+/** Quanto falta até o prazo, em texto curto ("em 2 dias", "em 5 horas", "encerrado"). */
+export function tempoAtePrazo(prazo) {
+  if (!prazo) {
+    return "";
+  }
+  const minutos = Math.round((new Date(prazo).getTime() - Date.now()) / 60000);
+  if (minutos <= 0) {
+    return "encerrado";
+  }
+  if (minutos < 60) {
+    return `em ${minutos} min`;
+  }
+  const horas = Math.round(minutos / 60);
+  if (horas < 48) {
+    return `em ${horas} hora${horas > 1 ? "s" : ""}`;
+  }
+  return `em ${Math.round(horas / 24)} dias`;
 }

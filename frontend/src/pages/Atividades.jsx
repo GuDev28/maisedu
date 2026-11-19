@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { listarAprovadas } from "../services/questaoService";
-import { criarAtividade, listarAtividadesDaTurma, resultadosDaAtividade } from "../services/atividadeService";
+import { alterarPrazo, criarAtividade, listarAtividadesDaTurma, resultadosDaAtividade } from "../services/atividadeService";
 import { useInterface } from "../context/InterfaceContext";
+import { BarraPercentual } from "../components/BarraPercentual";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
 import { AlternativasComGabarito, EtiquetasQuestao } from "../components/EtiquetasQuestao";
@@ -11,17 +12,34 @@ import { FILTROS_VAZIOS, FiltrosBanco } from "../components/FiltrosBanco";
 import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SeletorTurma } from "../components/SeletorTurma";
-import { SITUACOES, formatarDataHora } from "../components/rotulos";
+import { SITUACOES, formatarDataHora, formatarPercentual, paraCampoDataHora, rotuloNivel, tempoAtePrazo } from "../components/rotulos";
+
+const MINUTO = 60 * 1000;
+const DIA = 24 * 60 * MINUTO;
+
+/** Limites do prazo aceitos pelo back-end: ao menos 5 minutos à frente e no máximo 365 dias. */
+function limitesDoPrazo() {
+  return { minimo: paraCampoDataHora(Date.now() + 6 * MINUTO), maximo: paraCampoDataHora(Date.now() + 365 * DIA) };
+}
+
+/** Prazo sugerido para uma atividade nova: daqui a 7 dias, às 23h59. */
+function prazoSugerido() {
+  const data = new Date(Date.now() + 7 * DIA);
+  data.setHours(23, 59, 0, 0);
+  return paraCampoDataHora(data);
+}
 
 /**
  * RF15: atividades de uma turma. O professor escolhe questões APROVADAS do banco compartilhado (de
- * qualquer escola), define a ordem e acompanha quem já respondeu. Usada na página Atividades (com
+ * qualquer escola), define a ordem e o prazo de entrega e acompanha quem já entregou. Os alunos
+ * enviam as respostas uma vez só e veem a correção depois do prazo. Usada na página Atividades (com
  * seletor de turma) e na aba Atividades da tela da Turma.
  */
 export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
   const { avisar } = useInterface();
   const [atividades, setAtividades] = useState(null);
   const [resultado, setResultado] = useState(null);
+  const [editandoPrazo, setEditandoPrazo] = useState(null);
   const [criando, setCriando] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -52,7 +70,15 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
 
   async function aoCriar(atividade) {
     setCriando(false);
-    avisar(`Atividade "${atividade.titulo}" criada com ${atividade.totalQuestoes} questão(ões). Os alunos já podem começar.`);
+    avisar(
+      `Atividade "${atividade.titulo}" criada com ${atividade.totalQuestoes} questão(ões) e prazo ${formatarDataHora(atividade.prazo)}. Os alunos já podem começar.`
+    );
+    await carregar();
+  }
+
+  async function aoAlterarPrazo(atividade) {
+    setEditandoPrazo(null);
+    avisar(`Novo prazo de "${atividade.titulo}": ${formatarDataHora(atividade.prazo)}.`);
     await carregar();
   }
 
@@ -82,7 +108,7 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
             )
           }
         >
-          Monte uma atividade com questões aprovadas do banco compartilhado.
+          Monte uma atividade com questões aprovadas do banco compartilhado e defina o prazo de entrega.
         </EstadoVazio>
       )}
       {atividades && atividades.length > 0 && (
@@ -93,9 +119,9 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
                 <tr>
                   <th>Atividade</th>
                   <th className="text-end">Questões</th>
+                  <th>Prazo</th>
                   <th className="text-end">Iniciaram</th>
-                  <th className="text-end">Concluíram</th>
-                  <th>Criada em</th>
+                  <th className="text-end">Entregaram</th>
                   <th />
                 </tr>
               </thead>
@@ -104,13 +130,29 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
                   <tr key={atividade.id}>
                     <td>
                       <div className="fw-semibold">{atividade.titulo}</div>
-                      <div className="small text-secondary">por {atividade.professorNome}</div>
+                      <div className="small text-secondary">
+                        por {atividade.professorNome} · criada em {formatarDataHora(atividade.criadoEm)}
+                      </div>
                     </td>
                     <td className="text-end">{atividade.totalQuestoes}</td>
+                    <td className="small">
+                      <div>{formatarDataHora(atividade.prazo)}</div>
+                      {atividade.prazoEncerrado ? (
+                        <span className="badge text-bg-secondary">{atividade.fechada ? "Encerrada e corrigida" : "Encerrada"}</span>
+                      ) : (
+                        <span className="text-secondary">termina {tempoAtePrazo(atividade.prazo)}</span>
+                      )}
+                    </td>
                     <td className="text-end">{atividade.alunosQueIniciaram}</td>
-                    <td className="text-end">{atividade.alunosQueConcluiram}</td>
-                    <td className="small">{formatarDataHora(atividade.criadoEm)}</td>
-                    <td className="text-end">
+                    <td className="text-end text-nowrap">
+                      {atividade.alunosQueEntregaram} de {atividade.alunosDaTurma}
+                    </td>
+                    <td className="text-end text-nowrap">
+                      {podeCriar && !atividade.prazoEncerrado && (
+                        <button type="button" className="btn btn-sm btn-outline-secondary me-2" onClick={() => setEditandoPrazo(atividade)}>
+                          Alterar prazo
+                        </button>
+                      )}
                       <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => verResultados(atividade.id)}>
                         Resultados
                       </button>
@@ -123,59 +165,202 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
         </div>
       )}
 
-      {resultado && (
-        <Modal titulo={`Resultados: ${resultado.titulo}`} tamanho="lg" aoFechar={() => setResultado(null)}>
-          {resultado.alunos.length === 0 ? (
-            <p className="text-secondary">A turma ainda não tem alunos.</p>
-          ) : (
-            <table className="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th>Aluno</th>
-                  <th>Situação</th>
-                  <th className="text-end">Respondidas</th>
-                  <th className="text-end">Acertos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.alunos.map((aluno) => {
-                  const situacao = SITUACOES[aluno.situacao];
-                  return (
-                    <tr key={aluno.alunoId}>
-                      <td>{aluno.nome}</td>
-                      <td>
-                        <span className={`badge text-bg-${situacao?.cor ?? "secondary"}`}>{situacao?.rotulo ?? aluno.situacao}</span>
-                      </td>
-                      <td className="text-end">
-                        {aluno.respondidas} de {aluno.totalQuestoes}
-                      </td>
-                      <td className="text-end">{aluno.acertos}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-          <details>
-            <summary>Questões da atividade (com gabarito)</summary>
-            <ol className="mt-2">
-              {resultado.questoes.map((questao) => (
-                <li key={questao.id} className="mb-3">
-                  <div>{questao.enunciado}</div>
-                  <EtiquetasQuestao questao={questao} />
-                  <AlternativasComGabarito alternativas={questao.alternativas} />
-                </li>
-              ))}
-            </ol>
-          </details>
-        </Modal>
+      {editandoPrazo && (
+        <AlterarPrazo atividade={editandoPrazo} aoSalvar={aoAlterarPrazo} aoFechar={() => setEditandoPrazo(null)} />
       )}
+
+      {resultado && <Resultados resultado={resultado} aoFechar={() => setResultado(null)} />}
     </>
+  );
+}
+
+/** Modal para estender ou antecipar o prazo de uma atividade que ainda não terminou. */
+function AlterarPrazo({ atividade, aoSalvar, aoFechar }) {
+  const [prazo, setPrazo] = useState(paraCampoDataHora(atividade.prazo));
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState(null);
+  const { minimo, maximo } = limitesDoPrazo();
+
+  async function salvar(evento) {
+    evento.preventDefault();
+    setSalvando(true);
+    setErro(null);
+    try {
+      aoSalvar(await alterarPrazo(atividade.id, prazo));
+    } catch (err) {
+      setErro(err.message);
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Modal
+      titulo={`Prazo de "${atividade.titulo}"`}
+      aoFechar={aoFechar}
+      rodape={
+        <>
+          <button type="button" className="btn btn-outline-secondary" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button type="submit" form="form-prazo" className="btn btn-primary" disabled={salvando || !prazo}>
+            {salvando ? "Salvando..." : "Salvar prazo"}
+          </button>
+        </>
+      }
+    >
+      <form id="form-prazo" onSubmit={salvar}>
+        <p className="text-secondary small">
+          Prazo atual: {formatarDataHora(atividade.prazo)}. Quem ainda não entregou pode responder até o novo prazo; a
+          correção aparece para os alunos quando ele terminar.
+        </p>
+        <label htmlFor="novo-prazo" className="form-label">
+          Novo prazo
+        </label>
+        <input
+          id="novo-prazo"
+          type="datetime-local"
+          className="form-control"
+          value={prazo}
+          min={minimo}
+          max={maximo}
+          onChange={(e) => setPrazo(e.target.value)}
+          required
+        />
+        <div className="mt-3">
+          <Mensagens erro={erro} />
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** Resultados para o professor: situação de cada aluno e análise de cada questão. */
+function Resultados({ resultado, aoFechar }) {
+  const entregaram = resultado.alunos.filter((aluno) => aluno.situacao === "ENTREGUE").length;
+  return (
+    <Modal titulo={`Resultados: ${resultado.titulo}`} tamanho="xl" aoFechar={aoFechar}>
+      <p className="small text-secondary">
+        Prazo: {formatarDataHora(resultado.prazo)} ·{" "}
+        {resultado.prazoEncerrado
+          ? "encerrado: os alunos já veem a correção."
+          : `termina ${tempoAtePrazo(resultado.prazo)}. Você já vê os acertos de quem entregou; os alunos, só depois do prazo.`}
+      </p>
+
+      <h3 className="h6 mt-3">
+        Alunos <span className="text-secondary fw-normal">({entregaram} de {resultado.alunos.length} entregaram)</span>
+      </h3>
+      {resultado.alunos.length === 0 ? (
+        <p className="text-secondary">A turma ainda não tem alunos.</p>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Situação</th>
+                <th className="text-end">Respondidas</th>
+                <th className="text-end">Acertos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultado.alunos.map((aluno) => {
+                const situacao = SITUACOES[aluno.situacao];
+                const entregou = aluno.situacao === "ENTREGUE";
+                return (
+                  <tr key={aluno.alunoId}>
+                    <td>{aluno.nome}</td>
+                    <td>
+                      <span className={`badge text-bg-${situacao?.cor ?? "secondary"}`}>{situacao?.rotulo ?? aluno.situacao}</span>
+                    </td>
+                    <td className="text-end">
+                      {aluno.escolhidas} de {aluno.totalQuestoes}
+                      {aluno.situacao === "EM_ANDAMENTO" && <span className="d-block small text-secondary">ainda não enviou</span>}
+                    </td>
+                    <td className="text-end">{entregou ? `${aluno.acertos} de ${aluno.totalQuestoes}` : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className="h6 mt-4">Questão por questão</h3>
+      <p className="small text-secondary">
+        Considera só as respostas enviadas. O erro mais comum é a alternativa errada mais escolhida: costuma mostrar o
+        raciocínio que a turma precisa rever.
+      </p>
+      <div className="table-responsive">
+        <table className="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Questão</th>
+              <th style={{ minWidth: "10rem" }}>Acerto</th>
+              <th style={{ minWidth: "13rem" }}>Erro mais comum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultado.analise.map((questao) => (
+              <tr key={questao.questaoId}>
+                <td className="text-secondary">{questao.ordem}</td>
+                <td>
+                  <div className="me-texto-limitado">{questao.enunciado}</div>
+                  <div className="small text-secondary">
+                    {questao.topico} · {rotuloNivel(questao.nivelDificuldade)} · gabarito {questao.letraCorreta}
+                  </div>
+                </td>
+                <td>
+                  {questao.respostas === 0 ? (
+                    <span className="small text-secondary">sem respostas</span>
+                  ) : (
+                    <>
+                      <BarraPercentual valor={questao.percentualAcerto} />
+                      <div className="small text-secondary">
+                        {questao.acertos} de {questao.respostas}
+                      </div>
+                    </>
+                  )}
+                </td>
+                <td className="small">
+                  {questao.erroMaisComum ? (
+                    <>
+                      <span className="fw-semibold">
+                        {questao.erroMaisComum.letra}) {questao.erroMaisComum.texto}
+                      </span>
+                      <div className="text-secondary">
+                        {questao.erroMaisComum.vezes} aluno(s) · {formatarPercentual(questao.erroMaisComum.percentualDosErros)} dos erros
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-secondary">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <details>
+        <summary>Questões da atividade (com gabarito)</summary>
+        <ol className="mt-2">
+          {resultado.questoes.map((questao) => (
+            <li key={questao.id} className="mb-3">
+              <div>{questao.enunciado}</div>
+              <EtiquetasQuestao questao={questao} />
+              <AlternativasComGabarito alternativas={questao.alternativas} />
+            </li>
+          ))}
+        </ol>
+      </details>
+    </Modal>
   );
 }
 
 function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
   const [titulo, setTitulo] = useState("");
+  const [prazo, setPrazo] = useState(prazoSugerido);
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [banco, setBanco] = useState(null);
   const [selecionadas, setSelecionadas] = useState([]);
@@ -221,7 +406,7 @@ function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
     setSalvando(true);
     setErro(null);
     try {
-      aoCriar(await criarAtividade(turmaId, titulo, selecionadas.map((q) => q.id)));
+      aoCriar(await criarAtividade(turmaId, titulo, prazo, selecionadas.map((q) => q.id)));
     } catch (err) {
       setErro(err.message);
       setSalvando(false);
@@ -232,18 +417,38 @@ function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
     <div className="card">
       <div className="card-body p-4">
         <h2 className="h5 mb-3">Nova atividade</h2>
-        <div className="mb-4">
-          <label htmlFor="titulo-atividade" className="form-label">
-            Título
-          </label>
-          <input
-            id="titulo-atividade"
-            className="form-control"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            maxLength={150}
-            placeholder="Ex.: Revisão de frações"
-          />
+        <div className="row g-3 mb-4">
+          <div className="col-md-8">
+            <label htmlFor="titulo-atividade" className="form-label">
+              Título
+            </label>
+            <input
+              id="titulo-atividade"
+              className="form-control"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              maxLength={150}
+              placeholder="Ex.: Revisão de frações"
+            />
+          </div>
+          <div className="col-md-4">
+            <label htmlFor="prazo-atividade" className="form-label">
+              Prazo de entrega
+            </label>
+            <input
+              id="prazo-atividade"
+              type="datetime-local"
+              className="form-control"
+              value={prazo}
+              min={limitesDoPrazo().minimo}
+              max={limitesDoPrazo().maximo}
+              onChange={(e) => setPrazo(e.target.value)}
+              aria-describedby="ajuda-prazo"
+            />
+            <div id="ajuda-prazo" className="form-text">
+              Até lá o aluno pode mudar as respostas antes de enviar. A correção aparece depois do prazo.
+            </div>
+          </div>
         </div>
 
         <div className="row g-4">
@@ -317,7 +522,7 @@ function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
               type="button"
               className="btn btn-primary"
               onClick={salvar}
-              disabled={salvando || !titulo.trim() || selecionadas.length === 0}
+              disabled={salvando || !titulo.trim() || !prazo || selecionadas.length === 0}
             >
               {salvando ? "Criando..." : "Criar atividade"}
             </button>
@@ -344,7 +549,7 @@ export default function Atividades() {
   return (
     <>
       <Cabecalho titulo="Atividades" acoes={<SeletorTurma valor={turmaId} aoMudar={escolher} turmaInicial={parametros.get("turma")} />}>
-        Monte atividades com questões aprovadas do banco compartilhado e acompanhe quem já respondeu.
+        Monte atividades com questões aprovadas do banco compartilhado, defina o prazo e acompanhe as entregas.
       </Cabecalho>
       {turmaId && <AtividadesDaTurma turmaId={turmaId} />}
     </>

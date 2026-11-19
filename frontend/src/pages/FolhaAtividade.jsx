@@ -1,24 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { abrirFolha, marcarAlternativa, responderQuestao } from "../services/alunoService";
+import { abrirFolha, enviarFolha, marcarAlternativa } from "../services/alunoService";
 import { BarraPercentual } from "../components/BarraPercentual";
 import { Carregando } from "../components/Carregando";
 import { Mensagens } from "../components/Mensagens";
-import { rotuloNivel } from "../components/rotulos";
+import { formatarDataHora, rotuloNivel } from "../components/rotulos";
+import { useInterface } from "../context/InterfaceContext";
 
-/** Primeira questão ainda sem resposta (ou a última, se todas foram respondidas). */
-function primeiraPendente(questoes) {
-  const indice = questoes.findIndex((questao) => !questao.resposta);
-  return indice === -1 ? questoes.length - 1 : indice;
+/** Primeira questão ainda sem alternativa escolhida (ou a primeira, se todas têm). */
+function primeiraSemEscolha(questoes) {
+  const indice = questoes.findIndex((questao) => !questao.alternativaEscolhidaId);
+  return indice === -1 ? 0 : indice;
 }
 
-/** Acertos por tópico, para a tela final. */
+/** Acertos por tópico, para o resultado depois da correção. */
 function resumoPorTopico(questoes) {
   const porTopico = new Map();
   for (const questao of questoes) {
     const atual = porTopico.get(questao.topico) ?? { topico: questao.topico, total: 0, acertos: 0 };
     atual.total += 1;
-    if (questao.resposta?.acertou) {
+    if (questao.correcao?.acertou) {
       atual.acertos += 1;
     }
     porTopico.set(questao.topico, atual);
@@ -27,17 +28,21 @@ function resumoPorTopico(questoes) {
 }
 
 /**
- * Folha da atividade (ou da prática): uma questão por vez, na ordem fixada ao iniciar (RN03).
- * Clicar numa alternativa só a marca: a marcação fica guardada no servidor (volta se o aluno sair e
- * entrar de novo) e pode ser trocada. A resposta, única (RN04), só é gravada em "Confirmar resposta",
- * e a correção aparece na hora, com o retorno do próprio POST. No fim, os acertos por tópico.
+ * Folha da atividade (ou da prática), com entrega única: uma questão por vez, na ordem fixada ao
+ * iniciar (RN03). Clicar numa alternativa a escolhe; a escolha fica guardada no servidor (volta se o
+ * aluno sair e entrar de novo) e pode ser trocada até o envio e, na atividade, até o prazo. No fim,
+ * "Enviar respostas" manda tudo de uma vez, só com todas as questões respondidas (RN04).
+ *
+ * Correção: na prática adaptativa, logo depois do envio; na atividade da turma, só depois do prazo,
+ * para quem já enviou não repassar o gabarito a quem ainda não enviou.
  */
 export default function FolhaAtividade() {
   const { atividadeAlunoId } = useParams();
+  const { confirmar, avisar } = useInterface();
   const [folha, setFolha] = useState(null);
   const [atual, setAtual] = useState(0);
   const [enviando, setEnviando] = useState(false);
-  const [verResumo, setVerResumo] = useState(false);
+  const [verResultado, setVerResultado] = useState(false);
   const [erro, setErro] = useState(null);
   const [avisoMarcacao, setAvisoMarcacao] = useState(null);
   // As marcações vão ao servidor uma de cada vez, na ordem dos cliques: assim a última sempre vale.
@@ -47,23 +52,21 @@ export default function FolhaAtividade() {
     abrirFolha(atividadeAlunoId)
       .then((aberta) => {
         setFolha(aberta);
-        setAtual(primeiraPendente(aberta.questoes));
-        setVerResumo(Boolean(aberta.concluidaEm));
+        setAtual(primeiraSemEscolha(aberta.questoes));
+        setVerResultado(!aberta.podeResponder);
       })
       .catch((err) => setErro(err.message));
   }, [atividadeAlunoId]);
 
-  function atualizarQuestao(atividadeAlunoQuestaoId, mudanca) {
-    setFolha((anterior) => ({
-      ...anterior,
-      questoes: anterior.questoes.map((q) => (q.atividadeAlunoQuestaoId === atividadeAlunoQuestaoId ? { ...q, ...mudanca } : q)),
-    }));
-  }
-
-  /** Só marca: a escolha aparece na hora e é guardada no servidor, sem virar resposta. */
-  async function marcar(questao, alternativa) {
+  /** Escolhe (ou troca) a alternativa: aparece na hora e é guardada no servidor, sem virar resposta. */
+  async function escolher(questao, alternativa) {
     setErro(null);
-    atualizarQuestao(questao.atividadeAlunoQuestaoId, { alternativaMarcadaId: alternativa.id });
+    setFolha((anterior) => {
+      const questoes = anterior.questoes.map((q) =>
+        q.atividadeAlunoQuestaoId === questao.atividadeAlunoQuestaoId ? { ...q, alternativaEscolhidaId: alternativa.id } : q
+      );
+      return { ...anterior, questoes, escolhidas: questoes.filter((q) => q.alternativaEscolhidaId).length };
+    });
     const envio = filaMarcacoes.current.then(() =>
       marcarAlternativa(folha.atividadeAlunoId, questao.atividadeAlunoQuestaoId, alternativa.id)
     );
@@ -71,38 +74,40 @@ export default function FolhaAtividade() {
     try {
       await envio;
       setAvisoMarcacao(null);
-    } catch {
-      setAvisoMarcacao("Não foi possível guardar a sua marcação agora. Ela continua valendo nesta tela.");
+    } catch (err) {
+      setAvisoMarcacao(
+        err.status === 400
+          ? err.message
+          : "Não foi possível guardar a sua escolha agora. Ela continua valendo nesta tela até você enviar."
+      );
     }
   }
 
-  async function responder(questao) {
-    const alternativa = questao.alternativas.find((a) => a.id === questao.alternativaMarcadaId);
-    if (!alternativa) {
+  async function enviar() {
+    const ok = await confirmar({
+      titulo: "Enviar as respostas?",
+      mensagem:
+        folha.tipo === "ADAPTATIVA"
+          ? "Depois de enviar, as respostas não podem mais ser trocadas. A correção aparece em seguida."
+          : `Depois de enviar, as respostas não podem mais ser trocadas. A correção aparece depois do prazo (${formatarDataHora(folha.prazo)}).`,
+      textoConfirmar: "Enviar respostas",
+    });
+    if (!ok) {
       return;
     }
     setErro(null);
     setEnviando(true);
     try {
-      // Espera as marcações pendentes chegarem antes, para nenhuma delas chegar depois da resposta.
+      // Espera as marcações pendentes, para nenhuma chegar ao servidor depois do envio.
       await filaMarcacoes.current;
-      const resultado = await responderQuestao(folha.atividadeAlunoId, questao.atividadeAlunoQuestaoId, alternativa.id);
-      const resposta = {
-        alternativaEscolhidaId: alternativa.id,
-        letraEscolhida: alternativa.letra,
-        acertou: resultado.acertou,
-        alternativaCorretaId: resultado.alternativaCorretaId,
-        letraCorreta: resultado.letraCorreta,
-      };
-      setFolha((anterior) => ({
-        ...anterior,
-        respondidas: resultado.respondidas,
-        acertos: resultado.acertos,
-        concluidaEm: resultado.atividadeConcluida ? anterior.concluidaEm ?? new Date().toISOString() : null,
-        questoes: anterior.questoes.map((q) =>
-          q.atividadeAlunoQuestaoId === questao.atividadeAlunoQuestaoId ? { ...q, resposta, alternativaMarcadaId: null } : q
-        ),
+      const respostas = folha.questoes.map((q) => ({
+        atividadeAlunoQuestaoId: q.atividadeAlunoQuestaoId,
+        alternativaId: q.alternativaEscolhidaId,
       }));
+      const enviada = await enviarFolha(folha.atividadeAlunoId, respostas);
+      setFolha(enviada);
+      setVerResultado(true);
+      avisar("Respostas enviadas!");
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -123,201 +128,252 @@ export default function FolhaAtividade() {
   }
 
   const total = folha.questoes.length;
-  const progresso = total > 0 ? Math.round((folha.respondidas * 100) / total) : 0;
-  const concluida = Boolean(folha.concluidaEm);
+  const faltam = total - folha.escolhidas;
+  const progresso = total > 0 ? Math.round((folha.escolhidas * 100) / total) : 0;
   const praticaAdaptativa = folha.tipo === "ADAPTATIVA";
-  const marcadasSemConfirmar = folha.questoes.filter((q) => !q.resposta && q.alternativaMarcadaId).length;
 
   return (
     <div className="me-largura-md">
-      <Link to="/minhas-atividades" className="small">
-        ← Minhas atividades
+      <Link to={praticaAdaptativa ? "/praticar" : "/minhas-atividades"} className="small">
+        ← {praticaAdaptativa ? "Praticar" : "Minhas atividades"}
       </Link>
-      <div className="d-flex flex-wrap justify-content-between align-items-end gap-2 mt-2 mb-3">
+      <div className="d-flex flex-wrap justify-content-between align-items-end gap-2 mt-2 mb-1">
         <h1 className="me-titulo mb-0">{folha.titulo}</h1>
         <span className="text-secondary small">
-          {folha.respondidas} de {total} respondidas · {folha.acertos} acerto(s)
+          {folha.podeResponder ? `${folha.escolhidas} de ${total} respondidas` : situacaoDaFolha(folha)}
         </span>
       </div>
-      <div
-        className="progress mb-4"
-        role="progressbar"
-        aria-label="Progresso da atividade"
-        aria-valuenow={progresso}
-        aria-valuemin="0"
-        aria-valuemax="100"
-      >
-        <div className="progress-bar" style={{ width: `${progresso}%` }} />
-      </div>
+      {folha.prazo && (
+        <p className={`small mb-3 ${folha.prazoEncerrado ? "text-secondary" : "text-warning fw-semibold"}`}>
+          {folha.prazoEncerrado ? "Prazo encerrado em " : "Prazo de entrega: "}
+          {formatarDataHora(folha.prazo)}
+        </p>
+      )}
+      {folha.podeResponder && (
+        <div
+          className="progress mb-4"
+          role="progressbar"
+          aria-label="Questões respondidas"
+          aria-valuenow={progresso}
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div className="progress-bar" style={{ width: `${progresso}%` }} />
+        </div>
+      )}
 
       <Mensagens erro={erro} aviso={avisoMarcacao} />
 
-      {concluida && verResumo ? (
-        <ResumoFinal folha={folha} praticaAdaptativa={praticaAdaptativa} aoRever={() => { setVerResumo(false); setAtual(0); }} />
+      {!folha.podeResponder && verResultado ? (
+        <Resultado folha={folha} praticaAdaptativa={praticaAdaptativa} aoRever={() => { setVerResultado(false); setAtual(0); }} />
       ) : (
-        <QuestaoAtual
-          questao={folha.questoes[atual]}
-          numero={atual + 1}
-          total={total}
-          enviando={enviando}
-          aoMarcar={marcar}
-          aoResponder={responder}
-          aoAnterior={atual > 0 ? () => setAtual(atual - 1) : null}
-          aoProxima={atual < total - 1 ? () => setAtual(atual + 1) : null}
-          aoFinalizar={concluida ? () => setVerResumo(true) : null}
-          questoes={folha.questoes}
-          aoIrPara={setAtual}
-          atual={atual}
-          marcadasSemConfirmar={marcadasSemConfirmar}
-        />
+        <>
+          <QuestaoAtual
+            questao={folha.questoes[atual]}
+            numero={atual + 1}
+            total={total}
+            podeResponder={folha.podeResponder}
+            correcaoLiberada={folha.correcaoLiberada}
+            enviando={enviando}
+            aoEscolher={escolher}
+          />
+          <Navegacao
+            questoes={folha.questoes}
+            atual={atual}
+            correcaoLiberada={folha.correcaoLiberada}
+            aoIrPara={setAtual}
+          />
+          {folha.podeResponder ? (
+            <div className="card mt-3 border-primary-subtle">
+              <div className="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <span className="small text-secondary">
+                  {faltam > 0
+                    ? `Falta${faltam > 1 ? "m" : ""} ${faltam} questã${faltam > 1 ? "ões" : "o"} para poder enviar. Você pode trocar as alternativas até enviar.`
+                    : "Todas respondidas. Confira se quiser e envie quando estiver pronto(a)."}
+                </span>
+                <button type="button" className="btn btn-primary" disabled={faltam > 0 || enviando} onClick={enviar}>
+                  {enviando ? "Enviando..." : "Enviar respostas"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="d-flex justify-content-end mt-3">
+              <button type="button" className="btn btn-outline-primary" onClick={() => setVerResultado(true)}>
+                Voltar ao resultado
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-function QuestaoAtual({
-  questao,
-  numero,
-  total,
-  enviando,
-  aoMarcar,
-  aoResponder,
-  aoAnterior,
-  aoProxima,
-  aoFinalizar,
-  questoes,
-  aoIrPara,
-  atual,
-  marcadasSemConfirmar,
-}) {
-  const resposta = questao.resposta;
-  const marcada = questao.alternativas.find((a) => a.id === questao.alternativaMarcadaId);
-  return (
-    <>
-      <div className="card">
-        <div className="card-body p-4">
-          <div className="small text-secondary mb-2">
-            Questão {numero} de {total} · {questao.topico} · {rotuloNivel(questao.nivelDificuldade)}
-          </div>
-          <p className="fs-5 mb-4">{questao.enunciado}</p>
-          <div className="d-grid gap-2" role="radiogroup" aria-label={`Alternativas da questão ${numero}`}>
-            {questao.alternativas.map((alternativa) => {
-              let classe = "alternativa";
-              if (resposta && alternativa.id === resposta.alternativaCorretaId) {
-                classe += " alternativa-certa";
-              } else if (resposta && alternativa.id === resposta.alternativaEscolhidaId) {
-                classe += " alternativa-errada";
-              } else if (!resposta && alternativa.id === questao.alternativaMarcadaId) {
-                classe += " alternativa-marcada";
-              }
-              const selecionada = resposta
-                ? alternativa.id === resposta.alternativaEscolhidaId
-                : alternativa.id === questao.alternativaMarcadaId;
-              return (
-                <button
-                  key={alternativa.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={selecionada}
-                  className={classe}
-                  disabled={Boolean(resposta) || enviando}
-                  onClick={() => aoMarcar(questao, alternativa)}
-                >
-                  <span className="alternativa-letra">{alternativa.letra})</span>
-                  <span>{alternativa.texto}</span>
-                </button>
-              );
-            })}
-          </div>
-          {!resposta && (
-            <div className="d-flex flex-wrap align-items-center gap-3 mt-3">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!marcada || enviando}
-                onClick={() => aoResponder(questao)}
-              >
-                {enviando ? "Enviando..." : "Confirmar resposta"}
-              </button>
-              <span className="small text-secondary">
-                {marcada
-                  ? `Você marcou ${marcada.letra}. Pode trocar até confirmar; depois de confirmada, a resposta não muda.`
-                  : "Escolha uma alternativa e depois confirme."}
-              </span>
-            </div>
-          )}
-          {resposta && (
-            <div className={`alert mt-3 mb-0 ${resposta.acertou ? "alert-success" : "alert-danger"}`} role="status">
-              {resposta.acertou
-                ? "Você acertou!"
-                : `Você marcou ${resposta.letraEscolhida}; a resposta certa é ${resposta.letraCorreta}.`}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {marcadasSemConfirmar > 0 && (
-        <div className="alert alert-info py-2 mt-3 mb-0 small" role="status">
-          {marcadasSemConfirmar === 1
-            ? "1 questão está marcada mas ainda não foi confirmada."
-            : `${marcadasSemConfirmar} questões estão marcadas mas ainda não foram confirmadas.`}{" "}
-          Só as respostas confirmadas contam.
-        </div>
-      )}
-
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-        <button type="button" className="btn btn-outline-secondary" disabled={!aoAnterior} onClick={aoAnterior ?? undefined}>
-          ← Anterior
-        </button>
-        <nav aria-label="Questões da atividade" className="d-flex flex-wrap gap-1">
-          {questoes.map((q, indice) => {
-            let cor = "btn-outline-secondary";
-            if (q.resposta) {
-              cor = q.resposta.acertou ? "btn-success" : "btn-danger";
-            } else if (q.alternativaMarcadaId) {
-              cor = "btn-outline-primary";
-            }
-            return (
-              <button
-                key={q.atividadeAlunoQuestaoId}
-                type="button"
-                className={`btn btn-sm ${cor} ${indice === atual ? "fw-bold border-2" : ""}`}
-                aria-current={indice === atual ? "step" : undefined}
-                aria-label={`Questão ${indice + 1}${
-                  q.resposta ? (q.resposta.acertou ? ", acertou" : ", errou") : q.alternativaMarcadaId ? ", marcada sem confirmar" : ", sem resposta"
-                }`}
-                onClick={() => aoIrPara(indice)}
-              >
-                {indice + 1}
-              </button>
-            );
-          })}
-        </nav>
-        {aoProxima ? (
-          <button type="button" className="btn btn-primary" onClick={aoProxima}>
-            Próxima →
-          </button>
-        ) : aoFinalizar ? (
-          <button type="button" className="btn btn-primary" onClick={aoFinalizar}>
-            Ver resultado
-          </button>
-        ) : (
-          <span />
-        )}
-      </div>
-    </>
-  );
+function situacaoDaFolha(folha) {
+  if (!folha.enviadaEm) {
+    return "Não entregue";
+  }
+  return folha.correcaoLiberada
+    ? `${folha.acertos} de ${folha.totalQuestoes} acertos`
+    : `Enviada em ${formatarDataHora(folha.enviadaEm)}`;
 }
 
-function ResumoFinal({ folha, praticaAdaptativa, aoRever }) {
-  const topicos = resumoPorTopico(folha.questoes);
-  const percentual = folha.questoes.length > 0 ? (folha.acertos * 100) / folha.questoes.length : 0;
+function QuestaoAtual({ questao, numero, total, podeResponder, correcaoLiberada, enviando, aoEscolher }) {
+  const correcao = questao.correcao;
+  const escolhida = questao.alternativas.find((a) => a.id === questao.alternativaEscolhidaId);
   return (
     <div className="card">
       <div className="card-body p-4">
-        <h2 className="h4">{praticaAdaptativa ? "Prática concluída!" : "Atividade concluída!"}</h2>
+        <div className="small text-secondary mb-2">
+          Questão {numero} de {total} · {questao.topico} · {rotuloNivel(questao.nivelDificuldade)}
+        </div>
+        <p className="fs-5 mb-4">{questao.enunciado}</p>
+        <div className="d-grid gap-2" role="radiogroup" aria-label={`Alternativas da questão ${numero}`}>
+          {questao.alternativas.map((alternativa) => {
+            const minha = alternativa.id === questao.alternativaEscolhidaId;
+            const certa = correcao && alternativa.id === correcao.alternativaCorretaId;
+            let classe = "alternativa";
+            let selo = null;
+            if (correcao) {
+              if (certa) {
+                classe += " alternativa-certa";
+                selo = <span className="alternativa-selo text-success">✓ Correta</span>;
+              } else if (minha) {
+                classe += " alternativa-errada";
+                selo = <span className="alternativa-selo text-danger">✗ Sua resposta</span>;
+              }
+            } else if (minha) {
+              classe += " alternativa-marcada";
+              selo = <span className="alternativa-selo text-primary">{podeResponder ? "Escolhida" : "Enviada"}</span>;
+            }
+            return (
+              <button
+                key={alternativa.id}
+                type="button"
+                role="radio"
+                aria-checked={minha}
+                className={classe}
+                disabled={!podeResponder || enviando}
+                onClick={() => aoEscolher(questao, alternativa)}
+              >
+                <span className="alternativa-letra">{alternativa.letra})</span>
+                <span>{alternativa.texto}</span>
+                {selo}
+              </button>
+            );
+          })}
+        </div>
+        {podeResponder && (
+          <p className="small text-secondary mt-3 mb-0">
+            {escolhida
+              ? `Você escolheu ${escolhida.letra}. Pode trocar até enviar as respostas.`
+              : "Escolha uma alternativa. As respostas são enviadas todas juntas, no fim."}
+          </p>
+        )}
+        {!podeResponder && !correcaoLiberada && (
+          <p className="small text-secondary mt-3 mb-0">A correção aparece depois do prazo de entrega.</p>
+        )}
+        {correcao && !correcao.respondida && (
+          <div className="alert alert-secondary mt-3 mb-0 py-2" role="status">
+            Esta questão não foi respondida. A resposta certa é {correcao.letraCorreta}.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Navegacao({ questoes, atual, correcaoLiberada, aoIrPara }) {
+  return (
+    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+      <button type="button" className="btn btn-outline-secondary" disabled={atual === 0} onClick={() => aoIrPara(atual - 1)}>
+        ← Anterior
+      </button>
+      <nav aria-label="Questões" className="d-flex flex-wrap gap-1">
+        {questoes.map((q, indice) => {
+          let cor = "btn-outline-secondary";
+          let estado = "sem resposta";
+          if (correcaoLiberada && q.correcao) {
+            cor = q.correcao.acertou ? "btn-success" : "btn-danger";
+            estado = q.correcao.acertou ? "acertou" : q.correcao.respondida ? "errou" : "não respondida";
+          } else if (q.alternativaEscolhidaId) {
+            cor = "btn-outline-primary";
+            estado = "respondida";
+          }
+          return (
+            <button
+              key={q.atividadeAlunoQuestaoId}
+              type="button"
+              className={`btn btn-sm ${cor} ${indice === atual ? "fw-bold border-2" : ""}`}
+              aria-current={indice === atual ? "step" : undefined}
+              aria-label={`Questão ${indice + 1}, ${estado}`}
+              onClick={() => aoIrPara(indice)}
+            >
+              {indice + 1}
+            </button>
+          );
+        })}
+      </nav>
+      <button
+        type="button"
+        className="btn btn-outline-secondary"
+        disabled={atual === questoes.length - 1}
+        onClick={() => aoIrPara(atual + 1)}
+      >
+        Próxima →
+      </button>
+    </div>
+  );
+}
+
+function Resultado({ folha, praticaAdaptativa, aoRever }) {
+  if (!folha.correcaoLiberada) {
+    return (
+      <div className="card">
+        <div className="card-body p-4">
+          <h2 className="h4">Respostas enviadas!</h2>
+          <p className="text-secondary mb-4">
+            Você enviou as {folha.totalQuestoes} respostas em {formatarDataHora(folha.enviadaEm)}. A correção e o seu
+            desempenho aparecem depois do prazo, em {formatarDataHora(folha.prazo)}.
+          </p>
+          <div className="d-flex flex-wrap gap-2">
+            <Link to="/minhas-atividades" className="btn btn-primary">
+              Voltar para as atividades
+            </Link>
+            <button type="button" className="btn btn-outline-secondary" onClick={aoRever}>
+              Ver o que respondi
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!folha.enviadaEm) {
+    return (
+      <div className="card">
+        <div className="card-body p-4">
+          <h2 className="h4">Atividade não entregue</h2>
+          <p className="text-secondary mb-4">
+            O prazo terminou em {formatarDataHora(folha.prazo)} sem o envio das respostas, então elas não contam no
+            desempenho. Você ainda pode ver as questões com o gabarito.
+          </p>
+          <button type="button" className="btn btn-outline-primary" onClick={aoRever}>
+            Ver as questões e o gabarito
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const topicos = resumoPorTopico(folha.questoes);
+  const percentual = folha.totalQuestoes > 0 ? (folha.acertos * 100) / folha.totalQuestoes : 0;
+  return (
+    <div className="card">
+      <div className="card-body p-4">
+        <h2 className="h4">{praticaAdaptativa ? "Prática concluída!" : "Atividade corrigida"}</h2>
         <p className="text-secondary">
-          Você acertou <strong>{folha.acertos}</strong> de {folha.questoes.length} questões. Seu desempenho já foi
+          Você acertou <strong>{folha.acertos}</strong> de {folha.totalQuestoes} questões. Seu desempenho já foi
           atualizado.
         </p>
         <BarraPercentual valor={percentual} destaque />
@@ -334,7 +390,7 @@ function ResumoFinal({ folha, praticaAdaptativa, aoRever }) {
         </ul>
         <div className="d-flex flex-wrap gap-2">
           <Link to="/praticar" className="btn btn-primary">
-            Praticar os pontos fracos
+            Praticar de novo
           </Link>
           <Link to="/meu-desempenho" className="btn btn-outline-primary">
             Ver meu desempenho
