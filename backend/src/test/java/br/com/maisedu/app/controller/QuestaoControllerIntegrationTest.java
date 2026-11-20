@@ -224,14 +224,14 @@ class QuestaoControllerIntegrationTest extends IntegracaoTestBase {
     }
 
     @Test
-    void enviarParaValidacao_comQuestaoInexistente_deveRetornar400ComMensagem() {
+    void enviarParaValidacao_comQuestaoInexistente_deveRetornar404ComMensagem() {
         ResponseEntity<ErroResponse> response = client.post()
                 .uri(BASE_PATH + "/" + Long.MAX_VALUE + "/enviar-para-validacao")
                 .header(HttpHeaders.COOKIE, cookie(autor))
                 .retrieve()
                 .toEntity(ErroResponse.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody().mensagem()).isEqualTo("Questão não encontrada");
     }
 

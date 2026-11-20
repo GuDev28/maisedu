@@ -1,9 +1,11 @@
 package br.com.maisedu.app.service;
 
 import br.com.maisedu.app.dto.AtividadeAlunoResumoResponse;
+import br.com.maisedu.app.dto.AtividadeResumoResponse;
 import br.com.maisedu.app.dto.FolhaAtividadeResponse;
 import br.com.maisedu.app.dto.ResultadoAtividadeResponse;
 import br.com.maisedu.app.exception.NegocioException;
+import br.com.maisedu.app.exception.RecursoNaoEncontradoException;
 import br.com.maisedu.app.model.AcaoAuditoria;
 import br.com.maisedu.app.model.AlunoTurma;
 import br.com.maisedu.app.model.AnoEscolar;
@@ -374,6 +376,84 @@ class AtividadeServiceTest {
         assertEquals(1, lista.get(2).acertos());
         verify(atividadeAlunoRepository, never()).findByAlunoIdAndAtividadeId(any(), any());
         verify(respostaRepository, never()).findByAtividadeAluno(any());
+    }
+
+    // ---------- Lista da turma (professor) e acesso do aluno à própria folha ----------
+
+    @Test
+    void listarDaTurma_contaQuemIniciouEQuemEntregouCadaAtividade() {
+        Atividade revisao = atividadeDaTurma();
+        Atividade fracoes = new Atividade("Frações", turma, professor);
+        fracoes.definirQuestoes(List.of(q1));
+        ReflectionTestUtils.setField(fracoes, "id", 41L);
+
+        Usuario bia = Usuario.novoAluno("Bia Aluna", "2026002", "hash", turma.getInstituicao());
+        ReflectionTestUtils.setField(bia, "id", 11L);
+        AtividadeAluno entregue = AtividadeAluno.regular(aluno, revisao);
+        entregue.concluir();
+        AtividadeAluno emAndamento = AtividadeAluno.regular(bia, revisao);
+
+        when(acessoTurma.buscarComAcesso(atorProfessor, TURMA_ID)).thenReturn(turma);
+        when(atividadeRepository.findByTurmaId(TURMA_ID)).thenReturn(List.of(revisao, fracoes));
+        when(alunoTurmaRepository.countByTurmaId(TURMA_ID)).thenReturn(25L);
+        when(atividadeAlunoRepository.findByAtividadeIdIn(List.of(ATIVIDADE_ID, 41L)))
+                .thenReturn(List.of(entregue, emAndamento));
+
+        List<AtividadeResumoResponse> lista = service.listarDaTurma(atorProfessor, TURMA_ID);
+
+        assertEquals(2, lista.size());
+        AtividadeResumoResponse primeira = lista.get(0);
+        assertEquals(ATIVIDADE_ID, primeira.id());
+        assertEquals("Revisão", primeira.titulo());
+        assertEquals(TURMA_ID, primeira.turmaId());
+        assertEquals("7º ano A", primeira.turmaNome());
+        assertEquals("Paulo Professor", primeira.professorNome());
+        assertEquals(2, primeira.totalQuestoes());
+        assertEquals(25, primeira.alunosDaTurma());
+        assertEquals(2, primeira.alunosQueIniciaram());
+        assertEquals(1, primeira.alunosQueEntregaram());
+        assertFalse(primeira.prazoEncerrado());
+        assertFalse(primeira.fechada());
+
+        AtividadeResumoResponse segunda = lista.get(1);
+        assertEquals(1, segunda.totalQuestoes());
+        assertEquals(0, segunda.alunosQueIniciaram());
+        assertEquals(0, segunda.alunosQueEntregaram());
+    }
+
+    @Test
+    void listarDaTurma_semAtividades_naoConsultaAsFolhas() {
+        when(acessoTurma.buscarComAcesso(atorProfessor, TURMA_ID)).thenReturn(turma);
+        when(atividadeRepository.findByTurmaId(TURMA_ID)).thenReturn(List.of());
+        when(alunoTurmaRepository.countByTurmaId(TURMA_ID)).thenReturn(25L);
+
+        assertTrue(service.listarDaTurma(atorProfessor, TURMA_ID).isEmpty());
+
+        verifyNoInteractions(atividadeAlunoRepository);
+    }
+
+    @Test
+    void buscarDoAluno_propriaFolha_devolveAFolha() {
+        AtividadeAluno folhaDaAna = AtividadeAluno.regular(aluno, atividadeDaTurma());
+        when(atividadeAlunoRepository.findById(900L)).thenReturn(Optional.of(folhaDaAna));
+
+        assertSame(folhaDaAna, service.buscarDoAluno(ALUNO_ID, 900L));
+    }
+
+    @Test
+    void buscarDoAluno_folhaDeOutroAluno_respondeComoInexistente() {
+        AtividadeAluno folhaDaAna = AtividadeAluno.regular(aluno, atividadeDaTurma());
+        when(atividadeAlunoRepository.findById(900L)).thenReturn(Optional.of(folhaDaAna));
+
+        // RN04: 404 em vez de 403, para não revelar que a folha existe
+        assertThrows(RecursoNaoEncontradoException.class, () -> service.buscarDoAluno(11L, 900L));
+    }
+
+    @Test
+    void obterFolha_inexistente_recusa() {
+        when(atividadeAlunoRepository.findById(901L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNaoEncontradoException.class, () -> service.obterFolha(ALUNO_ID, 901L));
     }
 
     private void dadoQueOProfessorLecionaNaTurma() {
