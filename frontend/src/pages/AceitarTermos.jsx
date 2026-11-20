@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { AceiteTermos } from "../components/AceiteTermos";
 import { Logo } from "../components/Logo";
 import { Mensagens } from "../components/Mensagens";

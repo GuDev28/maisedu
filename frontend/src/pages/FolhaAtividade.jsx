@@ -5,7 +5,7 @@ import { BarraPercentual } from "../components/BarraPercentual";
 import { Carregando } from "../components/Carregando";
 import { Mensagens } from "../components/Mensagens";
 import { formatarDataHora, rotuloNivel } from "../components/rotulos";
-import { useInterface } from "../context/InterfaceContext";
+import { useInterface } from "../context/useInterface";
 
 /** Primeira questão ainda sem alternativa escolhida (ou a primeira, se todas têm). */
 function primeiraSemEscolha(questoes) {

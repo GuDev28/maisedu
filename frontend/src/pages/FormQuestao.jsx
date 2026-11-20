@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useInterface } from "../context/InterfaceContext";
+import { useInterface } from "../context/useInterface";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
 import { Mensagens } from "../components/Mensagens";

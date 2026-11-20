@@ -8,6 +8,17 @@ import { ACOES_AUDITORIA, formatarDataHora, rotuloAcao } from "../components/rot
 
 const FILTROS_INICIAIS = { usuarioId: "", acao: "", de: "", ate: "" };
 
+/** Parâmetros da busca no formato do back-end: as datas viram o começo e o fim do dia. */
+function consultaDosLogs(filtrosDaBusca, numeroPagina) {
+  return {
+    usuarioId: filtrosDaBusca.usuarioId,
+    acao: filtrosDaBusca.acao,
+    de: filtrosDaBusca.de ? `${filtrosDaBusca.de}T00:00:00` : "",
+    ate: filtrosDaBusca.ate ? `${filtrosDaBusca.ate}T23:59:59` : "",
+    pagina: numeroPagina,
+  };
+}
+
 /** RF13: trilha de auditoria da instituição do administrador, com filtros e paginação. */
 export default function Auditoria() {
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
@@ -21,13 +32,7 @@ export default function Auditoria() {
     setCarregando(true);
     setErro(null);
     try {
-      const dados = await listarLogs({
-        usuarioId: filtrosDaBusca.usuarioId,
-        acao: filtrosDaBusca.acao,
-        de: filtrosDaBusca.de ? `${filtrosDaBusca.de}T00:00:00` : "",
-        ate: filtrosDaBusca.ate ? `${filtrosDaBusca.ate}T23:59:59` : "",
-        pagina: numeroPagina,
-      });
+      const dados = await listarLogs(consultaDosLogs(filtrosDaBusca, numeroPagina));
       setResultado(dados);
       setPagina(numeroPagina);
     } catch (err) {
@@ -37,11 +42,14 @@ export default function Auditoria() {
     }
   }
 
+  // só na abertura da tela (página 0, sem filtros)
   useEffect(() => {
-    carregar(0, FILTROS_INICIAIS);
+    listarLogs(consultaDosLogs(FILTROS_INICIAIS, 0))
+      .then(setResultado)
+      .catch((err) => setErro(err.message))
+      .finally(() => setCarregando(false));
     // a lista de ações vem do back-end: uma ação nova aparece no filtro sem mudar o front
     listarAcoes().then(setAcoes).catch(() => {});
-    // só na abertura da tela
   }, []);
 
   function alterar(campo, valor) {
@@ -198,17 +206,23 @@ function BuscaUsuario({ id, usuarioId, aoEscolher }) {
   const [opcoes, setOpcoes] = useState([]);
   const [aberto, setAberto] = useState(false);
 
-  // Filtro limpo por fora (botão Limpar): apaga o texto também.
-  useEffect(() => {
+  // Filtro limpo por fora (botão Limpar): apaga o texto também. O ajuste é feito na renderização,
+  // guardando o último usuário escolhido (o padrão do React para "mudou a prop, ajusta o estado").
+  const [usuarioAnterior, setUsuarioAnterior] = useState(usuarioId);
+  if (usuarioAnterior !== usuarioId) {
+    setUsuarioAnterior(usuarioId);
     if (!usuarioId) {
       setTexto("");
     }
-  }, [usuarioId]);
+  }
+
+  // Só busca com a lista aberta e 2 letras ou mais; fora disso, a lista mostrada fica vazia.
+  const termo = texto.trim();
+  const buscaAtiva = aberto && termo.length >= 2;
+  const opcoesVisiveis = buscaAtiva ? opcoes : [];
 
   useEffect(() => {
-    const termo = texto.trim();
-    if (!aberto || termo.length < 2) {
-      setOpcoes([]);
+    if (!buscaAtiva) {
       return undefined;
     }
     const espera = setTimeout(() => {
@@ -217,7 +231,7 @@ function BuscaUsuario({ id, usuarioId, aoEscolher }) {
         .catch(() => setOpcoes([]));
     }, 250);
     return () => clearTimeout(espera);
-  }, [texto, aberto]);
+  }, [termo, buscaAtiva]);
 
   function escolher(usuario) {
     setTexto(`${usuario.nome} (${usuario.identificadorDeAcesso})`);
@@ -234,7 +248,7 @@ function BuscaUsuario({ id, usuarioId, aoEscolher }) {
         placeholder="Todos (digite para buscar)"
         autoComplete="off"
         role="combobox"
-        aria-expanded={aberto && opcoes.length > 0}
+        aria-expanded={opcoesVisiveis.length > 0}
         aria-controls={`${id}-opcoes`}
         value={texto}
         onChange={(e) => {
@@ -247,9 +261,9 @@ function BuscaUsuario({ id, usuarioId, aoEscolher }) {
         onFocus={() => setAberto(true)}
         onBlur={() => setTimeout(() => setAberto(false), 150)}
       />
-      {aberto && opcoes.length > 0 && (
+      {opcoesVisiveis.length > 0 && (
         <ul id={`${id}-opcoes`} className="list-group position-absolute w-100 shadow-sm me-busca-opcoes" role="listbox">
-          {opcoes.map((usuario) => (
+          {opcoesVisiveis.map((usuario) => (
             <li key={usuario.id} role="option" aria-selected="false">
               <button
                 type="button"

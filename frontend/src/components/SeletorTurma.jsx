@@ -10,25 +10,24 @@ export function SeletorTurma({ valor, aoMudar, turmaInicial, rotulo = "Turma" })
   const [turmas, setTurmas] = useState(null);
   const [erro, setErro] = useState(null);
 
+  // só na montagem: a lista de turmas não muda enquanto a tela está aberta
   useEffect(() => {
     let ativo = true;
     listarMinhasTurmas()
-      .then((lista) => {
-        if (!ativo) {
-          return;
-        }
-        setTurmas(lista);
-        if (!valor && lista.length > 0) {
-          const inicial = lista.find((turma) => String(turma.id) === String(turmaInicial)) ?? lista[0];
-          aoMudar(inicial.id);
-        }
-      })
+      .then((lista) => ativo && setTurmas(lista))
       .catch((err) => ativo && setErro(err.message));
     return () => {
       ativo = false;
     };
-    // só na montagem: a lista de turmas não muda enquanto a tela está aberta
   }, []);
+
+  // Com a lista na mão e nenhuma turma escolhida, escolhe a informada em turmaInicial (ou a primeira).
+  useEffect(() => {
+    if (!valor && turmas?.length > 0) {
+      const inicial = turmas.find((turma) => String(turma.id) === String(turmaInicial)) ?? turmas[0];
+      aoMudar(inicial.id);
+    }
+  }, [turmas, valor, turmaInicial, aoMudar]);
 
   if (erro) {
     return <div className="alert alert-danger py-2">{erro}</div>;

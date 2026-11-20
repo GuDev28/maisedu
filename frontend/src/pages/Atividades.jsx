@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { listarAprovadas } from "../services/questaoService";
 import { alterarPrazo, criarAtividade, listarAtividadesDaTurma, resultadosDaAtividade } from "../services/atividadeService";
-import { useInterface } from "../context/InterfaceContext";
+import { useInterface } from "../context/useInterface";
 import { BarraPercentual } from "../components/BarraPercentual";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
 import { AlternativasComGabarito, EtiquetasQuestao } from "../components/EtiquetasQuestao";
 import { EstadoVazio } from "../components/EstadoVazio";
-import { FILTROS_VAZIOS, FiltrosBanco } from "../components/FiltrosBanco";
+import { FiltrosBanco } from "../components/FiltrosBanco";
 import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SeletorTurma } from "../components/SeletorTurma";
-import { SITUACOES, formatarDataHora, formatarPercentual, paraCampoDataHora, rotuloNivel, tempoAtePrazo } from "../components/rotulos";
+import { FILTROS_VAZIOS, SITUACOES, formatarDataHora, formatarPercentual, paraCampoDataHora, rotuloNivel, tempoAtePrazo } from "../components/rotulos";
 
 const MINUTO = 60 * 1000;
 const DIA = 24 * 60 * MINUTO;
@@ -36,6 +36,11 @@ function prazoSugerido() {
  * seletor de turma) e na aba Atividades da tela da Turma.
  */
 export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
+  // a chave recomeça a seção a cada turma: lista, formulário de nova atividade e erro voltam ao início
+  return <AtividadesDaTurmaConteudo key={turmaId} turmaId={turmaId} podeCriar={podeCriar} />;
+}
+
+function AtividadesDaTurmaConteudo({ turmaId, podeCriar }) {
   const { avisar } = useInterface();
   const [atividades, setAtividades] = useState(null);
   const [resultado, setResultado] = useState(null);
@@ -52,11 +57,9 @@ export function AtividadesDaTurma({ turmaId, podeCriar = true }) {
   }
 
   useEffect(() => {
-    setAtividades(null);
-    setCriando(false);
-    setErro(null);
-    carregar();
-    // recarrega só quando a turma muda
+    listarAtividadesDaTurma(turmaId)
+      .then(setAtividades)
+      .catch((err) => setErro(err.message));
   }, [turmaId]);
 
   async function verResultados(atividadeId) {
@@ -364,7 +367,7 @@ function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [banco, setBanco] = useState(null);
   const [selecionadas, setSelecionadas] = useState([]);
-  const [buscando, setBuscando] = useState(false);
+  const [buscando, setBuscando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -381,7 +384,10 @@ function NovaAtividade({ turmaId, aoCriar, aoCancelar }) {
   }
 
   useEffect(() => {
-    buscar(FILTROS_VAZIOS);
+    listarAprovadas(FILTROS_VAZIOS)
+      .then(setBanco)
+      .catch((err) => setErro(err.message))
+      .finally(() => setBuscando(false));
   }, []);
 
   function alternar(questao) {

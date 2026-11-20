@@ -1,4 +1,5 @@
-import { Dica, useDica } from "./MapaDeCalor";
+import { Dica } from "./MapaDeCalor";
+import { useDica } from "./useDica";
 import { formatarPercentual } from "./rotulos";
 
 /**

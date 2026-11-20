@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useInterface } from "../context/InterfaceContext";
+import { useAuth } from "../context/useAuth";
+import { useInterface } from "../context/useInterface";
 import { cadastrarAluno, cadastrarProfessor } from "../services/usuarioService";
 import { redefinirSenha } from "../services/gestaoUsuarioService";
 import {
@@ -18,8 +18,8 @@ import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SenhaProvisoria } from "../components/SenhaProvisoria";
 import { EmailDoResponsavel } from "../components/EmailDoResponsavel";
-import { SeloEmailAcesso, resultadoDoEnvio } from "../components/SeloEmailAcesso";
-import { rotuloAno } from "../components/rotulos";
+import { SeloEmailAcesso } from "../components/SeloEmailAcesso";
+import { resultadoDoEnvio, rotuloAno } from "../components/rotulos";
 import { AtividadesDaTurma } from "./Atividades";
 import { DesempenhoDaTurma } from "./Desempenho";
 
@@ -43,8 +43,10 @@ export default function Turma() {
   }, [turmaId]);
 
   useEffect(() => {
-    carregar();
-  }, [carregar]);
+    listarMembros(turmaId)
+      .then(setTurma)
+      .catch((err) => setErro(err.message));
+  }, [turmaId]);
 
   if (erro && !turma) {
     return (

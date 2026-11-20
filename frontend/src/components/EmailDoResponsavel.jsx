@@ -2,7 +2,7 @@ import { useState } from "react";
 import { corrigirEmailResponsavel, redefinirSenha } from "../services/gestaoUsuarioService";
 import { Mensagens } from "./Mensagens";
 import { Modal } from "./Modal";
-import { resultadoDoEnvio } from "./SeloEmailAcesso";
+import { resultadoDoEnvio } from "./rotulos";
 
 /**
  * Corrige (ou cadastra, para aluno antigo) o e-mail do responsável. Se o e-mail estava errado, o
