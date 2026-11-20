@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useInterface } from "../context/InterfaceContext";
+import { useInterface } from "../context/useInterface";
 import { enviarParaValidacao, excluirQuestao, listarMinhasQuestoes } from "../services/questaoService";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
 import { AlternativasComGabarito, EtiquetasQuestao } from "../components/EtiquetasQuestao";
 import { EstadoVazio } from "../components/EstadoVazio";
+import { Icone } from "../components/Icone";
 import { Mensagens } from "../components/Mensagens";
-import { STATUS_QUESTAO, formatarDataHora } from "../components/rotulos";
+import { STATUS_QUESTAO, formatarData } from "../components/rotulos";
 
 const VOTOS_PARA_DECIDIR = 3;
 const ABAS = [
@@ -18,22 +19,48 @@ const ABAS = [
   { chave: "REJEITADA", rotulo: "Rejeitadas" },
 ];
 
-/** Placar da votação em linguagem simples ("2 de 3 aprovações · faltam 1"). */
+/** Três casas por lado: cada voto preenche uma; três iguais decidem a questão. */
+function Casas({ quantidade, tipo }) {
+  return (
+    <span className="me-casas" aria-hidden="true">
+      {[1, 2, 3].map((casa) => (
+        <span key={casa} className={casa <= quantidade ? `me-casa-${tipo}` : ""} />
+      ))}
+    </span>
+  );
+}
+
+/** Placar da votação: as casas mostram o andamento e a frase diz o mesmo em palavras. */
 function Placar({ questao }) {
-  if (questao.status === "RASCUNHO") {
-    return <span className="text-secondary small">Ainda não enviada para validação.</span>;
-  }
   const aprovacoes = questao.aprovacoes ?? 0;
   const rejeicoes = questao.rejeicoes ?? 0;
   const faltam = VOTOS_PARA_DECIDIR - Math.max(aprovacoes, rejeicoes);
+  let resumo;
+  if (questao.status === "APROVADA") {
+    resumo = "Aprovada: já está no banco compartilhado.";
+  } else if (questao.status === "REJEITADA") {
+    resumo = "Rejeitada pelos avaliadores.";
+  } else if (faltam > 0) {
+    resumo = `Decide com mais ${faltam} ${faltam === 1 ? "voto igual" : "votos iguais"}.`;
+  } else {
+    resumo = "Aguardando a decisão.";
+  }
   return (
-    <span className="small">
-      <strong className="text-success">{aprovacoes}</strong> de {VOTOS_PARA_DECIDIR} aprovações ·{" "}
-      <strong className="text-danger">{rejeicoes}</strong> rejeição(ões)
-      {questao.status === "PENDENTE" && faltam > 0 && (
-        <span className="text-secondary"> · decide com mais {faltam} voto(s) iguais</span>
-      )}
-    </span>
+    <div className="me-placar">
+      <div className="me-placar-lado">
+        <Casas quantidade={aprovacoes} tipo="sim" />
+        <span>
+          <strong>{aprovacoes}</strong> de {VOTOS_PARA_DECIDIR} aprovações
+        </span>
+      </div>
+      <div className="me-placar-lado">
+        <Casas quantidade={rejeicoes} tipo="nao" />
+        <span>
+          <strong>{rejeicoes}</strong> {rejeicoes === 1 ? "rejeição" : "rejeições"}
+        </span>
+      </div>
+      <span className="me-placar-resumo">{resumo}</span>
+    </div>
   );
 }
 
@@ -54,7 +81,9 @@ export default function MinhasQuestoes() {
   }
 
   useEffect(() => {
-    carregar();
+    listarMinhasQuestoes()
+      .then(setQuestoes)
+      .catch((err) => setErro(err.message));
   }, []);
 
   async function enviar(questao) {
@@ -124,85 +153,100 @@ export default function MinhasQuestoes() {
 
       {questoes?.length > 0 && (
         <>
-          <ul className="nav nav-pills mb-3 gap-1">
+          <div className="me-contadores mb-4" role="group" aria-label="Filtrar por status">
             {ABAS.map((aba) => (
-              <li key={aba.chave} className="nav-item">
-                <button
-                  type="button"
-                  className={`nav-link py-1 ${filtro === aba.chave ? "active" : ""}`}
-                  onClick={() => setFiltro(aba.chave)}
-                >
-                  {aba.rotulo}{" "}
-                  <span className="opacity-75">({aba.chave ? contagem[aba.chave] ?? 0 : questoes.length})</span>
-                </button>
-              </li>
+              <button
+                key={aba.chave}
+                type="button"
+                className={`me-contador me-contador-${(aba.chave || "todas").toLowerCase()} ${filtro === aba.chave ? "ativo" : ""}`}
+                aria-pressed={filtro === aba.chave}
+                onClick={() => setFiltro(aba.chave)}
+              >
+                <span className="me-contador-numero">{aba.chave ? contagem[aba.chave] ?? 0 : questoes.length}</span>
+                <span className="me-contador-rotulo">{aba.rotulo}</span>
+              </button>
             ))}
-          </ul>
+          </div>
 
-          <div className="list-group">
-            {visiveis.map((questao) => (
-              <div key={questao.id} className="list-group-item py-3">
-                <div className="d-flex flex-wrap gap-2 justify-content-between align-items-start">
-                  <div className="flex-grow-1">
-                    <div className="fw-semibold mb-1">{questao.enunciado}</div>
-                    <EtiquetasQuestao questao={questao} mostrarStatus />
-                    <div className="mt-2">
+          <div className="d-flex flex-column gap-3">
+            {visiveis.map((questao) => {
+              const idAlternativas = `alternativas-${questao.id}`;
+              return (
+                <article key={questao.id} className={`card me-questao me-questao-${questao.status.toLowerCase()}`}>
+                  <div className="card-body">
+                    <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                      <EtiquetasQuestao questao={questao} mostrarStatus />
+                      <span className="small text-secondary d-inline-flex align-items-center gap-1">
+                        <Icone nome="relogio" tamanho={15} />
+                        Criada em {formatarData(questao.criadoEm)}
+                      </span>
+                    </div>
+                    <p className="me-questao-enunciado">{questao.enunciado}</p>
+
+                    {questao.status === "RASCUNHO" ? (
+                      <p className="small text-secondary mb-0">Ainda não enviada: só você vê este rascunho.</p>
+                    ) : (
                       <Placar questao={questao} />
+                    )}
+
+                    {questao.status === "REJEITADA" && questao.motivosRejeicao?.length > 0 && (
+                      <div className="me-aviso me-aviso-erro mt-3">
+                        <div className="fw-semibold mb-1">Por que foi rejeitada</div>
+                        <ul className="mb-1 ps-3">
+                          {questao.motivosRejeicao.map((motivo, indice) => (
+                            <li key={indice}>{motivo}</li>
+                          ))}
+                        </ul>
+                        <div className="text-secondary">Corrija e cadastre de novo como uma questão nova.</div>
+                      </div>
+                    )}
+                    {questao.status === "PENDENTE" && questao.motivosRejeicao?.length > 0 && (
+                      <div className="me-aviso me-aviso-atencao mt-3">
+                        <span className="fw-semibold">Comentários de quem rejeitou: </span>
+                        {questao.motivosRejeicao.join(" · ")}
+                      </div>
+                    )}
+
+                    {aberta === questao.id && (
+                      <div id={idAlternativas} className="mt-3">
+                        <AlternativasComGabarito alternativas={questao.alternativas} />
+                      </div>
+                    )}
+
+                    <div className="me-questao-acoes">
+                      <button
+                        type="button"
+                        className={`btn btn-sm me-botao-gabarito ${aberta === questao.id ? "aberto" : ""}`}
+                        aria-expanded={aberta === questao.id}
+                        aria-controls={idAlternativas}
+                        onClick={() => setAberta(aberta === questao.id ? null : questao.id)}
+                      >
+                        {aberta === questao.id ? "Ocultar alternativas" : "Ver alternativas"}
+                        <Icone nome="abaixo" tamanho={16} />
+                      </button>
+                      {questao.status === "RASCUNHO" && (
+                        <div className="d-flex flex-wrap gap-2">
+                          <button type="button" className="btn btn-sm btn-outline-danger me-botao-icone" onClick={() => excluir(questao)}>
+                            <Icone nome="lixeira" tamanho={16} />
+                            Excluir
+                          </button>
+                          <Link to={`/questoes/${questao.id}/editar`} className="btn btn-sm btn-outline-secondary me-botao-icone">
+                            <Icone nome="editar" tamanho={16} />
+                            Editar
+                          </Link>
+                          <button type="button" className="btn btn-sm btn-primary me-botao-icone" onClick={() => enviar(questao)}>
+                            <Icone nome="enviar" tamanho={16} />
+                            Enviar para validação
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="d-flex flex-wrap gap-1">
-                    {questao.status === "RASCUNHO" && (
-                      <>
-                        <button type="button" className="btn btn-sm btn-primary" onClick={() => enviar(questao)}>
-                          Enviar para validação
-                        </button>
-                        <Link to={`/questoes/${questao.id}/editar`} className="btn btn-sm btn-outline-secondary">
-                          Editar
-                        </Link>
-                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => excluir(questao)}>
-                          Excluir
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-link"
-                      aria-expanded={aberta === questao.id}
-                      onClick={() => setAberta(aberta === questao.id ? null : questao.id)}
-                    >
-                      {aberta === questao.id ? "Ocultar" : "Ver alternativas"}
-                    </button>
-                  </div>
-                </div>
-
-                {questao.status === "REJEITADA" && questao.motivosRejeicao?.length > 0 && (
-                  <div className="alert alert-danger py-2 mt-3 mb-0">
-                    <div className="fw-semibold small mb-1">Por que foi rejeitada</div>
-                    <ul className="mb-0 small ps-3">
-                      {questao.motivosRejeicao.map((motivo, indice) => (
-                        <li key={indice}>{motivo}</li>
-                      ))}
-                    </ul>
-                    <div className="small mt-1">Corrija e cadastre de novo como uma questão nova.</div>
-                  </div>
-                )}
-                {questao.status === "PENDENTE" && questao.motivosRejeicao?.length > 0 && (
-                  <div className="alert alert-warning py-2 mt-3 mb-0 small">
-                    <span className="fw-semibold">Comentários de quem rejeitou: </span>
-                    {questao.motivosRejeicao.join(" · ")}
-                  </div>
-                )}
-
-                {aberta === questao.id && (
-                  <div className="mt-3">
-                    <AlternativasComGabarito alternativas={questao.alternativas} />
-                    <div className="small text-secondary mt-2">Criada em {formatarDataHora(questao.criadoEm)}</div>
-                  </div>
-                )}
-              </div>
-            ))}
+                </article>
+              );
+            })}
             {visiveis.length === 0 && (
-              <div className="list-group-item text-secondary">Nenhuma questão com o status {STATUS_QUESTAO[filtro]?.rotulo.toLowerCase()}.</div>
+              <p className="text-secondary">Nenhuma questão com o status {STATUS_QUESTAO[filtro]?.rotulo.toLowerCase()}.</p>
             )}
           </div>
         </>

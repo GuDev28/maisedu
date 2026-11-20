@@ -3,7 +3,7 @@ import { listarTopicos } from "../services/questaoService";
 import { ANOS_ESCOLARES, NIVEIS } from "./rotulos";
 
 /** Filtros do banco compartilhado (tópico, nível e ano), usados no Banco de questões e na Nova atividade. */
-export function FiltrosBanco({ filtros, aoMudar, aoBuscar, buscando }) {
+export function FiltrosBanco({ filtros, aoMudar, aoBuscar, buscando, className = "mb-3" }) {
   const [topicos, setTopicos] = useState([]);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function FiltrosBanco({ filtros, aoMudar, aoBuscar, buscando }) {
 
   return (
     <form
-      className="row g-2 align-items-end mb-3"
+      className={`row g-2 align-items-end ${className}`}
       onSubmit={(evento) => {
         evento.preventDefault();
         aoBuscar();
@@ -69,5 +69,3 @@ export function FiltrosBanco({ filtros, aoMudar, aoBuscar, buscando }) {
     </form>
   );
 }
-
-export const FILTROS_VAZIOS = { topicoId: "", nivel: "", anoEscolar: "" };
