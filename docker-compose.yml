@@ -2,9 +2,8 @@
 #   docker compose up --build
 # Front-end: http://localhost:8081   (a API fica em http://localhost:8081/api)
 #
-# Por padrão roda no perfil "dev": com o banco vazio, cria o cenário de demonstração
-# (contas na saída do back-end: docker compose logs backend). Variáveis em .env (veja .env.example).
-# Para a escola de volume (1000 alunos simulados, para os painéis): SPRING_PROFILES_ACTIVE=dev,demo-volume
+# Por padrão roda no perfil "dev": com o banco vazio, cria o cenário de demonstração, com duas escolas e
+# 1000 alunos simulados (contas na saída do back-end: docker compose logs backend). Variáveis em .env (veja .env.example).
 
 services:
   db:
