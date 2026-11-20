@@ -130,9 +130,8 @@ abstract class IntegracaoTestBase {
         String hash = passwordEncoder.encode(SENHA_DEFINITIVA);
 
         Usuario admin = new Usuario(nome, email, hash, instituicao);
-        // Igual ao SeedInicial: o admin acumula o papel de professor
+        // Igual ao SeedInicial: o admin administra a escola e não acumula o papel de professor
         admin.adicionarRole(buscarRole(RoleNome.ADMIN));
-        admin.adicionarRole(buscarRole(RoleNome.PROFESSOR));
         // Marca o primeiro acesso como ja feito (senhaTemporaria = false e termos vigentes aceitos)
         admin.trocarSenha(hash);
         admin.aceitarTermos(versaoTermosAtual);

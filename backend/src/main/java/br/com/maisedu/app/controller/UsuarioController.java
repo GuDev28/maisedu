@@ -31,13 +31,17 @@ public class UsuarioController {
         return UsuarioCadastradoResponse.semSenha(novo.usuario(), statusDoEnvio(novo.usuario().getId()));
     }
 
+    /**
+     * O professor cadastra alunos nas turmas em que leciona; o admin, em qualquer turma da escola (o admin
+     * não precisa ter o papel de professor para isso). A permissão sobre a turma é conferida no vínculo.
+     */
     @PostMapping("/alunos")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('PROFESSOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROFESSOR')")
     public UsuarioCadastradoResponse cadastrarAluno(
-            @AuthenticationPrincipal UsuarioAutenticado professor,
+            @AuthenticationPrincipal UsuarioAutenticado ator,
             @Valid @RequestBody CadastroAlunoRequest request) {
-        var novo = usuarioService.cadastrarAluno(professor, request.nome(), request.emailResponsavel(),
+        var novo = usuarioService.cadastrarAluno(ator, request.nome(), request.emailResponsavel(),
                 request.turmaId());
         // a senha provisória foi para o e-mail do responsável: não volta para quem cadastrou (o login volta)
         return UsuarioCadastradoResponse.semSenha(novo.usuario(), statusDoEnvio(novo.usuario().getId()));

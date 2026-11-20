@@ -1,7 +1,8 @@
 /**
- * Menu lateral por perfil, no mesmo formato do antigo GRUPOS, agora com rotas. O admin também tem
- * o papel PROFESSOR: as seções de professor aparecem para ele com o título "Ensino", e itens com
- * {@code somenteSemRole: "ADMIN"} ficam de fora (a tela Turmas dele já cobre todas as turmas).
+ * Menu lateral por perfil, no mesmo formato do antigo GRUPOS, agora com rotas. O admin normalmente
+ * tem só o papel ADMIN; se também lecionar (exceção), as seções de professor aparecem para ele com o
+ * título "Ensino", e itens com {@code somenteSemRole: "ADMIN"} ficam de fora (a tela Turmas dele já
+ * cobre todas as turmas).
  * O servidor confere o papel em toda requisição; o menu só esconde o que o perfil não usa.
  */
 export const MENU = [

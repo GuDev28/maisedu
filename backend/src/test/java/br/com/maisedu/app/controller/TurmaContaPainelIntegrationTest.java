@@ -163,6 +163,31 @@ class TurmaContaPainelIntegrationTest extends IntegracaoTestBase {
     }
 
     @Test
+    void adminSemPapelDeProfessorCadastraAlunoJaNaTurmaMasNaoUsaAsTelasDoProfessor() {
+        // o admin administra a escola e não leciona: mesmo assim cadastra alunos em qualquer turma
+        long ts = System.nanoTime();
+        ResponseEntity<UsuarioCadastradoResponse> alunoCriado = client.post().uri("/alunos")
+                .header(HttpHeaders.COOKIE, cookie(admin))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CadastroAlunoRequest("Aluno " + ts, "resp." + ts + "@familia.test", turmaId))
+                .retrieve()
+                .toEntity(UsuarioCadastradoResponse.class);
+        assertThat(alunoCriado.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(alunoCriado.getBody().senhaProvisoria()).as("a senha vai para o responsável").isNull();
+        Long alunoId = alunoCriado.getBody().id();
+        assertThat(senhaEnviadaAoResponsavel(alunoId, "resp." + ts + "@familia.test")).isNotBlank();
+        assertThat(idsDosMembros(membros(admin).alunos())).containsExactly(alunoId);
+        assertThat(membros(admin).professores()).as("o admin não vira professor da turma").isEmpty();
+
+        // banco de questões, validação e atividades continuam só com o papel de professor
+        ResponseEntity<ErroResponse> topicos = client.get().uri("/topicos")
+                .header(HttpHeaders.COOKIE, cookie(admin))
+                .retrieve()
+                .toEntity(ErroResponse.class);
+        assertThat(topicos.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void inicioDoAdminContaTurmasEPessoasDaPropriaInstituicao() {
         Conta professor = cadastrarProfessor(admin);
         cadastrarAlunoSemAtivar(professor);

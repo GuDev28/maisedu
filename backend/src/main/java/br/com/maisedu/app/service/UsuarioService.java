@@ -69,16 +69,17 @@ public class UsuarioService {
      * Cadastra o aluno na instituição de quem cadastra. O login é gerado pelo sistema (único em
      * todas as escolas) e o aluno não tem e-mail próprio: o login e a senha provisória vão para o
      * e-mail do responsável (depois do commit). Quem cadastra vê o login, mas não a senha. Com a
-     * turma informada, já faz o vínculo no mesmo passo (RN01).
+     * turma informada, já faz o vínculo no mesmo passo (RN01): o professor só nas turmas em que
+     * leciona, o admin em qualquer turma da escola (conferido em {@link VinculoTurmaService#vincularAluno}).
      */
     @Transactional
-    public NovoUsuario cadastrarAluno(UsuarioAutenticado professor, String nomeInformado,
+    public NovoUsuario cadastrarAluno(UsuarioAutenticado ator, String nomeInformado,
                                       String emailResponsavelInformado, Long turmaId) {
         String nome = nomeInformado.strip();
         String emailResponsavel = Identificadores.normalizar(emailResponsavelInformado);
         String login = geradorLogin.gerar(usuarioRepository::existsByLogin);
 
-        Instituicao instituicao = instituicaoRepository.findById(professor.instituicaoId())
+        Instituicao instituicao = instituicaoRepository.findById(ator.instituicaoId())
                 .orElseThrow(() -> new NegocioException("Instituição não encontrada."));
 
         String senhaProvisoria = senhaGeradora.gerar();
@@ -87,9 +88,9 @@ public class UsuarioService {
         aluno.adicionarRole(buscarRole(RoleNome.ALUNO));
 
         Usuario salvo = usuarioRepository.save(aluno);
-        auditoriaService.registrar(professor, AcaoAuditoria.CADASTRO_ALUNO, "Usuario", salvo.getId(), true, null);
+        auditoriaService.registrar(ator, AcaoAuditoria.CADASTRO_ALUNO, "Usuario", salvo.getId(), true, null);
         if (turmaId != null) {
-            vinculoTurmaService.vincularAluno(salvo.getId(), turmaId, professor);
+            vinculoTurmaService.vincularAluno(salvo.getId(), turmaId, ator);
         }
 
         emailService.enviarAcessoAoResponsavel(salvo.getId(), nome, login, instituicao.getNome(), emailResponsavel,
