@@ -182,10 +182,18 @@ class FluxoAtividadeIntegrationTest extends IntegracaoTestBase {
         assertNotNull(doAluno);
         assertEquals(AtividadeAlunoResumoResponse.ENTREGUE, doAluno.situacao());
         assertEquals(1, doAluno.acertos());
-        ResultadoAtividadeResponse.AnaliseQuestao analiseQ2 = resultado.analise().get(0);
-        assertEquals(1, analiseQ2.respostas());
-        assertEquals(0, analiseQ2.acertos());
-        assertEquals('A', analiseQ2.erroMaisComum().letra());
+        // A análise vem na ordem da atividade (Q2, Q1); o aluno errou a Q1 marcando A
+        ResultadoAtividadeResponse.AnaliseQuestao analiseQ1 = null;
+        for (ResultadoAtividadeResponse.AnaliseQuestao analise : resultado.analise()) {
+            if (analise.questaoId().equals(q1)) {
+                analiseQ1 = analise;
+            }
+        }
+        assertNotNull(analiseQ1);
+        assertEquals(2, analiseQ1.ordem());
+        assertEquals(1, analiseQ1.respostas());
+        assertEquals(0, analiseQ1.acertos());
+        assertEquals('A', analiseQ1.erroMaisComum().letra());
 
         // O prazo termina (simulado) e a rotina de fechamento contabiliza o desempenho
         Atividade daAtividade = atividadeRepository.findById(atividadeId).orElseThrow();

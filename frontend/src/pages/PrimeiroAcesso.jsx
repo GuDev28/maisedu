@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { AceiteTermos } from "../components/AceiteTermos";
 import { CamposSenhaNova } from "../components/CampoSenhaNova";
 import { Logo } from "../components/Logo";

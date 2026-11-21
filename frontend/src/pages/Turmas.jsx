@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useInterface } from "../context/InterfaceContext";
+import { useAuth } from "../context/useAuth";
+import { useInterface } from "../context/useInterface";
 import { cadastrarTurma, desativarTurma, listarMinhasTurmas, listarTurmasParaGestao, reativarTurma } from "../services/turmaService";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
@@ -35,7 +35,9 @@ function TurmasDaEscola() {
   }
 
   useEffect(() => {
-    carregar();
+    listarTurmasParaGestao()
+      .then(setTurmas)
+      .catch((err) => setErro(err.message));
   }, []);
 
   async function alternar(turma) {

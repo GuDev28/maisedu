@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as authService from "../services/authService";
 import { EVENTO_SESSAO_EXPIRADA } from "../services/http";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./contextos";
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -70,12 +69,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const contexto = useContext(AuthContext);
-  if (!contexto) {
-    throw new Error("useAuth precisa ser usado dentro de um AuthProvider");
-  }
-  return contexto;
 }

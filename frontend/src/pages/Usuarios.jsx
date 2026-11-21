@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useInterface } from "../context/InterfaceContext";
+import { useAuth } from "../context/useAuth";
+import { useInterface } from "../context/useInterface";
 import {
   anonimizarUsuario,
   corrigirNome,
@@ -19,10 +19,15 @@ import { Mensagens } from "../components/Mensagens";
 import { Modal } from "../components/Modal";
 import { SenhaProvisoria } from "../components/SenhaProvisoria";
 import { EmailDoResponsavel } from "../components/EmailDoResponsavel";
-import { SeloEmailAcesso, resultadoDoEnvio } from "../components/SeloEmailAcesso";
-import { PAPEIS, rotuloAno } from "../components/rotulos";
+import { SeloEmailAcesso } from "../components/SeloEmailAcesso";
+import { PAPEIS, resultadoDoEnvio, rotuloAno } from "../components/rotulos";
 
 const POR_PAGINA = 20;
+
+/** Parâmetros da listagem paginada no formato do back-end (vazio = sem filtro). */
+function consultaDeUsuarios(papel, busca, numeroPagina) {
+  return { papel: papel || undefined, busca: busca || undefined, pagina: numeroPagina, tamanho: POR_PAGINA };
+}
 
 /**
  * Admin: usuários da escola, cadastro de professor (já podendo escolher a turma) e os controles
@@ -45,22 +50,22 @@ export default function Usuarios() {
 
   async function carregar() {
     try {
-      setPagina(
-        await listarUsuarios({
-          papel: papel || undefined,
-          busca: buscaAplicada || undefined,
-          pagina: numeroPagina,
-          tamanho: POR_PAGINA,
-        })
-      );
+      setPagina(await listarUsuarios(consultaDeUsuarios(papel, buscaAplicada, numeroPagina)));
     } catch (err) {
       setErro(err.message);
     }
   }
 
+  // recarrega quando o filtro, a busca ou a página mudam; a resposta de um filtro antigo que chegue
+  // atrasada é descartada
   useEffect(() => {
-    carregar();
-    // recarrega quando o filtro, a busca ou a página mudam
+    let ativa = true;
+    listarUsuarios(consultaDeUsuarios(papel, buscaAplicada, numeroPagina))
+      .then((dados) => ativa && setPagina(dados))
+      .catch((err) => ativa && setErro(err.message));
+    return () => {
+      ativa = false;
+    };
   }, [papel, buscaAplicada, numeroPagina]);
 
   // Busca aplicada 300 ms depois da última tecla, voltando para a primeira página.

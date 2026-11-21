@@ -1,11 +1,11 @@
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Modal } from "../components/Modal";
+import { InterfaceContext } from "./contextos";
 
 /**
  * Avisos que somem sozinhos (toasts) e confirmações em modal, no lugar de window.alert,
  * window.confirm e window.prompt.
  */
-const InterfaceContext = createContext(null);
 
 let proximoId = 1;
 
@@ -96,12 +96,4 @@ export function InterfaceProvider({ children }) {
       )}
     </InterfaceContext.Provider>
   );
-}
-
-export function useInterface() {
-  const contexto = useContext(InterfaceContext);
-  if (!contexto) {
-    throw new Error("useInterface precisa ser usado dentro de um InterfaceProvider");
-  }
-  return contexto;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { CartaoNumero } from "../../components/CartaoNumero";
 import { Carregando } from "../../components/Carregando";
 import { Mensagens } from "../../components/Mensagens";
@@ -9,14 +9,18 @@ import { listarQuestoesPendentes } from "../../services/questaoService";
 
 export default function InicioAdmin() {
   const { usuario } = useAuth();
+  // o admin pode também lecionar (exceção); só então participa da validação de questões
+  const ehProfessor = usuario.roles.includes("PROFESSOR");
   const [painel, setPainel] = useState(null);
   const [fila, setFila] = useState(null);
   const [erro, setErro] = useState(null);
 
   useEffect(() => {
     resumoDaInstituicao().then(setPainel).catch((err) => setErro(err.message));
-    listarQuestoesPendentes().then((lista) => setFila(lista.length)).catch(() => setFila(null));
-  }, []);
+    if (ehProfessor) {
+      listarQuestoesPendentes().then((lista) => setFila(lista.length)).catch(() => setFila(null));
+    }
+  }, [ehProfessor]);
 
   return (
     <>
@@ -89,17 +93,26 @@ export default function InicioAdmin() {
                 rotulo="Questões aprovadas no banco compartilhado"
                 valor={painel.questoesNoBancoCompartilhado}
                 detalhe="de todas as escolas, prontas para usar em atividades"
-                para="/questoes/banco"
+                para={ehProfessor ? "/questoes/banco" : "/painel-escola"}
               />
             </div>
             <div className="col-md-6">
-              <CartaoNumero
-                rotulo="Questões esperando o seu voto"
-                valor={fila ?? "—"}
-                detalhe="você também é professor e participa da validação"
-                para="/questoes/avaliar"
-                tom={fila > 0 ? "warning" : ""}
-              />
+              {ehProfessor ? (
+                <CartaoNumero
+                  rotulo="Questões esperando o seu voto"
+                  valor={fila ?? "—"}
+                  detalhe="você também é professor e participa da validação"
+                  para="/questoes/avaliar"
+                  tom={fila > 0 ? "warning" : ""}
+                />
+              ) : (
+                <CartaoNumero
+                  rotulo="Contas desativadas"
+                  valor={painel.contasDesativadas}
+                  detalhe="podem ser reativadas na tela Usuários"
+                  para="/usuarios"
+                />
+              )}
             </div>
           </div>
 

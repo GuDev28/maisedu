@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useInterface } from "../context/InterfaceContext";
+import { useAuth } from "../context/useAuth";
+import { useInterface } from "../context/useInterface";
 import { meusDados, minhaConta } from "../services/authService";
 import { baixarJson } from "../services/http";
 import { Cabecalho } from "../components/Cabecalho";

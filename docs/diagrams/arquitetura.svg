@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="1780" height="1200" viewBox="0 0 1780 1200">
+<defs>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="7"/>
+    <feOffset dy="5" result="b"/>
+    <feComponentTransfer><feFuncA type="linear" slope=".10"/></feComponentTransfer>
+    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+    <circle cx="1.5" cy="1.5" r="1.1" fill="#cbd5e1" fill-opacity=".55"/>
+  </pattern>
+  <linearGradient id="hdr" x1="0" x2="1">
+    <stop offset="0" stop-color="#4f46e5"/><stop offset=".55" stop-color="#0d9488"/><stop offset="1" stop-color="#db2777"/>
+  </linearGradient>
+  <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+    <path d="M1 1.5L10.5 6 1 10.5 3.2 6z" fill="#334155"/>
+  </marker>
+</defs>
+<rect width="1780" height="1200" fill="#f8fafc"/>
+<rect width="1780" height="1200" fill="url(#dots)"/>
+<rect x="0" y="0" width="1780" height="6" fill="url(#hdr)"/>
+<text x="40" y="78" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="38" font-weight="800" fill="#0f172a">MaisEdu<tspan font-weight="400" fill="#64748b"> — Arquitetura</tspan></text>
+<text x="42" y="112" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15.5" fill="#64748b">Desenvolvimento: três contêineres no Docker Compose · navegador e API na mesma origem</text>
+<rect x="42" y="132" width="215.6" height="24" rx="12" fill="#ffffff" stroke="#0f172a" stroke-opacity=".28"/>
+<text x="149.8" y="148.2" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-size="12" font-weight="600" fill="#0f172a">$ docker compose up --build</text>
+<rect x="271.64" y="132" width="108.0" height="24" rx="12" fill="#ecfdf8" stroke="#0d9488" stroke-opacity=".28"/>
+<text x="325.6" y="148.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#0d9488">Mesma origem</text>
+<rect x="387.64" y="132" width="130.5" height="24" rx="12" fill="#f0f1ff" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="452.9" y="148.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#4f46e5">Cookie HttpOnly</text>
+<rect x="526.14" y="132" width="130.5" height="24" rx="12" fill="#f0f1ff" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="591.4" y="148.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#4f46e5">SameSite=Strict</text>
+<rect x="664.64" y="132" width="78.0" height="24" rx="12" fill="#fff0f6" stroke="#db2777" stroke-opacity=".28"/>
+<text x="703.6" y="148.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#db2777">Sem CORS</text>
+<rect x="750.64" y="132" width="333.0" height="24" rx="12" fill="#f1f5f9" stroke="#475569" stroke-opacity=".28"/>
+<text x="917.1" y="148.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#475569">Produção: Render · domínio próprio · HTTPS</text>
+<rect x="300" y="196" width="1450" height="820" rx="28" fill="#ffffff" fill-opacity=".55" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="9 7"/>
+<rect x="324" y="180" width="196" height="32" rx="16" fill="#ffffff" stroke="#94a3b8"/>
+<g transform="translate(336,186) scale(0.8333333333333334)" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#0284c7"><path d="M12 2.8l8.5 4.6v9.2L12 21.2l-8.5-4.6V7.4z"/><path d="M3.8 7.6L12 12l8.2-4.4M12 12v9"/></g>
+<text x="364" y="201" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Docker Compose</text>
+<rect x="330" y="236" width="740" height="258" rx="22" fill="#ecfdf8" stroke="#99e6d6" stroke-width="1.4"/>
+<g transform="translate(350,251) scale(0.9166666666666666)" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#0d9488"><rect x="2.5" y="3.5" width="19" height="13" rx="2"/><path d="M8.5 20.5h7M12 16.5v4"/></g>
+<text x="382" y="268" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#0d9488">frontend</text>
+<text x="1046" y="268" text-anchor="end" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14" fill="#64748b">nginx 1.27 · porta 8081</text>
+<rect x="1380" y="236" width="340" height="258" rx="22" fill="#fff0f6" stroke="#f9bcd8" stroke-width="1.4"/>
+<g transform="translate(1400,251) scale(0.9166666666666666)" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#db2777"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8v-13"/><path d="M4.5 12c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8"/></g>
+<text x="1432" y="268" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#db2777">db</text>
+<text x="1696" y="268" text-anchor="end" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14" fill="#64748b">PostgreSQL 17</text>
+<rect x="330" y="548" width="1390" height="438" rx="22" fill="#f0f1ff" stroke="#c7cbfb" stroke-width="1.4"/>
+<g transform="translate(350,563) scale(0.9166666666666666)" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#4f46e5"><rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><circle cx="7" cy="7" r=".9" fill="currentColor"/><circle cx="7" cy="17" r=".9" fill="currentColor"/><path d="M11 7h6M11 17h6"/></g>
+<text x="382" y="580" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#4f46e5">backend</text>
+<text x="1696" y="580" text-anchor="end" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14" fill="#64748b">Spring Boot 4.1 · Java 25 · porta 8080</text>
+<rect x="28" y="296" width="246" height="164" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="28" y="314" width="4" height="128" rx="2" fill="#475569"/>
+<rect x="46" y="314" width="44" height="44" rx="12" fill="#f1f5f9"/>
+<g transform="translate(55.0,323.0) scale(1.0833333333333333)" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#475569"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M2.5 8.5h19"/><circle cx="5.5" cy="6.25" r=".6" fill="currentColor"/><circle cx="7.8" cy="6.25" r=".6" fill="currentColor"/><path d="M7 15l2-2-2-2M11 15.5h4"/></g>
+<text x="102" y="334" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Navegador</text>
+<text x="102" y="354" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Usuários por perfil</text>
+<rect x="46" y="420" width="54.0" height="24" rx="12" fill="#f1f5f9" stroke="#475569" stroke-opacity=".28"/>
+<text x="73.0" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#475569">admin</text>
+<rect x="107.0" y="420" width="82.8" height="24" rx="12" fill="#f1f5f9" stroke="#475569" stroke-opacity=".28"/>
+<text x="148.4" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#475569">professor</text>
+<rect x="196.8" y="420" width="54.0" height="24" rx="12" fill="#f1f5f9" stroke="#475569" stroke-opacity=".28"/>
+<text x="223.8" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#475569">aluno</text>
+<rect x="366" y="296" width="316" height="164" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="366" y="314" width="4" height="128" rx="2" fill="#0d9488"/>
+<rect x="384" y="314" width="44" height="44" rx="12" fill="#ecfdf8"/>
+<g transform="translate(393.0,323.0) scale(1.0833333333333333)" fill="none" stroke="#0d9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#0d9488"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text x="440" y="334" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">SPA React 19 + Vite 8</text>
+<text x="440" y="354" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Menu lateral por perfil</text>
+<rect x="384" y="420" width="118.8" height="24" rx="12" fill="#ecfdf8" stroke="#0d9488" stroke-opacity=".28"/>
+<text x="443.4" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#0d9488">React Router 7</text>
+<rect x="509.8" y="420" width="111.6" height="24" rx="12" fill="#ecfdf8" stroke="#0d9488" stroke-opacity=".28"/>
+<text x="565.6" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#0d9488">Bootstrap 5.3</text>
+<rect x="738" y="296" width="300" height="164" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="738" y="314" width="4" height="128" rx="2" fill="#0d9488"/>
+<rect x="756" y="314" width="44" height="44" rx="12" fill="#ecfdf8"/>
+<g transform="translate(765.0,323.0) scale(1.0833333333333333)" fill="none" stroke="#0d9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#0d9488"><path d="M3 12h7"/><path d="M10 12c3 0 4-5 8-5h3"/><path d="M10 12c3 0 4 5 8 5h3"/><path d="M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></g>
+<text x="812" y="334" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Proxy /api</text>
+<text x="812" y="354" font-family="DejaVu Sans Mono, monospace" font-size="12" fill="#64748b">/api/*  → backend:8080</text>
+<text x="812" y="372" font-family="DejaVu Sans Mono, monospace" font-size="12" fill="#64748b">demais  → index.html</text>
+<rect x="1410" y="296" width="280" height="164" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="1410" y="314" width="4" height="128" rx="2" fill="#db2777"/>
+<rect x="1428" y="314" width="44" height="44" rx="12" fill="#fff0f6"/>
+<g transform="translate(1437.0,323.0) scale(1.0833333333333333)" fill="none" stroke="#db2777" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#db2777"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8v-13"/><path d="M4.5 12c0 1.55 3.36 2.8 7.5 2.8s7.5-1.25 7.5-2.8"/></g>
+<text x="1484" y="334" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">PostgreSQL 17</text>
+<text x="1484" y="354" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Esquema só por Flyway (V1–V11)</text>
+<rect x="1428" y="420" width="75.6" height="24" rx="12" fill="#fff0f6" stroke="#db2777" stroke-opacity=".28"/>
+<text x="1465.8" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#db2777">triggers</text>
+<rect x="1510.6" y="420" width="61.2" height="24" rx="12" fill="#fff0f6" stroke="#db2777" stroke-opacity=".28"/>
+<text x="1541.2" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#db2777">CHECKs</text>
+<rect x="1578.8" y="420" width="68.4" height="24" rx="12" fill="#fff0f6" stroke="#db2777" stroke-opacity=".28"/>
+<text x="1613.0" y="436.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#db2777">EXCLUDE</text>
+<rect x="362" y="612" width="300" height="150" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="362" y="630" width="4" height="114" rx="2" fill="#4f46e5"/>
+<rect x="380" y="630" width="44" height="44" rx="12" fill="#e9eafe"/>
+<g transform="translate(389.0,639.0) scale(1.0833333333333333)" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#4f46e5"><path d="M12 2.8l8 3v6c0 4.8-3.4 8.4-8 9.6-4.6-1.2-8-4.8-8-9.6v-6z"/><rect x="8.8" y="11" width="6.4" height="5" rx="1"/><path d="M10.2 11V9.6a1.8 1.8 0 013.6 0V11"/></g>
+<text x="436" y="650" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Spring Security</text>
+<text x="436" y="670" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Filtro JWT do cookie · RBAC</text>
+<text x="436" y="688" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Confere conta e sessão no banco</text>
+<rect x="712" y="612" width="270" height="150" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="712" y="630" width="4" height="114" rx="2" fill="#4f46e5"/>
+<rect x="730" y="630" width="44" height="44" rx="12" fill="#e9eafe"/>
+<g transform="translate(739.0,639.0) scale(1.0833333333333333)" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#4f46e5"><path d="M8 4H7a2 2 0 00-2 2v3.5a2 2 0 01-2 2.5 2 2 0 012 2.5V18a2 2 0 002 2h1M16 4h1a2 2 0 012 2v3.5a2 2 0 002 2.5 2 2 0 00-2 2.5V18a2 2 0 01-2 2h-1"/><circle cx="9.5" cy="12" r=".9" fill="currentColor"/><circle cx="12" cy="12" r=".9" fill="currentColor"/><circle cx="14.5" cy="12" r=".9" fill="currentColor"/></g>
+<text x="786" y="650" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Controllers REST</text>
+<text x="786" y="670" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Endpoints da API</text>
+<rect x="730" y="722" width="127.8" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="793.9" y="738.2" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-size="12" font-weight="600" fill="#4f46e5">@RestController</text>
+<rect x="1032" y="612" width="300" height="150" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="1032" y="630" width="4" height="114" rx="2" fill="#4f46e5"/>
+<rect x="1050" y="630" width="44" height="44" rx="12" fill="#e9eafe"/>
+<g transform="translate(1059.0,639.0) scale(1.0833333333333333)" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#4f46e5"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1L5.3 5.3"/><circle cx="12" cy="12" r="6.4"/></g>
+<text x="1106" y="650" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Services</text>
+<text x="1106" y="670" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Regras de negócio RN01–RN06</text>
+<rect x="1050" y="722" width="97.2" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="1098.6" y="738.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">AcessoTurma</text>
+<rect x="1154.2" y="722" width="82.8" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="1195.6" y="738.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">Auditoria</text>
+<rect x="1244.0" y="722" width="46.8" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="1267.4" y="738.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">LGPD</text>
+<rect x="1382" y="612" width="306" height="150" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="1382" y="630" width="4" height="114" rx="2" fill="#4f46e5"/>
+<rect x="1400" y="630" width="44" height="44" rx="12" fill="#e9eafe"/>
+<g transform="translate(1409.0,639.0) scale(1.0833333333333333)" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#4f46e5"><path d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5L12 21l9-4.5"/></g>
+<text x="1456" y="650" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Repositories</text>
+<text x="1456" y="670" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Spring Data JPA</text>
+<rect x="1400" y="722" width="82.8" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="1441.4" y="738.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">Hibernate</text>
+<rect x="1489.8" y="722" width="39.6" height="24" rx="12" fill="#e9eafe" stroke="#4f46e5" stroke-opacity=".28"/>
+<text x="1509.6" y="738.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#4f46e5">JPA</text>
+<rect x="712" y="818" width="270" height="130" rx="16" fill="#fff8e6" stroke="#f6d58a" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="712" y="836" width="4" height="94" rx="2" fill="#d97706"/>
+<rect x="730" y="836" width="44" height="44" rx="12" fill="#fdeebf"/>
+<g transform="translate(739.0,845.0) scale(1.0833333333333333)" fill="none" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#d97706"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></g>
+<text x="786" y="856" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">MotorAdaptativo</text>
+<text x="786" y="876" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">Classe pura · RN06</text>
+<rect x="730" y="908" width="133.2" height="24" rx="12" fill="#fdeebf" stroke="#d97706" stroke-opacity=".28"/>
+<text x="796.6" y="924.2" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12" font-weight="600" fill="#d97706">sem dependências</text>
+<rect x="1032" y="1046" width="300" height="130" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+<rect x="1032" y="1064" width="4" height="94" rx="2" fill="#475569"/>
+<rect x="1050" y="1064" width="44" height="44" rx="12" fill="#f1f5f9"/>
+<g transform="translate(1059.0,1073.0) scale(1.0833333333333333)" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" color="#475569"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3.2 6.5l8.8 6.6 8.8-6.6"/></g>
+<text x="1106" y="1084" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17.5" font-weight="700" fill="#0f172a">Resend</text>
+<text x="1106" y="1104" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">E-mail da senha provisória</text>
+<text x="1106" y="1122" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">enviado depois do commit</text>
+<rect x="36" y="1060" width="420" height="100" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="58" y="1090" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Legenda</text>
+<path d="M58 1114h46" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="116" y="1118" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">requisição / chamada direta</text>
+<path d="M58 1140h46" stroke="#334155" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<text x="116" y="1144" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="13" fill="#64748b">uso auxiliar / serviço externo</text>
+<rect x="330" y="1079" width="11" height="11" rx="3" fill="#0d9488"/>
+<text x="349" y="1089" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" fill="#64748b">frontend</text>
+<rect x="330" y="1097" width="11" height="11" rx="3" fill="#4f46e5"/>
+<text x="349" y="1107" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" fill="#64748b">backend</text>
+<rect x="330" y="1115" width="11" height="11" rx="3" fill="#db2777"/>
+<text x="349" y="1125" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" fill="#64748b">banco</text>
+<rect x="330" y="1133" width="11" height="11" rx="3" fill="#475569"/>
+<text x="349" y="1143" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" fill="#64748b">externo</text>
+<path d="M274 378 H 362" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="271.5" y="345" width="91.0" height="22" rx="11" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="317.0" y="360.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#334155">HTTP :8081</text>
+<path d="M682 378 H 734" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="662.5" y="345" width="91.0" height="22" rx="11" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="708.0" y="360.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#334155">fetch /api</text>
+<path d="M888 460 V 520 H 512 V 608" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="647.0" y="512" width="106.0" height="22" rx="11" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="700.0" y="527.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#334155">HTTP interno</text>
+<path d="M662 687 H 708" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M982 687 H 1028" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1332 687 H 1378" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1432 612 V 464" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1409.0" y="509" width="46.0" height="22" rx="11" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="1432.0" y="524.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#334155">JDBC</text>
+<path d="M1110 762 C 1110 830, 1040 883, 986 883" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<path d="M1182 762 V 1042" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<rect x="1155.2" y="989" width="53.5" height="22" rx="11" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="1182.0" y="1004.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="12.5" font-weight="600" fill="#334155">HTTPS</text>
+</svg>

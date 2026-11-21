@@ -11,9 +11,12 @@ export const NIVEIS = [
   { valor: "DIFICIL", rotulo: "Difícil" },
 ];
 
+/** Filtros do banco compartilhado sem nada escolhido (Banco de questões e Nova atividade). */
+export const FILTROS_VAZIOS = { topicoId: "", nivel: "", anoEscolar: "" };
+
 export const PAPEIS = { ADMIN: "Administrador", PROFESSOR: "Professor", ALUNO: "Aluno" };
 
-/** Papel principal, para o cabeçalho: o admin também é professor, mas aparece como administrador. */
+/** Papel principal, para o cabeçalho: um admin que também leciona aparece como administrador. */
 export function papelPrincipal(roles = []) {
   if (roles.includes("ADMIN")) {
     return PAPEIS.ADMIN;
@@ -48,6 +51,26 @@ export const STATUS_EMAIL_ACESSO = {
   FALHOU: { rotulo: "O e-mail de acesso não foi entregue", cor: "danger" },
   NAO_CONFIGURADO: { rotulo: "Envio de e-mail desativado neste ambiente", cor: "warning" },
 };
+
+/**
+ * Frase para avisar o resultado do envio do e-mail de acesso. {@code destino}: "o responsável",
+ * "o professor"... Devolve {texto, tipo} para o aviso (tipo do Bootstrap: success, warning, danger).
+ */
+export function resultadoDoEnvio(status, destino) {
+  if (status === "FALHOU") {
+    return {
+      tipo: "danger",
+      texto: `O e-mail para ${destino} não foi entregue. Confira o endereço e use “Nova senha” para enviar de novo.`,
+    };
+  }
+  if (status === "NAO_CONFIGURADO") {
+    return {
+      tipo: "warning",
+      texto: "O envio de e-mail está desativado neste ambiente, então o e-mail não saiu (em desenvolvimento, a senha provisória fica no log do back-end).",
+    };
+  }
+  return { tipo: "success", texto: `Login e senha provisória enviados para ${destino}.` };
+}
 
 export function rotuloSituacao(valor) {
   return SITUACOES[valor]?.rotulo ?? valor;

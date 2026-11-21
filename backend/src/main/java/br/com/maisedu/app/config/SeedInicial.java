@@ -48,13 +48,11 @@ public class SeedInicial implements CommandLineRunner {
         String senhaProvisoria = senhaGeradora.gerar();
         Usuario admin = new Usuario("Administrador", "admin@maisedu.dev",
                 passwordEncoder.encode(senhaProvisoria), instituicao);
+        // Só ADMIN (menor privilégio): o admin monta a escola (turmas, professores, alunos, vínculos) e
+        // acompanha painéis e auditoria, mas não cria questões, não vota na validação entre pares nem
+        // cria atividades, que são do papel PROFESSOR.
         admin.adicionarRole(roleRepository.findByNome(RoleNome.ADMIN)
                 .orElseThrow(() -> new IllegalStateException("Papel ADMIN não cadastrado (ver migration V3).")));
-        // Admin acumula PROFESSOR: tem acesso a tudo que o professor tem, e
-        // "cadastrar professor" / "vincular professor à turma" ficam reservados
-        // só para quem tem ADMIN.
-        admin.adicionarRole(roleRepository.findByNome(RoleNome.PROFESSOR)
-                .orElseThrow(() -> new IllegalStateException("Papel PROFESSOR não cadastrado (ver migration V1).")));
         usuarioRepository.save(admin);
 
         log.warn("""

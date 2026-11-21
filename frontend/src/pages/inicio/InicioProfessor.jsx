@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { CartaoNumero } from "../../components/CartaoNumero";
 import { Carregando } from "../../components/Carregando";
 import { EstadoVazio } from "../../components/EstadoVazio";

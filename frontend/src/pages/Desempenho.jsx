@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { desempenhoDaTurma, desempenhoDoAlunoNaTurma } from "../services/atividadeService";
+import { Avatar } from "../components/Avatar";
 import { BarraPercentual } from "../components/BarraPercentual";
 import { Cabecalho } from "../components/Cabecalho";
 import { Carregando } from "../components/Carregando";
@@ -8,7 +9,9 @@ import { EstadoVazio } from "../components/EstadoVazio";
 import { Mensagens } from "../components/Mensagens";
 import { GraficoEvolucao } from "../components/GraficoEvolucao";
 import { GraficoHaltere } from "../components/GraficoHaltere";
-import { Dica, LegendaCalor, classeCalor, useDica } from "../components/MapaDeCalor";
+import { Dica, LegendaCalor } from "../components/MapaDeCalor";
+import { classeCalor } from "../components/escalaCalor";
+import { useDica } from "../components/useDica";
 import { Modal } from "../components/Modal";
 import { PainelDesempenho } from "../components/PainelDesempenho";
 import { SeletorTurma } from "../components/SeletorTurma";
@@ -24,13 +27,16 @@ const POUCAS_RESPOSTAS = 3;
  * na aba Desempenho da tela da Turma.
  */
 export function DesempenhoDaTurma({ turmaId }) {
+  // a chave recomeça a seção a cada turma: nada da turma anterior fica na tela enquanto carrega
+  return <DesempenhoDaTurmaConteudo key={turmaId} turmaId={turmaId} />;
+}
+
+function DesempenhoDaTurmaConteudo({ turmaId }) {
   const [dados, setDados] = useState(null);
   const [alunoAberto, setAlunoAberto] = useState(null);
   const [erro, setErro] = useState(null);
 
   useEffect(() => {
-    setDados(null);
-    setErro(null);
     desempenhoDaTurma(turmaId).then(setDados).catch((err) => setErro(err.message));
   }, [turmaId]);
 
@@ -211,8 +217,17 @@ function MapaAlunosTopicos({ dados, aoAbrirAluno }) {
             {alunos.map((aluno) => (
               <tr key={aluno.alunoId}>
                 <th scope="row" className="me-calor-fixa">
-                  <button type="button" className="btn btn-link btn-sm p-0 text-start" onClick={() => aoAbrirAluno(aluno)}>
-                    {aluno.nome}
+                  <button
+                    type="button"
+                    className="me-calor-aluno"
+                    onClick={() => aoAbrirAluno(aluno)}
+                    title={`Ver o desempenho de ${aluno.nome}`}
+                  >
+                    <Avatar nome={aluno.nome} tamanho={30} />
+                    <span className="me-calor-aluno-texto">
+                      <span className="me-calor-aluno-nome">{aluno.nome}</span>
+                      <span className="me-calor-aluno-geral">{formatarPercentual(aluno.percentual)} no geral</span>
+                    </span>
                   </button>
                 </th>
                 {dados.topicos.map((topico) => {

@@ -36,9 +36,11 @@ class PainelEUsuariosIntegrationTest extends IntegracaoTestBase {
 
         PaginaResponse<UsuarioGestaoResponse> primeira = listar(admin, "/usuarios?papel=PROFESSOR&tamanho=1&pagina=0");
         assertThat(primeira.conteudo()).hasSize(1);
-        // o admin também tem o papel de professor: são pelo menos 3
-        assertThat(primeira.total()).isGreaterThanOrEqualTo(3L);
-        assertThat(primeira.totalPaginas()).isGreaterThanOrEqualTo(3);
+        // escola nova: só os dois professores cadastrados (o admin não tem o papel de professor)
+        assertThat(primeira.total()).isEqualTo(2L);
+        assertThat(primeira.totalPaginas()).isEqualTo(2);
+        PaginaResponse<UsuarioGestaoResponse> professores = listar(admin, "/usuarios?papel=PROFESSOR&tamanho=10&pagina=0");
+        assertThat(idsDe(professores)).doesNotContain(admin.id());
 
         PaginaResponse<UsuarioGestaoResponse> busca = listar(admin, "/usuarios?busca=" + professor1.nome().split(" ")[1]);
         assertThat(idsDe(busca)).containsExactly(professor1.id());

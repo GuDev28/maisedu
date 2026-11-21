@@ -1,5 +1,39 @@
 # Alterações
 
+## Telas de questões, entrada e mapa de calor (25 de novembro de 2026)
+
+Só front-end: nenhuma mudança na API, no banco ou nas dependências.
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Tela de entrada | Painel da marca à esquerda (degradê azul com grade de caderno; a logo branca, grande, centralizada na metade de cima; embaixo, o ângulo desenhado e a frase "Cada um tem um jeito de aprender. A gente se adapta ao seu." em letra grande, rente ao pé do painel) e o formulário à direita. Botão para mostrar ou ocultar a senha. "Esqueci minha senha" abre a orientação de sempre (aluno pede ao professor; professor fala com o administrador), porque não existe recuperação por e-mail. No celular, o painel vira uma faixa no topo | `pages/Login.jsx`, `public/logo-maisedu-branco.png` |
+| Banco de questões | Faixa com o banco em números (questões, escolas, professores autores e tópicos), busca por texto no enunciado, no autor ou na escola (sem acento, feita no navegador sobre o resultado), ordenação (mais recentes, tópico, nível) e cartões em duas colunas com autor e escola. O gabarito abre dentro do cartão | `pages/BancoQuestoes.jsx` |
+| Minhas questões | Contadores por status que também filtram; cartões com a cor do status na borda; placar da votação em três casas para cada lado (três votos iguais decidem); motivos da rejeição em destaque; ações do rascunho com ícones | `pages/MinhasQuestoes.jsx` |
+| Avaliar questões | Fila numerada à esquerda e a questão aberta à direita, com o gabarito, o autor, a posição na fila e o roteiro "Antes de votar, confira". Botões grandes de Aprovar e Rejeitar; na rejeição, começos de motivo com um clique (gabarito errado, enunciado confuso etc.). Erro ao carregar a fila agora aparece na tela | `pages/AvaliarQuestoes.jsx` |
+| Mapa de calor da turma | Cada aluno aparece com as iniciais, o nome em destaque e o acerto geral embaixo; continua abrindo os detalhes ao clicar | `pages/Desempenho.jsx` |
+| Lint zerado | O `npm run lint` (oxlint) passa sem nenhum aviso. Hooks, constantes e funções saíram dos arquivos de componente: `context/contextos.js` (os dois contextos), `context/useAuth.js`, `context/useInterface.js`, `components/useDica.js`, `components/escalaCalor.js`; `FILTROS_VAZIOS` e `resultadoDoEnvio` foram para `rotulos.js`. Os efeitos deixaram de chamar `setState` direto: as cargas iniciais usam `.then`, a troca de turma em Desempenho e Atividades recomeça a seção pela `key`, o menu e a busca de usuário da Auditoria se ajustam na renderização, o `useLargura` virou um ref de função com `ResizeObserver`, e a lista de Usuários descarta respostas atrasadas de um filtro antigo. Nenhuma tela mudou de comportamento | `context/`, `components/`, `pages/` (imports de `useAuth` e `useInterface` em todas as telas) |
+| Peças comuns | Etiquetas da questão em formato de pílula (o nível ganha bolinhas de 1 a 3), alternativas com a letra em círculo e a correta em verde, e o componente de iniciais (`Avatar`, `Autor`). As etiquetas e as alternativas novas aparecem também em Atividades. O filtro do banco aceita a classe de espaçamento | `components/EtiquetasQuestao.jsx`, `components/Avatar.jsx`, `components/FiltrosBanco.jsx`, `components/Icone.jsx`, `estilo.css` |
+
+## Cenário de demonstração único e testes (25 de novembro de 2026)
+
+### Antes de rodar
+
+O perfil `demo-volume` deixou de existir: o `dev` cria tudo numa carga só. Para ver o cenário novo,
+zere o banco (`docker compose down -v`) e suba de novo. Se o `.env` tiver
+`SPRING_PROFILES_ACTIVE=dev,demo-volume`, troque por `dev` (o `demo-volume` que sobrar não quebra
+nada, só não faz mais nada). A primeira subida leva cerca de 30 segundos a mais.
+
+| Item | O que mudou | Onde |
+|---|---|---|
+| Seed único do perfil `dev` | Junta o cenário pequeno e a escola de volume: duas escolas (560 e 440 alunos, 1000 no total), turmas do 6º ao 9º ano com 20 a 30 alunos (tamanho sorteado), administradores, professores, um professor sem turma e contas de primeiro acesso. Gravação em lote com JDBC numa única transação, seguindo à mão as regras dos serviços (quórum de votos, prazo, folha única, correção só depois do prazo, desempenho só com respostas contabilizadas) | `config/SeedDemonstracao.java`; o `SeedVolume` foi removido |
+| Contas de vitrine | `ana@maisedu.dev` (3 turmas, questões em todos os status, fila de avaliação, atividades vencidas e abertas) e `a700001` (atividades corrigidas, não entregue, aguardando correção, em andamento e a fazer; práticas recomendadas e por tópico, uma em andamento) | `SeedDemonstracao.PROFESSORA_VITRINE`, `ALUNO_VITRINE` |
+| Carga reproduzível | Sementes fixas e ordem fixa dos tópicos: cada recriação gera os mesmos alunos, turmas, questões e atividades | `SeedDemonstracao` |
+| Administrador separado do professor | O admin passa a ter só o papel ADMIN (menor privilégio): gestão da escola, painéis e auditoria, sem lecionar, criar questões, votar na validação entre pares ou criar atividades. Vale para o primeiro admin de produção e para os da demonstração, cujas turmas passaram aos professores. Uma conta com os dois papéis continua possível, como exceção | `SeedInicial`, `SeedDemonstracao`, `IntegracaoTestBase.criarAdmin` |
+| Admin cadastra aluno | `POST /alunos` aceita ADMIN (em qualquer turma da escola) além de PROFESSOR (nas suas turmas); antes, um admin sem o papel de professor recebia 403 ao cadastrar aluno na tela da Turma | `UsuarioController`, `UsuarioService.cadastrarAluno`, `TurmaContaPainelIntegrationTest` |
+| Início do admin | A fila "Questões esperando o seu voto" só aparece (e só é consultada) para quem também leciona; para o admin, o card mostra as contas desativadas, e o card do banco compartilhado leva ao Painel da escola | `pages/inicio/InicioAdmin.jsx` |
+| Testes corrigidos | O fluxo completo buscava a análise da questão errada (pela posição, não pelo id); a validação de questão inexistente agora espera 404, como o serviço responde desde a entrega de 16/11 | `FluxoAtividadeIntegrationTest`, `QuestaoControllerIntegrationTest` |
+| Testes unitários novos | Filtro JWT, estado da sessão, JSON de erro, gerador de senha, tratamento global de exceções, painéis, desempenho, e-mail (Resend simulado), auditoria e retenção, e a lista de atividades da turma | `src/test/java/.../security`, `exception`, `service` |
+
 ## Entrega com prazo, prática por tópico, painéis e nova paleta (23 de novembro de 2026)
 
 ### Antes de rodar

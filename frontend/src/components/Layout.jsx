@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { MENU_RODAPE, secoesDoMenu } from "../navegacao";
 import { listarQuestoesPendentes } from "../services/questaoService";
 import { Icone } from "./Icone";
@@ -63,10 +63,13 @@ export default function Layout() {
   const secoes = secoesDoMenu(usuario.roles);
   const fila = useFilaDeAvaliacao(usuario.roles.includes("PROFESSOR"));
 
-  // trocar de página fecha a gaveta no celular
-  useEffect(() => {
+  // Trocar de página fecha a gaveta no celular. O ajuste é feito na própria renderização, guardando a
+  // rota em que o menu estava (o padrão do React para "mudou a prop, ajusta o estado"), sem efeito.
+  const [rotaDoMenu, setRotaDoMenu] = useState(pathname);
+  if (rotaDoMenu !== pathname) {
+    setRotaDoMenu(pathname);
     setMenuAberto(false);
-  }, [pathname]);
+  }
 
   const fechar = () => setMenuAberto(false);
 
