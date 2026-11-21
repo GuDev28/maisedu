@@ -1,0 +1,635 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2850" height="1308" viewBox="0 0 2850 1308">
+<defs>
+ <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+  <feGaussianBlur in="SourceAlpha" stdDeviation="6"/><feOffset dy="4"/>
+  <feComponentTransfer><feFuncA type="linear" slope=".10"/></feComponentTransfer>
+  <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+ </filter>
+</defs>
+<rect width="2850" height="1308" fill="#F7F9FC"/>
+<rect width="2850" height="8" fill="#195ABE"/>
+<text x="60" y="84" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#0F2A55">MaisEdu <tspan font-weight="400" fill="#475569">— Modelo de dados</tspan></text>
+<text x="62" y="124" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="18" fill="#64748B">PostgreSQL 17 · esquema gerado a partir do banco criado pelas migrations Flyway (V1 a V10)</text>
+<rect x="32" y="174" width="736" height="824" rx="24" fill="#EEF4FD" stroke="#C9DAF5" stroke-width="1.5"/>
+<rect x="54" y="192" width="6" height="22" rx="3" fill="#195ABE"/>
+<text x="70" y="209" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#195ABE">Instituição e acesso</text>
+<rect x="872" y="174" width="736" height="361" rx="24" fill="#FFF8EB" stroke="#F1DDB0" stroke-width="1.5"/>
+<rect x="894" y="192" width="6" height="22" rx="3" fill="#B7791F"/>
+<text x="910" y="209" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#B7791F">Turmas · RN01</text>
+<rect x="1692" y="174" width="1116" height="432" rx="24" fill="#F4F0FD" stroke="#DCD1F7" stroke-width="1.5"/>
+<rect x="1714" y="192" width="6" height="22" rx="3" fill="#6D4AC4"/>
+<text x="1730" y="209" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#6D4AC4">Banco de questões · RN02</text>
+<rect x="872" y="690" width="1616" height="576" rx="24" fill="#ECF8F6" stroke="#BFE5DF" stroke-width="1.5"/>
+<rect x="894" y="708" width="6" height="22" rx="3" fill="#0F7C74"/>
+<text x="910" y="725" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#0F7C74">Atividades e desempenho · RN03–RN06</text>
+<path d="M740,928 L766,928 Q776,928 776,918 L776,850 Q776,840 766,840 L740,840" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,921 V935" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,921 V935" stroke="#195ABE" stroke-width="2"/>
+<path d="M754,840 L740,833" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M754,840 L740,840" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M754,840 L740,847" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M760,833 V847" stroke="#195ABE" stroke-width="2"/>
+<path d="M360,288 L390,288 Q400,288 400,298 L400,390 Q400,400 410,400 L440,400" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M369,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M375,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M426,400 L440,393" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M426,400 L440,400" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M426,400 L440,407" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M420,393 V407" stroke="#195ABE" stroke-width="2"/>
+<path d="M1200,288 L1230,288 Q1240,288 1240,298 L1240,334 Q1240,344 1250,344 L1280,344" fill="none" stroke="#B7791F" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1209,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M1215,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M1266,344 L1280,337" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1266,344 L1280,344" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1266,344 L1280,351" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1260,337 V351" stroke="#B7791F" stroke-width="2"/>
+<path d="M2020,288 L2046,288 Q2056,288 2056,298 L2056,414 Q2056,424 2066,424 L2100,424" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2029,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2035,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2086,424 L2100,417" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2086,424 L2100,424" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2086,424 L2100,431" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2080,417 V431" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2400,288 L2430,288 Q2440,288 2440,298 L2440,310 Q2440,320 2450,320 L2480,320" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2409,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2415,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2466,320 L2480,313" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2466,320 L2480,320" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2466,320 L2480,327" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2460,313 V327" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M1200,808 L1230,808 Q1240,808 1240,818 L1240,846 Q1240,856 1250,856 L1280,856" fill="none" stroke="#0F7C74" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1209,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1215,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1266,856 L1280,849" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1266,856 L1280,856" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1266,856 L1280,863" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<circle cx="1256" cy="856" r="5" fill="#fff" stroke="#0F7C74" stroke-width="2"/>
+<path d="M2050,808 L2078,808 Q2088,808 2088,818 L2088,822 Q2088,832 2098,832 L2130,832" fill="none" stroke="#0F7C74" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2059,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M2065,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M2116,832 L2130,825" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M2116,832 L2130,832" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M2116,832 L2130,839" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M2110,825 V839" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1580,808 L1662,808 Q1672,808 1672,818 L1672,822 Q1672,832 1682,832 L1720,832" fill="none" stroke="#0F7C74" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1589,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1595,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1706,832 L1720,825" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1706,832 L1720,832" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1706,832 L1720,839" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1700,825 V839" stroke="#0F7C74" stroke-width="2"/>
+<path d="M900,288 L866,288 Q856,288 856,298 L856,846 Q856,856 866,856 L900,856" fill="none" stroke="#B7791F" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M891,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M885,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M886,856 L900,849" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M886,856 L900,856" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M886,856 L900,863" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M880,849 V863" stroke="#B7791F" stroke-width="2"/>
+<path d="M740,288 L766,288 Q776,288 776,298 L776,798 Q776,808 766,808 L740,808" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M754,808 L740,801" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M754,808 L740,808" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M754,808 L740,815" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M760,801 V815" stroke="#195ABE" stroke-width="2"/>
+<path d="M2100,288 L2082,288 Q2072,288 2072,298 L2072,446 Q2072,456 2062,456 L2020,456" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2091,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2085,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2034,456 L2020,449" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2034,456 L2020,456" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2034,456 L2020,463" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2040,449 V463" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M1200,288 L1230,288 Q1240,288 1240,298 L1240,486 Q1240,496 1250,496 L1280,496" fill="none" stroke="#B7791F" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1209,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M1215,281 V295" stroke="#B7791F" stroke-width="2"/>
+<path d="M1266,496 L1280,489" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1266,496 L1280,496" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1266,496 L1280,503" stroke="#B7791F" stroke-width="2" fill="none"/>
+<path d="M1260,489 V503" stroke="#B7791F" stroke-width="2"/>
+<path d="M1200,808 L1222,808 Q1232,808 1232,818 L1232,1054 Q1232,1064 1242,1064 L1280,1064" fill="none" stroke="#0F7C74" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1209,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1215,801 V815" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1266,1064 L1280,1057" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1266,1064 L1280,1064" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1266,1064 L1280,1071" stroke="#0F7C74" stroke-width="2" fill="none"/>
+<path d="M1260,1057 V1071" stroke="#0F7C74" stroke-width="2"/>
+<path d="M1720,288 L1682,288 Q1672,288 1672,298 L1672,784.0 Q1672,792 1664.0,792 L1664.0,792 Q1656,792 1656,800.0 L1656,1078 Q1656,1088 1666,1088 L1720,1088" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1711,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M1705,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M1706,1088 L1720,1081" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1706,1088 L1720,1088" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1706,1088 L1720,1095" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1700,1081 V1095" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M360,288 L390,288 Q400,288 400,278 L400,202 Q400,192 410,192 L830,192 Q840,192 840,202 L840,334 Q840,344 850,344 L900,344" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M369,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M375,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M886,344 L900,337" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M886,344 L900,344" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M886,344 L900,351" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M880,337 V351" stroke="#195ABE" stroke-width="2"/>
+<path d="M740,288 L766,288 Q776,288 776,298 L776,470 Q776,480 786,480 L1214,480 Q1224,480 1224,470 L1224,330 Q1224,320 1234,320 L1280,320" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M1266,320 L1280,313" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,320 L1280,320" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,320 L1280,327" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1260,313 V327" stroke="#195ABE" stroke-width="2"/>
+<path d="M2480,288 L2458,288 Q2448,288 2448,298 L2448,694 Q2448,704 2458,704 L2486,704 Q2496,704 2496,714 L2496,846 Q2496,856 2486,856 L2460,856" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2471,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2465,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2474,856 L2460,849" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2474,856 L2460,856" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2474,856 L2460,863" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2480,849 V863" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2100,288 L2082,288 Q2072,288 2072,298 L2072,724.0 Q2072,728 2076.0,728 L2076.0,728 Q2080,728 2080,732.0 L2080,846 Q2080,856 2070,856 L2050,856" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2091,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2085,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2064,856 L2050,849" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2064,856 L2050,856" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2064,856 L2050,863" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2070,849 V863" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,878 Q824,888 834,888 L900,888" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M886,888 L900,881" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M886,888 L900,888" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M886,888 L900,895" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M880,881 V895" stroke="#195ABE" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,470 Q824,480 834,480 L1216.0,480 Q1224,480 1224,472.0 L1224,472.0 Q1224,464 1232.0,464 L1280,464" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M1266,464 L1280,457" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,464 L1280,464" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,464 L1280,471" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1260,457 V471" stroke="#195ABE" stroke-width="2"/>
+<path d="M2480,288 L2458,288 Q2448,288 2448,298 L2448,694 Q2448,704 2438,704 L2106,704 Q2096,704 2096,714 L2096,902 Q2096,912 2086,912 L2050,912" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2471,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2465,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2064,912 L2050,905" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2064,912 L2050,912" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M2064,912 L2050,919" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<circle cx="2074" cy="912" r="5" fill="#fff" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,958 Q824,968 834,968 L1238,968 Q1248,968 1248,958 L1248,842 Q1248,832 1258,832 L1280,832" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M1266,832 L1280,825" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,832 L1280,832" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1266,832 L1280,839" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1260,825 V839" stroke="#195ABE" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,470 Q824,480 834,480 L1214,480 Q1224,480 1224,490 L1224,534 Q1224,544 1234,544 L1646,544 Q1656,544 1656,534 L1656,490 Q1656,480 1666,480 L1720,480" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M1706,480 L1720,473" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1706,480 L1720,480" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1706,480 L1720,487" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1700,473 V487" stroke="#195ABE" stroke-width="2"/>
+<path d="M2100,288 L2082,288 Q2072,288 2072,298 L2072,694 Q2072,704 2062,704 L1626,704 Q1616,704 1616,714 L1616,1078 Q1616,1088 1606,1088 L1580,1088" fill="none" stroke="#6D4AC4" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M2091,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M2085,281 V295" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M1594,1088 L1580,1081" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1594,1088 L1580,1088" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1594,1088 L1580,1095" stroke="#6D4AC4" stroke-width="2" fill="none"/>
+<path d="M1600,1081 V1095" stroke="#6D4AC4" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,470 Q824,480 834,480 L1214,480 Q1224,480 1224,490 L1224,534 Q1224,544 1234,544 L1646,544 Q1656,544 1656,554 L1656,606 Q1656,616 1666,616 L2046,616 Q2056,616 2056,606 L2056,440.0 Q2056,432 2048.0,432 L2048.0,432 Q2040,432 2040,424.0 L2040,354 Q2040,344 2050,344 L2100,344" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M2086,344 L2100,337" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M2086,344 L2100,344" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M2086,344 L2100,351" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M2080,337 V351" stroke="#195ABE" stroke-width="2"/>
+<path d="M740,288 L814,288 Q824,288 824,298 L824,958 Q824,968 834,968 L1206,968 Q1216,968 1216,978 L1216,1158 Q1216,1168 1226,1168 L1662,1168 Q1672,1168 1672,1158 L1672,1074 Q1672,1064 1682,1064 L1720,1064" fill="none" stroke="#195ABE" stroke-opacity=".75" stroke-width="2" stroke-linejoin="round"/>
+<path d="M749,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M755,281 V295" stroke="#195ABE" stroke-width="2"/>
+<path d="M1706,1064 L1720,1057" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1706,1064 L1720,1064" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1706,1064 L1720,1071" stroke="#195ABE" stroke-width="2" fill="none"/>
+<path d="M1700,1057 V1071" stroke="#195ABE" stroke-width="2"/>
+<g filter="url(#sh)"><rect x="60" y="236" width="300" height="202" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M60,276 V248 Q60,236 72,236 H348 Q360,236 360,248 V276 Z" fill="#195ABE"/>
+<text x="76" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">instituicao</text>
+<rect x="72" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="84" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="104" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="348" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="61" y="303" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nome</text>
+<text x="348" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="104" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">cnpj</text>
+<text x="348" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="61" y="357" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="375.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">endereco</text>
+<text x="348" y="375.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="104" y="402.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ativo</text>
+<text x="348" y="402.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M61,411 H359 V426 Q359,437 348,437 H72 Q61,437 61,426 Z" fill="#F5F8FC"/>
+<text x="104" y="429.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="348" y="429.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="440" y="236" width="300" height="472" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M440,276 V248 Q440,236 452,236 H728 Q740,236 740,248 V276 Z" fill="#195ABE"/>
+<text x="456" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">usuario</text>
+<rect x="452" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="464" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="484" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="728" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="303" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nome</text>
+<text x="728" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="484" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">email</text>
+<text x="728" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="transparent">  </tspan></text>
+<rect x="441" y="357" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="375.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">senha</text>
+<text x="728" y="375.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="452" y="389.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="464" y="401.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="484" y="402.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">instituicao_id</text>
+<text x="728" y="402.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="411" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="429.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ativo</text>
+<text x="728" y="429.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="484" y="456.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="728" y="456.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="465" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="483.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">login</text>
+<text x="728" y="483.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(50)<tspan fill="transparent">  </tspan></text>
+<text x="484" y="510.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">tentativas_falhas</text>
+<text x="728" y="510.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">int<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="519" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="537.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">bloqueado_ate</text>
+<text x="728" y="537.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="transparent">  </tspan></text>
+<text x="484" y="564.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">senha_temporaria</text>
+<text x="728" y="564.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="573" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="591.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">termos_aceitos_em</text>
+<text x="728" y="591.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="transparent">  </tspan></text>
+<text x="484" y="618.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">versao_sessao</text>
+<text x="728" y="618.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">int<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="441" y="627" width="298" height="27" fill="#F5F8FC"/>
+<text x="484" y="645.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">termos_versao</text>
+<text x="728" y="645.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">int<tspan fill="transparent">  </tspan></text>
+<text x="484" y="672.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">anonimizado_em</text>
+<text x="728" y="672.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="transparent">  </tspan></text>
+<path d="M441,681 H739 V696 Q739,707 728,707 H452 Q441,707 441,696 Z" fill="#F5F8FC"/>
+<text x="484" y="699.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">email_responsavel</text>
+<text x="728" y="699.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="60" y="468" width="300" height="391" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M60,508 V480 Q60,468 72,468 H348 Q360,468 360,480 V508 Z" fill="#195ABE"/>
+<text x="76" y="494" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">log_auditoria</text>
+<rect x="72" y="513.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="84" y="525.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="104" y="526.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="348" y="526.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="61" y="535" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="553.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">usuario_id</text>
+<text x="348" y="553.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="transparent">  </tspan></text>
+<text x="104" y="580.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">usuario_nome</text>
+<text x="348" y="580.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="transparent">  </tspan></text>
+<rect x="61" y="589" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="607.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">identificador_acesso</text>
+<text x="348" y="607.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="transparent">  </tspan></text>
+<text x="104" y="634.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">acao</text>
+<text x="348" y="634.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(40)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="61" y="643" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="661.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">entidade</text>
+<text x="348" y="661.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(60)<tspan fill="transparent">  </tspan></text>
+<text x="104" y="688.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">entidade_id</text>
+<text x="348" y="688.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="transparent">  </tspan></text>
+<rect x="61" y="697" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="715.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">sucesso</text>
+<text x="348" y="715.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="104" y="742.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">detalhes</text>
+<text x="348" y="742.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(500)<tspan fill="transparent">  </tspan></text>
+<rect x="61" y="751" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="769.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ip</text>
+<text x="348" y="769.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(45)<tspan fill="transparent">  </tspan></text>
+<text x="104" y="796.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">user_agent</text>
+<text x="348" y="796.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(500)<tspan fill="transparent">  </tspan></text>
+<rect x="61" y="805" width="298" height="27" fill="#F5F8FC"/>
+<text x="104" y="823.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="348" y="823.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="104" y="850.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">instituicao_id</text>
+<text x="348" y="850.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="440" y="756" width="300" height="94" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M440,796 V768 Q440,756 452,756 H728 Q740,756 740,768 V796 Z" fill="#195ABE"/>
+<text x="456" y="782" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">usuario_role</text>
+<rect x="452" y="801.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="464" y="813.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<rect x="480" y="801.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="492" y="813.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="512" y="814.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">usuario_id</text>
+<text x="728" y="814.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M441,823 H739 V838 Q739,849 728,849 H452 Q441,849 441,838 Z" fill="#F5F8FC"/>
+<rect x="452" y="828.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="464" y="840.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<rect x="480" y="828.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="492" y="840.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="512" y="841.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">role_id</text>
+<text x="728" y="841.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="440" y="876" width="300" height="94" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M440,916 V888 Q440,876 452,876 H728 Q740,876 740,888 V916 Z" fill="#195ABE"/>
+<text x="456" y="902" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">role</text>
+<rect x="452" y="921.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="464" y="933.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="484" y="934.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="728" y="934.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M441,943 H739 V958 Q739,969 728,969 H452 Q441,969 441,958 Z" fill="#F5F8FC"/>
+<text x="484" y="961.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nome</text>
+<text x="728" y="961.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="900" y="236" width="300" height="202" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M900,276 V248 Q900,236 912,236 H1188 Q1200,236 1200,248 V276 Z" fill="#B7791F"/>
+<text x="916" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">turma</text>
+<rect x="912" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="924" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="944" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1188" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="901" y="303" width="298" height="27" fill="#F5F8FC"/>
+<text x="944" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nome</text>
+<text x="1188" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="912" y="335.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="924" y="347.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="944" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">instituicao_id</text>
+<text x="1188" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="901" y="357" width="298" height="27" fill="#F5F8FC"/>
+<text x="944" y="375.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ano_escolar</text>
+<text x="1188" y="375.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="944" y="402.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ativo</text>
+<text x="1188" y="402.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M901,411 H1199 V426 Q1199,437 1188,437 H912 Q901,437 901,426 Z" fill="#F5F8FC"/>
+<text x="944" y="429.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="1188" y="429.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1280" y="236" width="300" height="121" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1280,276 V248 Q1280,236 1292,236 H1568 Q1580,236 1580,248 V276 Z" fill="#B7791F"/>
+<text x="1296" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">aluno_turma</text>
+<rect x="1292" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1304" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1324" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1568" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1281" y="303" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1292" y="308.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="320.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">aluno_id</text>
+<text x="1568" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1292" y="335.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="347.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">turma_id</text>
+<text x="1568" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1280" y="386" width="300" height="121" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1280,426 V398 Q1280,386 1292,386 H1568 Q1580,386 1580,398 V426 Z" fill="#B7791F"/>
+<text x="1296" y="412" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">professor_turma</text>
+<rect x="1292" y="431.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1304" y="443.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1324" y="444.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1568" y="444.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1281" y="453" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1292" y="458.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="470.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="471.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">professor_id</text>
+<text x="1568" y="471.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1292" y="485.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="497.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="498.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">turma_id</text>
+<text x="1568" y="498.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1720" y="236" width="300" height="94" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1720,276 V248 Q1720,236 1732,236 H2008 Q2020,236 2020,248 V276 Z" fill="#6D4AC4"/>
+<text x="1736" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">topico</text>
+<rect x="1732" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1744" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1764" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2008" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M1721,303 H2019 V318 Q2019,329 2008,329 H1732 Q1721,329 1721,318 Z" fill="#F5F8FC"/>
+<text x="1764" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nome</text>
+<text x="2008" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(100)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="2100" y="236" width="300" height="256" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M2100,276 V248 Q2100,236 2112,236 H2388 Q2400,236 2400,248 V276 Z" fill="#6D4AC4"/>
+<text x="2116" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">questao</text>
+<rect x="2112" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="2124" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="2144" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2388" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2101" y="303" width="298" height="27" fill="#F5F8FC"/>
+<text x="2144" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">enunciado</text>
+<text x="2388" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">text<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2112" y="335.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="2124" y="347.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="2144" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">autor_id</text>
+<text x="2388" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2101" y="357" width="298" height="27" fill="#F5F8FC"/>
+<text x="2144" y="375.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">status</text>
+<text x="2388" y="375.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="2144" y="402.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="2388" y="402.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2101" y="411" width="298" height="27" fill="#F5F8FC"/>
+<rect x="2112" y="416.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="2124" y="428.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="2144" y="429.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">topico_id</text>
+<text x="2388" y="429.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="2144" y="456.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nivel_dificuldade</text>
+<text x="2388" y="456.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(10)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M2101,465 H2399 V480 Q2399,491 2388,491 H2112 Q2101,491 2101,480 Z" fill="#F5F8FC"/>
+<text x="2144" y="483.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ano_escolar</text>
+<text x="2388" y="483.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(20)<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="2480" y="236" width="300" height="175" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M2480,276 V248 Q2480,236 2492,236 H2768 Q2780,236 2780,248 V276 Z" fill="#6D4AC4"/>
+<text x="2496" y="262" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">alternativa</text>
+<rect x="2492" y="281.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="2504" y="293.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="2524" y="294.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2768" y="294.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2481" y="303" width="298" height="27" fill="#F5F8FC"/>
+<rect x="2492" y="308.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="2504" y="320.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="2524" y="321.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">questao_id</text>
+<text x="2768" y="321.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="2524" y="348.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">texto</text>
+<text x="2768" y="348.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">text<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2481" y="357" width="298" height="27" fill="#F5F8FC"/>
+<text x="2524" y="375.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">correta</text>
+<text x="2768" y="375.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bool<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="2524" y="402.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ordem</text>
+<text x="2768" y="402.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">smallint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1720" y="376" width="300" height="202" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1720,416 V388 Q1720,376 1732,376 H2008 Q2020,376 2020,388 V416 Z" fill="#6D4AC4"/>
+<text x="1736" y="402" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">avaliacao_questao</text>
+<rect x="1732" y="421.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1744" y="433.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1764" y="434.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2008" y="434.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="443" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1732" y="448.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="460.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="461.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">questao_id</text>
+<text x="2008" y="461.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1732" y="475.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="487.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="488.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">professor_id</text>
+<text x="2008" y="488.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="497" width="298" height="27" fill="#F5F8FC"/>
+<text x="1764" y="515.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">voto</text>
+<text x="2008" y="515.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(255)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="1764" y="542.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">avaliado_em</text>
+<text x="2008" y="542.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M1721,551 H2019 V566 Q2019,577 2008,577 H1732 Q1721,577 1721,566 Z" fill="#F5F8FC"/>
+<text x="1764" y="569.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">comentario</text>
+<text x="2008" y="569.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(500)<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="900" y="752" width="300" height="175" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M900,792 V764 Q900,752 912,752 H1188 Q1200,752 1200,764 V792 Z" fill="#0F7C74"/>
+<text x="916" y="778" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">atividade</text>
+<rect x="912" y="797.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="924" y="809.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="944" y="810.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1188" y="810.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="901" y="819" width="298" height="27" fill="#F5F8FC"/>
+<text x="944" y="837.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">titulo</text>
+<text x="1188" y="837.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(150)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="912" y="851.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="924" y="863.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="944" y="864.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">turma_id</text>
+<text x="1188" y="864.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="901" y="873" width="298" height="27" fill="#F5F8FC"/>
+<rect x="912" y="878.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="924" y="890.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="944" y="891.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">professor_id</text>
+<text x="1188" y="891.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="944" y="918.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">criado_em</text>
+<text x="1188" y="918.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1280" y="982" width="300" height="148" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1280,1022 V994 Q1280,982 1292,982 H1568 Q1580,982 1580,994 V1022 Z" fill="#0F7C74"/>
+<text x="1296" y="1008" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">atividade_questao</text>
+<rect x="1292" y="1027.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1304" y="1039.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1324" y="1040.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1568" y="1040.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1281" y="1049" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1292" y="1054.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="1066.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="1067.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">atividade_id</text>
+<text x="1568" y="1067.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1292" y="1081.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="1093.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="1094.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">questao_id</text>
+<text x="1568" y="1094.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M1281,1103 H1579 V1118 Q1579,1129 1568,1129 H1292 Q1281,1129 1281,1118 Z" fill="#F5F8FC"/>
+<text x="1324" y="1121.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ordem</text>
+<text x="1568" y="1121.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">smallint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1280" y="752" width="300" height="202" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1280,792 V764 Q1280,752 1292,752 H1568 Q1580,752 1580,764 V792 Z" fill="#0F7C74"/>
+<text x="1296" y="778" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">atividade_aluno</text>
+<rect x="1292" y="797.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1304" y="809.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1324" y="810.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="1568" y="810.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1281" y="819" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1292" y="824.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="836.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="837.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">aluno_id</text>
+<text x="1568" y="837.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1292" y="851.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1304" y="863.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1324" y="864.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">atividade_id</text>
+<text x="1568" y="864.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="transparent">  </tspan></text>
+<rect x="1281" y="873" width="298" height="27" fill="#F5F8FC"/>
+<text x="1324" y="891.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">tipo</text>
+<text x="1568" y="891.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(20)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="1324" y="918.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">iniciada_em</text>
+<text x="1568" y="918.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M1281,927 H1579 V942 Q1579,953 1568,953 H1292 Q1281,953 1281,942 Z" fill="#F5F8FC"/>
+<text x="1324" y="945.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">concluida_em</text>
+<text x="1568" y="945.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="1720" y="752" width="330" height="202" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1720,792 V764 Q1720,752 1732,752 H2038 Q2050,752 2050,764 V792 Z" fill="#0F7C74"/>
+<text x="1736" y="778" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">atividade_aluno_questao</text>
+<rect x="1732" y="797.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1744" y="809.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1764" y="810.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2038" y="810.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="819" width="328" height="27" fill="#F5F8FC"/>
+<rect x="1732" y="824.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="836.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="837.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">atividade_aluno_id</text>
+<text x="2038" y="837.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1732" y="851.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="863.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="864.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">questao_id</text>
+<text x="2038" y="864.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="873" width="328" height="27" fill="#F5F8FC"/>
+<text x="1764" y="891.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">ordem</text>
+<text x="2038" y="891.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">smallint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1732" y="905.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="917.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="918.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">alternativa_marcada_id</text>
+<text x="2038" y="918.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="transparent">  </tspan></text>
+<path d="M1721,927 H2049 V942 Q2049,953 2038,953 H1732 Q1721,953 1721,942 Z" fill="#F5F8FC"/>
+<text x="1764" y="945.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">marcada_em</text>
+<text x="2038" y="945.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="transparent">  </tspan></text>
+<g filter="url(#sh)"><rect x="2130" y="752" width="330" height="148" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M2130,792 V764 Q2130,752 2142,752 H2448 Q2460,752 2460,764 V792 Z" fill="#0F7C74"/>
+<text x="2146" y="778" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">resposta</text>
+<rect x="2142" y="797.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="2154" y="809.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="2174" y="810.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2448" y="810.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2131" y="819" width="328" height="27" fill="#F5F8FC"/>
+<rect x="2142" y="824.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="2154" y="836.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="2174" y="837.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">atividade_aluno_questao_id</text>
+<text x="2448" y="837.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="2142" y="851.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="2154" y="863.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="2174" y="864.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">alternativa_id</text>
+<text x="2448" y="864.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M2131,873 H2459 V888 Q2459,899 2448,899 H2142 Q2131,899 2131,888 Z" fill="#F5F8FC"/>
+<text x="2174" y="891.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">respondida_em</text>
+<text x="2448" y="891.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<g filter="url(#sh)"><rect x="1720" y="982" width="300" height="256" rx="12" fill="#fff" stroke="#D6DFEC"/></g>
+<path d="M1720,1022 V994 Q1720,982 1732,982 H2008 Q2020,982 2020,994 V1022 Z" fill="#0F7C74"/>
+<text x="1736" y="1008" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fff">desempenho_topico</text>
+<rect x="1732" y="1027.5" width="24" height="16" rx="4" fill="#FDF1D6"/>
+<text x="1744" y="1039.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="1764" y="1040.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="700" fill="#0F2A55">id</text>
+<text x="2008" y="1040.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="1049" width="298" height="27" fill="#F5F8FC"/>
+<rect x="1732" y="1054.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="1066.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="1067.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">aluno_id</text>
+<text x="2008" y="1067.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1732" y="1081.5" width="24" height="16" rx="4" fill="#E3ECFB"/>
+<text x="1744" y="1093.5" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="1764" y="1094.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">topico_id</text>
+<text x="2008" y="1094.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">bigint<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="1103" width="298" height="27" fill="#F5F8FC"/>
+<text x="1764" y="1121.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">nivel_dificuldade</text>
+<text x="2008" y="1121.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">varchar(10)<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="1764" y="1148.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">total_respostas</text>
+<text x="2008" y="1148.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">int<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="1721" y="1157" width="298" height="27" fill="#F5F8FC"/>
+<text x="1764" y="1175.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">total_acertos</text>
+<text x="2008" y="1175.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">int<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<text x="1764" y="1202.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">percentual_acerto</text>
+<text x="2008" y="1202.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">numeric<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<path d="M1721,1211 H2019 V1226 Q2019,1237 2008,1237 H1732 Q1721,1237 1721,1226 Z" fill="#F5F8FC"/>
+<text x="1764" y="1229.5" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="14.5" font-weight="400" fill="#0F2A55">atualizado_em</text>
+<text x="2008" y="1229.0" text-anchor="end" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="12" fill="#64748B">timestamp<tspan fill="#C2410C" font-weight="700"> *</tspan></text>
+<rect x="32" y="1040" width="740" height="196" rx="20" fill="#fff" stroke="#D6DFEC"/>
+<text x="60" y="1080" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#0F2A55">Legenda</text>
+<rect x="60" y="1112" width="24" height="16" rx="4" fill="#FDF1D6"/><text x="72" y="1124" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#A16207">PK</text>
+<text x="96" y="1125" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">chave primária</text>
+<rect x="60" y="1150" width="24" height="16" rx="4" fill="#E3ECFB"/><text x="72" y="1162" text-anchor="middle" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#195ABE">FK</text>
+<text x="96" y="1163" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">chave estrangeira</text>
+<text x="66" y="1201" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C2410C">*</text><text x="96" y="1201" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">obrigatório (NOT NULL)</text>
+<path d="M332,1120 H402" stroke="#5B6B85" stroke-width="2"/>
+<path d="M341,1113 V1127" stroke="#5B6B85" stroke-width="2"/>
+<path d="M347,1113 V1127" stroke="#5B6B85" stroke-width="2"/>
+<path d="M388,1120 L402,1113" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<path d="M388,1120 L402,1120" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<path d="M388,1120 L402,1127" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<path d="M382,1113 V1127" stroke="#5B6B85" stroke-width="2"/>
+<text x="418" y="1125" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">um para muitos</text>
+<path d="M332,1158 H402" stroke="#5B6B85" stroke-width="2"/>
+<path d="M341,1151 V1165" stroke="#5B6B85" stroke-width="2"/>
+<path d="M347,1151 V1165" stroke="#5B6B85" stroke-width="2"/>
+<path d="M388,1158 L402,1151" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<path d="M388,1158 L402,1158" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<path d="M388,1158 L402,1165" stroke="#5B6B85" stroke-width="2" fill="none"/>
+<circle cx="378" cy="1158" r="5" fill="#fff" stroke="#5B6B85" stroke-width="2"/>
+<text x="418" y="1163" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">um para zero ou muitos (FK opcional)</text>
+<text x="332" y="1201" font-family="Arial, Liberation Sans, Helvetica, sans-serif" font-size="15" fill="#475569">Cor da linha = grupo da tabela referenciada</text>
+</svg>

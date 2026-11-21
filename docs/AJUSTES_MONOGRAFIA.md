@@ -3,6 +3,18 @@
 O arquivo .docx não foi alterado. Abaixo, por seção, o que mudar para o texto bater com o código.
 Trechos entre aspas podem ser colados (revisem o tom e a formatação ABNT).
 
+## Novidades de 25 de novembro de 2026
+
+- **1.5.1 (atores)**: "O administrador gerencia a escola (turmas, professores, alunos e vínculos) e
+  acompanha o painel da escola e a auditoria. Ele não leciona, não cria questões, não vota na validação
+  entre pares nem cria atividades, que são atribuições do professor. Uma mesma pessoa pode acumular os
+  dois papéis, como exceção." (Antes, o primeiro administrador acumulava o papel de professor.)
+- **RF05 (cadastro do aluno)**: atores "Administrador (em qualquer turma da escola) e Professor (nas
+  turmas em que leciona)".
+- **1.6 (controle de acesso)**: citar o princípio do menor privilégio e a separação de funções: a
+  validação das questões fica restrita aos professores, para que a gestão da escola não interfira na
+  avaliação entre pares.
+
 ## Novidades de 23 de novembro de 2026 (aplicar junto com o restante)
 
 - **RN04 / RF16 (resolver atividade)**: trocar a "resposta única por questão, confirmada uma a uma"
@@ -39,8 +51,8 @@ Trechos entre aspas podem ser colados (revisem o tom e a formatação ABNT).
 - **Diagrama de classes**: `Atividade` ganha `prazo`, `fechadaEm`, `alterarPrazo`, `prazoEncerrado`,
   `fechar`; `AtividadeAluno` ganha `topico`, `aceitaRespostas`, `correcaoLiberada`; `Resposta` ganha
   `contabilizadaEm`; novos `FechamentoAtividadesService`, `GeradorLogin` e `PainelService`.
-- **Resultados (simulação)**: o perfil `demo-volume` gera 1000 alunos simulados para demonstrar os
-  painéis. Se usarem esses números no texto, deixem claro que são **dados sintéticos**; o "efeito da
+- **Resultados (simulação)**: o perfil `dev` gera 1000 alunos simulados, em duas escolas, para demonstrar
+  os painéis. Se usarem esses números no texto, deixem claro que são **dados sintéticos**; o "efeito da
   prática" é uma comparação antes/depois, descritiva, e não prova causalidade (pode haver outras
   causas: aulas, revisão, dificuldade das questões).
 - **Identidade visual**: se houver capturas de tela no texto, refazê-las com a paleta nova.
